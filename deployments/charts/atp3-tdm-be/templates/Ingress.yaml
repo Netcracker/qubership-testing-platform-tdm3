@@ -1,0 +1,26 @@
+{{- if eq .Values.PAAS_PLATFORM "KUBERNETES" }}
+  {{- if .Values.atp3tdm.externalLinkEnabled }}
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: '{{ .Values.LABEL }}{{ .Values.SERVICE_NAME }}'
+  annotations:
+    haproxy.router.openshift.io/timeout: 10h
+spec:
+  tls:
+    - hosts:
+        - {{ include "atp3tdm.ingressHost" . }}
+  rules:
+    - host: '{{ include "atp3tdm.ingressHost" . }}'
+      http:
+        paths:
+          - path: /
+            pathType: "Prefix"
+            backend:
+              service:
+                port:
+                  number: 8080
+                name: '{{ .Values.LABEL }}{{ .Values.SERVICE_NAME }}'
+  {{- end }}
+{{- end }}

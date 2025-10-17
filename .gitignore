@@ -1,0 +1,24 @@
+# IDEs and editors
+.idea/
+
+/qubership-atp-tdm-backend/qubership-atp-tdm-backend.iml
+/qubership-atp-tdm-backend/target/
+/qubership-atp-tdm-backend/web/
+/qubership-atp-tdm-backend/console.*
+
+/qubership-atp-tdm-distribution/qubership-atp-tdm-distribution.iml
+/qubership-atp-tdm-distribution/target/
+
+/qubership-atp-tdm-env-configurator/qubership-atp-tdm-env-configurator.iml
+/qubership-atp-tdm-env-configurator/target/
+
+/qubership-atp-tdm.iml
+
+/**/target
+/qubership-atp-tdm-benchmarks/qubership-atp-tdm-benchmarks.iml
+/parent/qubership-atp-tdm-parent-db/qubership-atp-tdm-parent-db.iml
+/parent/qubership-atp-tdm-parent-java/qubership-atp-tdm-parent-java.iml
+dist
+coverage
+/application.pid
+/db/

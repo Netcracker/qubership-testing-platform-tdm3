@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    
+    <changeSet id="ADD_COLUMN_ENVIRONMENT_ID_TO_TEST_DATA_TABLE_CATALOG" author="atp-tdm-be">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="TEST_DATA_TABLE_CATALOG" columnName="ENVIRONMENT_ID"/>
+            </not>
+        </preConditions>
+        <comment>TASUP-11354</comment>
+        <addColumn tableName="TEST_DATA_TABLE_CATALOG">
+            
+            <column name="ENVIRONMENT_ID" type="uuid">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    
+    <changeSet id="ADD_COLUMN_CLEANUP_TYPE_TO_TEST_DATA_CLEANUP_CONFIG" author="atp-tdm-be">
+        <comment>ATPII-20246</comment>
+        <addColumn tableName="TEST_DATA_CLEANUP_CONFIG">
+            <column name="TYPE" type="VARCHAR" defaultValue="SQL">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    
+    <changeSet id="ADD_COLUMN_SEARCH_DATE_TO_TEST_DATA_CLEANUP_CONFIG" author="atp-tdm-be">
+        <comment>ATPII-20246</comment>
+        <addColumn tableName="TEST_DATA_CLEANUP_CONFIG">
+            <column name="SEARCH_DATE" type="VARCHAR">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="ADD_COLUMN_CREATED_WHEN_TO_TEST_DATA_OCCUPY_STATISTIC" author="atp-tdm-be">
+        <comment>ATPII-23742</comment>
+        <addColumn tableName="TEST_DATA_OCCUPY_STATISTIC">
+            <column name="CREATED_WHEN" type="DATE" defaultValue="2010-01-01">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="ADD_COLUMN_UPDATE_BY_QUERY_TO_TEST_DATA_TABLE_IMPORT_INFO" author="atp-tdm-be">
+        <comment>ATPII-36019</comment>
+        <addColumn tableName="TEST_DATA_TABLE_IMPORT_INFO">
+            <column name="UPDATE_BY_QUERY" type="VARCHAR">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="DROP_CONSTRAIN_NOT_NULL_FOR_COLUMN_TABLE_QUERY_TO_TEST_DATA_TABLE_IMPORT_INFO" author="atp-tdm-be">
+        <comment>ATPII-36019</comment>
+        <dropNotNullConstraint tableName="TEST_DATA_TABLE_IMPORT_INFO" columnName="TABLE_QUERY"/>
+    </changeSet>
+
+    <changeSet id="ADD_COLUMN_QUERY_TIMEOUT_TO_TEST_DATA_TABLE_IMPORT_INFO" author="atp-tdm-be">
+        <comment>ATPII-35664</comment>
+        <addColumn tableName="TEST_DATA_TABLE_IMPORT_INFO">
+            <column name="QUERY_TIMEOUT" type="INTEGER">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="ADD_COLUMN_QUERY_TIMEOUT_TO_TEST_DATA_CLEANUP_CONFIG" author="atp-tdm-be">
+        <comment>ATPII-35664</comment>
+        <addColumn tableName="TEST_DATA_CLEANUP_CONFIG">
+            <column name="QUERY_TIMEOUT" type="INTEGER">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="ADD_COLUMN_ALL_ENV_TO_TEST_DATA_REFRESH_CONFIG" author="atp-tdm-be">
+        <comment>ATPII-35839</comment>
+        <addColumn tableName="TEST_DATA_REFRESH_CONFIG">
+            <column name="ALL_ENV" type="BOOLEAN" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="DELETE_COLUMN_NOT_NULL_CONSTRAINT_OCCUPIED_BY_IN_TEST_DATA_OCCUPY_STATISTIC" author="atp-tdm-be">
+        <comment>ATPII-23742</comment>
+        <dropNotNullConstraint columnName="OCCUPIED_BY"
+                               tableName="TEST_DATA_OCCUPY_STATISTIC"/>
+    </changeSet>
+    
+    <changeSet id="DELETE_COLUMN_NOT_NULL_CONSTRAINT_OCCUPIED_DATE_IN_TEST_DATA_OCCUPY_STATISTIC" author="atp-tdm-be">
+        <comment>ATPII-23742</comment>
+        <dropNotNullConstraint columnName="OCCUPIED_DATE"
+                               tableName="TEST_DATA_OCCUPY_STATISTIC"/>
+    </changeSet>
+
+<!--    <changeSet id="MIGRATE_DATA_FROM_TEST_DATA_CLEANUP_STATISTIC_TO_TEST_DATA_OCCUPY_STATISTIC" author="atp-tdm-be">-->
+<!--        <comment>ATPII-23452</comment>-->
+<!--        <sqlFile path="migrationScripts/MIGRATE_DATA_FROM_TEST_DATA_CLEANUP_STATISTIC_TO_TEST_DATA_OCCUPY_STATISTIC_ATPII-23452.sql" splitStatements="false"/>-->
+<!--    </changeSet>-->
+
+<!--    <changeSet id="DROP_TABLE_TEST_DATA_CLEANUP_STATISTIC" author="atp-tdm-be">-->
+<!--        <comment>ATPII-23452</comment>-->
+<!--        <sqlFile path="migrationScripts/DROP_TABLE_TEST_DATA_CLEANUP_STATISTIC_ATPII-23452.sql" splitStatements="false"/>-->
+<!--    </changeSet>-->
+
+<!--    <changeSet id="MIGRATE_DATA_TO_PROJECT_INFORMATION_TABLE" author="atp-tdm-be">-->
+<!--        <comment>ATPII-23452</comment>-->
+<!--        <sqlFile path="migrationScripts/MIGRATE_DATA_TO_PROJECT_INFORMATION.sql" splitStatements="false"/>-->
+<!--    </changeSet>-->
+
+    <changeSet id="TEST_DATA_TABLE_CATALOG(PROJECT_ID, SYSTEM_ID)" author="atp-tdm-be">
+        <createIndex tableName="TEST_DATA_TABLE_CATALOG" indexName="TEST_DATA_TABLE_CATALOG(PROJECT_ID, SYSTEM_ID)">
+            <column name="PROJECT_ID"/>
+            <column name="SYSTEM_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="ADD_COLUMNS_FOR_DELETING_EXPIRED_TABLES" author="atp-tdm-be">
+        <addColumn tableName="test_data_table_catalog">
+            <column name="last_usage" type="DATE" defaultValueComputed="CURRENT_DATE"/>
+        </addColumn>
+        <addColumn tableName="project_information">
+            <column name="expiration_months_timeout" type="INTEGER" defaultValue="1" />
+        </addColumn>
+    </changeSet>
+
+    <include file="v2/service-entities-migration.xml" relativeToChangelogFile="true"/>
+
+    <changeSet id="create function uuid_generate_v4()" author="atp-tdm-be">
+        <sql>
+            CREATE ALIAS IF NOT EXISTS UUID_GENERATE_V4 FOR "org.h2.value.ValueUuid.getNewRandom";
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

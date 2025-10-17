@@ -1,0 +1,46 @@
+{
+  "type": "png",
+  "options": {
+    "credits": {
+      "enabled": false
+    },
+    "chart": {
+      "width": %s,
+      "height": 300,
+      "spacingRight": 40,
+      "type": "column"
+    },
+    "legend": {
+      "layout": "horizontal",
+      "align": "left",
+      "verticalAlign": "top",
+      "symbolRadius": 3
+    },
+    "title": "",
+    "xAxis": {
+      "labels": {
+        "style": {
+          "fontSize": "8px"
+        },
+        "rotation": 45
+      },
+      "tickLength": 0,
+      "categories": ["%s"]
+    },
+    "yAxis": {
+      "min": 0
+    },
+    "plotOptions": {
+      "column": {
+        "pointWidth": 4,
+        "shadow": {
+          "enabled": true,
+          "color": "rgba(0, 0, 0, 0.35)"
+        },
+        "borderRadius": 5
+      }
+    },
+    "series":
+        %s
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "data": {
+    "header": {
+      "rows": [
+        {
+          "columns": [
+            {
+              "type": "checkbox",
+              "value": false
+            },
+            {
+              "value": "SIM",
+              "filter": true,
+              "filterType": "text",
+              "contentModel": {
+                "id": "SIM"
+              }
+            },
+            {
+              "value": "Status",
+              "filter": true,
+              "filterType": "text",
+              "contentModel": {
+                "id": "Status"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "body": {
+      "rows": []
+    }
+  },
+  "records": 0,
+  "name": null,
+  "query": "select name, object_id, object_type_id, description from nc_objects where rownum < 10",
+  "updateByQuery": null
+}

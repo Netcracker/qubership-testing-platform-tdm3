@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>qubership-atp-tdm-parent-db</artifactId>
+        <groupId>org.qubership.atp.tdm</groupId>
+        <version>${atp.service.version}</version>
+        <relativePath>../parent/qubership-atp-tdm-parent-db/pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>qubership-atp-tdm-rest-openapi-specifications</artifactId>
+    <packaging>jar</packaging>
+    <build>
+        <resources>
+            <resource>
+                <targetPath>api/tdm</targetPath> <!--please set api/'name of service' here-->
+                <filtering>false</filtering>
+                <directory>${basedir}</directory>
+                <includes>
+                    <include>**/*.yaml</include>
+                </includes>
+                <excludes>
+                    <exclude>target/**</exclude>
+                </excludes>
+            </resource>
+        </resources>
+    </build>
+
+</project>

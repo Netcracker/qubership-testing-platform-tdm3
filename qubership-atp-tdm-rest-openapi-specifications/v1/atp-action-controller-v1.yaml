@@ -1,0 +1,491 @@
+openapi: 3.0.3
+info:
+  title: Api Documentation
+  description: Api Documentation
+  version: '1.0'
+servers:
+  - url: http://localhost:8080
+    description: Inferred Url
+tags:
+  - name: atp-action-controller
+    description: Atp Action Controller
+paths:
+  /api/tdm/rest/add-info-to-row:
+    post:
+      tags:
+        - atp-action-controller
+      summary: ATP Action. Add info to row in table.
+      operationId: addInfoToRow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestApiRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseMessage'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/rest/get-record:
+    post:
+      tags:
+        - atp-action-controller
+      summary: ATP Action. Get test data from table.
+      operationId: getTestData
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestApiRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseMessage'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/rest/get-records:
+    post:
+      tags:
+        - atp-action-controller
+      summary: ATP Action. Get multiple column test data from table.
+      operationId: getMultipleColumnTestData
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestApiRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseMessage'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/rest/insert-records:
+    post:
+      tags:
+        - atp-action-controller
+      summary: ATP Action. Insert records to table.
+      operationId: insertTestData
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestApiRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/rest/occupy-records:
+    post:
+      tags:
+        - atp-action-controller
+      summary: ATP Action. Occupy test data in table.
+      operationId: occupyTestData
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestApiRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseMessage'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/rest/occupy-records-full-row:
+    post:
+      tags:
+        - atp-action-controller
+      summary: ATP Action. Occupy test data in table.
+      operationId: occupyTestDataFullRow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestApiRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseMessage'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/rest/refresh-tables:
+    post:
+      tags:
+        - atp-action-controller
+      summary: ATP Action. Refresh tables by name.
+      operationId: refreshTables
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestApiRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseMessage'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/rest/truncate-table:
+    post:
+      tags:
+        - atp-action-controller
+      summary: ATP Action. Truncate table.
+      operationId: truncateTable
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestApiRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseMessage'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/rest/run-cleanup-table:
+    post:
+      tags:
+        - atp-action-controller
+      summary: ATP Action. Run cleanup for table.
+      operationId: runCleanupForTable
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestApiRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseMessage'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/rest/release-records:
+    post:
+      tags:
+        - atp-action-controller
+      summary: ATP Action. Release test data in table.
+      operationId: releaseTestData
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestApiRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseMessage'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/rest/release-records/bulk:
+    post:
+      tags:
+        - atp-action-controller
+      summary: ATP Action. Release test data in table.
+      operationId: releaseFullTestData
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestApiRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseMessage'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/rest/update-records:
+    post:
+      tags:
+        - atp-action-controller
+      summary: ATP Action. Update test data in table.
+      operationId: updateTestData
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestApiRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseMessage'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+components:
+  schemas:
+    AddInfoToRowRequest:
+      title: AddInfoToRowRequest
+      type: object
+      properties:
+        record-with-data-for-update:
+          type: object
+          additionalProperties:
+            type: string
+        search-row-parameters-set:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiDataFilter'
+    ApiDataFilter:
+      title: ApiDataFilter
+      type: object
+      properties:
+        caseSensitive:
+          type: boolean
+        name-column:
+          type: string
+        search-criterion:
+          type: string
+        search-value:
+          type: string
+    GetRowRequest:
+      title: GetRowRequest
+      type: object
+      properties:
+        name-column-response:
+          type: string
+        response-column-names:
+          type: array
+          items:
+            type: string
+        search-row-parameters-set:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiDataFilter'
+    OccupyFullRowRequest:
+      title: OccupyFullRowRequest
+      type: object
+      properties:
+        response-column-names:
+          type: array
+          items:
+            type: string
+        search-row-parameters-set:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiDataFilter'
+    OccupyRowRequest:
+      title: OccupyRowRequest
+      type: object
+      properties:
+        name-column-response:
+          type: string
+        search-row-parameters-set:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiDataFilter'
+    ReleaseRowRequest:
+      title: ReleaseRowRequest
+      type: object
+      properties:
+        name-column-response:
+          type: string
+        search-row-parameters-set:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiDataFilter'
+    ResponseMessage:
+      title: ResponseMessage
+      type: object
+      properties:
+        content:
+          type: string
+        contentObject:
+          type: object
+        link:
+          type: string
+        type:
+          $ref: '#/components/schemas/ResponseType'
+    RestApiRequest:
+      title: RestApiRequest
+      type: object
+      properties:
+        add-info-to-row-requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddInfoToRowRequest'
+        envName:
+          type: string
+        environment:
+          type: object
+        get-row-requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetRowRequest'
+        insert-records:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: object
+        occupy-full-row-requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/OccupyFullRowRequest'
+        occupy-row-requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/OccupyRowRequest'
+        projectName:
+          type: string
+        release-row-requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReleaseRowRequest'
+        systemName:
+          type: string
+        title-table:
+          type: string
+        update-row-requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/UpdateRowRequest'
+    UpdateRowRequest:
+      title: UpdateRowRequest
+      type: object
+      properties:
+        record-with-data-for-update:
+          type: object
+          additionalProperties:
+            type: string
+        search-row-parameters-set:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiDataFilter'
+    ResponseType:
+      type: string
+      enum:
+        - error
+        - success

@@ -1,0 +1,173 @@
+openapi: 3.0.3
+info:
+  title: Api Documentation
+  description: Api Documentation
+  version: '1.0'
+servers:
+  - url: http://localhost:8080
+    description: Inferred Url
+tags:
+  - name: data-refresh-controller
+    description: Data Refresh Controller
+paths:
+  /api/tdm/data/refresh/config:
+    post:
+      tags:
+        - data-refresh-controller
+      summary: Save / update data refresh settings.
+      operationId: saveRefreshConfig
+      parameters:
+        - name: tableName
+          in: query
+          description: tableName
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: queryTimeout
+          in: query
+          description: queryTimeout
+          required: true
+          style: form
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestDataRefreshConfig'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDataRefreshConfig'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/data/refresh/config/{id}:
+    get:
+      tags:
+        - data-refresh-controller
+      summary: Get refresh configuration for specified dataset / table ID.
+      operationId: getRefreshConfig
+      parameters:
+        - name: id
+          in: path
+          description: id
+          required: true
+          style: simple
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDataRefreshConfig'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/data/refresh/next/run:
+    get:
+      tags:
+        - data-refresh-controller
+      summary: Get next run's date / time details.
+      operationId: getNextScheduledRun
+      parameters:
+        - name: cronExpression
+          in: query
+          description: cronExpression
+          required: true
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/data/refresh/run:
+    post:
+      tags:
+        - data-refresh-controller
+      summary: Force run data refresh.
+      operationId: runDataRefresh
+      parameters:
+        - name: tableName
+          in: query
+          description: tableName
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: queryTimeout
+          in: query
+          description: queryTimeout
+          required: true
+          style: form
+          schema:
+            type: integer
+        - name: allEnv
+          in: query
+          description: allEnv
+          required: true
+          style: form
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RefreshResults'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+components:
+  schemas:
+    RefreshResults:
+      title: RefreshResults
+      type: object
+      properties:
+        recordsTotal:
+          type: integer
+          format: int32
+    TestDataRefreshConfig:
+      title: TestDataRefreshConfig
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        id:
+          type: string
+          format: uuid
+        schedule:
+          type: string

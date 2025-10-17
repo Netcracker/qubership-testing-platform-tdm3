@@ -1,0 +1,108 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: '{{ .Values.LABEL }}{{ .Values.SERVICE_NAME }}'
+  labels:
+    app: '{{ .Values.LABEL }}{{ .Values.SERVICE_NAME }}'
+    name: '{{ .Values.LABEL }}{{ .Values.SERVICE_NAME }}'
+    servicetype: '{{ .Values.SERVICE_TYPE }}'
+spec:
+  strategy:
+    type: Recreate
+  replicas: {{ .Values.REPLICAS }}
+  selector:
+    matchLabels:
+      name: '{{ .Values.LABEL }}{{ .Values.SERVICE_NAME }}'
+      app: '{{ .Values.LABEL }}{{ .Values.SERVICE_NAME }}'
+      deploymentconfig: '{{ .Values.LABEL }}{{ .Values.SERVICE_NAME }}'
+      servicetype: '{{ .Values.SERVICE_TYPE }}'
+  template:
+    metadata:
+      labels:
+        name: '{{ .Values.LABEL }}{{ .Values.SERVICE_NAME }}'
+        app: '{{ .Values.LABEL }}{{ .Values.SERVICE_NAME }}'
+        deploymentconfig: '{{ .Values.LABEL }}{{ .Values.SERVICE_NAME }}'
+        servicetype: '{{ .Values.SERVICE_TYPE }}'
+    spec:
+      securityContext:
+        {{- include "tdmbe.securityContext.pod" . | nindent 8 }}
+      volumes:
+      {{- if .Values.atp3tdm.heapDumpEnabled }}
+        - name: heapdumps
+          emptyDir: {}
+      {{- end }}
+        - name: atp3tdmbe-storage
+          persistentVolumeClaim:
+            claimName: {{ .Values.SERVICE_NAME }}-pvc
+      containers:
+        - name: '{{ .Values.LABEL }}{{ .Values.SERVICE_NAME }}'
+          image: '{{ .Values.DOCKER_TAG }}'
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: '{{ .Values.MEMORY_REQUEST }}'
+              cpu: '{{ .Values.CPU_REQUEST }}'
+            limits:
+              memory: '{{ .Values.MEMORY_LIMIT }}'
+              cpu: '{{ .Values.CPU_LIMIT }}'
+          livenessProbe:
+            httpGet:
+              path: /rest/deployment/liveness
+              port: 8080
+              httpHeaders:
+                - name: Content-Type
+                  value: application/json
+            initialDelaySeconds: 200
+            periodSeconds: 60
+            timeoutSeconds: 30
+            successThreshold: 1
+            failureThreshold: 10
+          readinessProbe:
+            httpGet:
+              path: /rest/deployment/readiness
+              port: 8080
+              httpHeaders:
+                - name: Content-Type
+                  value: application/json
+            initialDelaySeconds: 200
+            periodSeconds: 60
+            timeoutSeconds: 30
+            successThreshold: 1
+            failureThreshold: 10
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/atp-tdm/pre-stop.sh"]
+          {{- if .Values.SECURITY_CONTEXT_ENABLED }}
+          securityContext:
+            {{- include "tdmbe.securityContext.container" . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+          {{- if .Values.atp3tdm.heapDumpEnabled }}
+            - mountPath: /tmp/diagnostic
+              name: heapdumps
+          {{- end }}
+            - name: atp3tdmbe-storage
+              mountPath: /atp-tdm/database
+          ports:
+            - containerPort: 8080
+              name: web
+              protocol: TCP
+            - containerPort: 9000
+              name: ssl
+              protocol: TCP
+          env:
+            - name: PROJECTS_INFO
+              value: {{ .Values.atp3tdm.projectsInfo | toJson | quote }}
+          {{- include "tdmbe.env.cloud" . | indent 12 }}
+            - name: CLOUD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+          {{- if .Values.atp3tdm.extraEnvs }}
+          {{- toYaml .Values.atp3tdm.extraEnvs | nindent 12 }}
+          {{- end }}
+      {{- if .Values.atp3tdm.nodeSelector }}
+      nodeSelector: {{- .Values.atp3tdm.nodeSelector | toYaml | nindent 8 }}
+      {{ end }}

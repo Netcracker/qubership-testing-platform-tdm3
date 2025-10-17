@@ -1,0 +1,116 @@
+{
+  "projectId" : "6b90558d-f0c7-448a-b701-f04d95ad655d",
+  "testDataMonitoring" : null,
+  "tables" : [ {
+    "systemId" : "dc42601e-54c5-4511-bd5b-bc588b343058",
+    "environmentId" : "da027247-bb3b-41cf-a8e8-247a368065e1",
+    "tableName" : "tdm_test_data_unoccupied_refresh",
+    "tableTitle" : "There is no environment in envs service",
+    "cleanupConfig" : {
+      "id" : "6c8f8424-d3ed-4760-a811-3f803ad58adb",
+      "enabled" : true,
+      "schedule" : "0 0/1 * * * ?",
+      "type" : "DATE",
+      "searchSql" : null,
+      "searchClass" : null,
+      "searchDate" : "3w 4d",
+      "shared" : false,
+      "scheduled" : null
+    },
+    "columns" : [ ],
+    "importInfo" : {
+      "tableName" : "tdm_test_data_unoccupied_refresh",
+      "tableQuery" : "select SIM from tdm_test_data_refresh_unoccupied_table"
+    },
+    "refreshConfig" : null,
+    "flagsTable" : {
+      "tableName" : "tdm_test_data_unoccupied_refresh",
+      "unoccupiedValidation" : false
+    },
+    "data" : [ {
+      "Status" : "51",
+      "Partner ID" : "1",
+      "ENVIRONMENT" : "ZLAB01",
+      "Operator ID" : "2501",
+      "ROW_ID" : "3760c0b3-849e-4b52-a7a2-55803cad58b8",
+      "SELECTED" : false,
+      "Assignment" : "Test Automation' 1",
+      "OCCUPIED_BY" : null,
+      "SIM" : "8901260720040140811",
+      "CREATED_WHEN" : "2021-09-21 18:01:40",
+      "Partner category" : "MVNO",
+      "OCCUPIED_DATE" : null,
+      "Partner" : "CINTEX"
+    }, {
+      "Status" : "52",
+      "Partner ID" : "2",
+      "ENVIRONMENT" : "ZLAB02",
+      "Operator ID" : "2502",
+      "ROW_ID" : "cb88a617-867d-4c41-8009-f799ab6431d7",
+      "SELECTED" : false,
+      "Assignment" : "TeSt AutoMatioN 2",
+      "OCCUPIED_BY" : null,
+      "SIM" : "8901260720040140822",
+      "CREATED_WHEN" : "2021-09-21 18:01:40",
+      "Partner category" : "MVNO",
+      "OCCUPIED_DATE" : null,
+      "Partner" : "CINTEX"
+    }, {
+      "Status" : "53",
+      "Partner ID" : "3",
+      "ENVIRONMENT" : "ZLAB03",
+      "Operator ID" : "2503",
+      "ROW_ID" : "ec3bee32-70ae-4402-9597-2ba3215421fe",
+      "SELECTED" : false,
+      "Assignment" : "Test Automation 3",
+      "OCCUPIED_BY" : null,
+      "SIM" : "8901260720040140973",
+      "CREATED_WHEN" : "2021-09-21 18:01:40",
+      "Partner category" : "MVNO",
+      "OCCUPIED_DATE" : null,
+      "Partner" : "CINTEX"
+    }, {
+      "Status" : "54",
+      "Partner ID" : "4",
+      "ENVIRONMENT" : "ZLAB04",
+      "Operator ID" : "2504",
+      "ROW_ID" : "f0d055e2-5291-4ef6-87e3-4cbec1811d2b",
+      "SELECTED" : false,
+      "Assignment" : "Test Automation 4",
+      "OCCUPIED_BY" : null,
+      "SIM" : "8901260720040141084",
+      "CREATED_WHEN" : "2021-09-21 18:01:40",
+      "Partner category" : "MVNO",
+      "OCCUPIED_DATE" : null,
+      "Partner" : "CINTEX"
+    }, {
+      "Status" : "55",
+      "Partner ID" : "5",
+      "ENVIRONMENT" : "ZLAB05",
+      "Operator ID" : "2505",
+      "ROW_ID" : "1890e184-1bfd-483b-af15-348cecb3c826",
+      "SELECTED" : false,
+      "Assignment" : "Test Automation 5",
+      "OCCUPIED_BY" : null,
+      "SIM" : "8901260720040140975",
+      "CREATED_WHEN" : "2021-09-21 18:01:40",
+      "Partner category" : "MVNO",
+      "OCCUPIED_DATE" : null,
+      "Partner" : "CINTEX"
+    }, {
+      "Status" : "56",
+      "Partner ID" : "6",
+      "ENVIRONMENT" : "ZLAB06",
+      "Operator ID" : "2506",
+      "ROW_ID" : "0f85afb1-2cc2-45f4-ab25-4dafac7c5189",
+      "SELECTED" : false,
+      "Assignment" : "Test Automation 6",
+      "OCCUPIED_BY" : null,
+      "SIM" : "8901260720040141106",
+      "CREATED_WHEN" : "2021-09-21 18:01:40",
+      "Partner category" : "MVNO",
+      "OCCUPIED_DATE" : null,
+      "Partner" : "CINTEX"
+    } ]
+  } ]
+}

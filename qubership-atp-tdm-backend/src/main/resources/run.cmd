@@ -1,0 +1,1 @@
+java -Dspring.config.location=".\config\application.properties" --add-opens java.base/java.lang=ALL-UNNAMED -Xms256m -Xmx768m -Dspring.cloud.config.location=".\config\bootstrap.properties" -cp "config/;lib/*" org.qubership.atp.tdm.Main

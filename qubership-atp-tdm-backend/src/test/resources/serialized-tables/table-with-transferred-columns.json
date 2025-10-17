@@ -1,0 +1,63 @@
+{
+  "data": {
+    "header": {
+      "rows": [
+        {
+          "columns": [
+            {
+              "type": "checkbox",
+              "value": false
+            },
+            {
+              "value": "OCCUPIED_BY",
+              "filter": true,
+              "filterType": "text",
+              "contentModel": {
+                "id": "OCCUPIED_BY"
+              }
+            },
+            {
+              "value": "OCCUPIED_DATE",
+              "filter": true,
+              "filterType": "date",
+              "contentModel": {
+                "id": "OCCUPIED_DATE"
+              }
+            },
+            {
+              "value": "SIM",
+              "filter": true,
+              "filterType": "text",
+              "contentModel": {
+                "id": "SIM"
+              }
+            },
+            {
+              "value": "Status",
+              "filter": true,
+              "filterType": "text",
+              "contentModel": {
+                "id": "Status"
+              }
+            },
+            {
+              "value": "CREATED_WHEN",
+              "filter": true,
+              "filterType": "date",
+              "contentModel": {
+                "id": "CREATED_WHEN"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "body": {
+      "rows": []
+    }
+  },
+  "records": 0,
+  "name": null,
+  "query": null,
+  "updateByQuery": null
+}

@@ -1,0 +1,83 @@
+<assembly xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+
+    <includeBaseDirectory>true</includeBaseDirectory>
+    <baseDirectory>atp-tdm</baseDirectory>
+
+    <id>dist</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+
+    <fileSets>
+        <fileSet>
+            <directory>target/config</directory>
+            <outputDirectory>config</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/resources</directory>
+            <outputDirectory>web</outputDirectory>
+            <includes>
+                <include>version.txt</include>
+            </includes>
+            <filtered>true</filtered>
+        </fileSet>
+        <fileSet>
+            <directory>web</directory>
+            <outputDirectory>web</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/resources/tmp</directory>
+            <outputDirectory>tmp</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/resources/freemarker</directory>
+            <outputDirectory>resources/freemarker</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/resources</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>run.cmd</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/resources</directory>
+            <outputDirectory>resources</outputDirectory>
+            <includes>
+                <include>highcharts-template.json</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/resources</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>run.sh</include>
+                <include>pre-stop.sh</include>
+            </includes>
+            <lineEnding>unix</lineEnding>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/swagger</directory>
+            <outputDirectory>resources/swagger</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>target/scripts</directory>
+            <outputDirectory>scripts</outputDirectory>
+            <includes>
+                <include>**/*.jar</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>/lib</outputDirectory>
+            <excludes>
+                <exclude>com.zaxxer:HikariCP-java7</exclude>
+            </excludes>
+        </dependencySet>
+    </dependencySets>
+
+</assembly>

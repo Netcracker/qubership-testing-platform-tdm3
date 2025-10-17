@@ -1,0 +1,934 @@
+openapi: 3.0.3
+info:
+  title: Api Documentation
+  description: Api Documentation
+  version: '1.0'
+servers:
+  - url: http://localhost:8080
+    description: Inferred Url
+tags:
+  - name: statistics-controller
+    description: Statistics Controller
+paths:
+  /api/tdm/statistics/data/occupied/users:
+    post:
+      tags:
+        - statistics-controller
+      summary: Get statistics by users.
+      operationId: getStatisticsByUsers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsersOccupyStatisticRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GeneralStatisticsItem'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/statistics/data/available:
+    get:
+      tags:
+        - statistics-controller
+      summary: Get test data availability.
+      operationId: getTestDataAvailability
+      parameters:
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: systemId
+          in: query
+          description: systemId
+          required: false
+          style: form
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GeneralStatisticsItem'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/statistics/data/created/when:
+    get:
+      tags:
+        - statistics-controller
+      summary: Get test data by created when date.
+      operationId: getTestDataCreatedWhen
+      parameters:
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: systemId
+          in: query
+          description: systemId
+          required: false
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: dateFrom
+          in: query
+          description: dateFrom
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          description: dateTo
+          required: true
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DateStatistics'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/statistics/data/occupied:
+    get:
+      tags:
+        - statistics-controller
+      summary: Get test data consumption.
+      operationId: getTestDataConsumption
+      parameters:
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: systemId
+          in: query
+          description: systemId
+          required: false
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: dateFrom
+          in: query
+          description: dateFrom
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          description: dateTo
+          required: true
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumedStatistics'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/statistics/data/outdated:
+    get:
+      tags:
+        - statistics-controller
+      summary: Get test data consumption with outdated.
+      operationId: getTestDataConsumptionWhitOutdated
+      parameters:
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: systemId
+          in: query
+          description: systemId
+          required: false
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: dateFrom
+          in: query
+          description: dateFrom
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          description: dateTo
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: expirationDate
+          in: query
+          description: expirationDate
+          required: true
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutdatedStatistics'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/statistics/delete/schedule:
+    put:
+      tags:
+        - statistics-controller
+      summary: Delete schedule for statistics monitoring.
+      operationId: deleteScheduledRun
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestDataTableMonitoring'
+      responses:
+        '200':
+          description: OK
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/statistics/fix/occupied/date/column:
+    get:
+      tags:
+        - statistics-controller
+      summary: Old update.
+      operationId: alterOccupiedDateColumn
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/statistics/next/run:
+    get:
+      tags:
+        - statistics-controller
+      summary: Get next run's date / time details.
+      operationId: getNextScheduledRun
+      parameters:
+        - name: cronExpression
+          in: query
+          description: cronExpression
+          required: true
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/statistics/schedule:
+    get:
+      tags:
+        - statistics-controller
+      summary: Get statistics monitoring schedule.
+      operationId: getMonitoringSchedule
+      parameters:
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDataTableMonitoring'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+    post:
+      tags:
+        - statistics-controller
+      summary: Setup next run in schedule for statistics monitoring.
+      operationId: setupScheduledRun
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestDataTableMonitoring'
+      responses:
+        '200':
+          description: OK
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/statistics/threshold:
+    get:
+      tags:
+        - statistics-controller
+      summary: Get threshold for statistics.
+      operationId: getThreshold
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/statistics/schedule/users:
+    get:
+      tags:
+        - statistics-controller
+      summary: Get statistics users monitoring schedule.
+      operationId: getUsersMonitoringSchedule
+      parameters:
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDataTableUsersMonitoring'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+    post:
+      tags:
+        - statistics-controller
+      summary: Setup next run in schedule for statistics users monitoring.
+      operationId: setupUsersScheduledRun
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestDataTableUsersMonitoring'
+      responses:
+        '200':
+          description: OK
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/statistics/delete/schedule/users:
+    put:
+      tags:
+        - statistics-controller
+      summary: Delete schedule for statistics users monitoring.
+      operationId: deleteUsersScheduledRun
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestDataTableUsersMonitoring'
+      responses:
+        '200':
+          description: OK
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/statistics/available/column/configuration:
+    post:
+      tags:
+        - statistics-controller
+      summary: Get available data by column configuration.
+      operationId: saveAvailableDataStatsConfig
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AvailableDataStatisticsConfig'
+      responses:
+        '200':
+          description: OK
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+    get:
+      tags:
+        - statistics-controller
+      summary: Get available data by column configuration.
+      operationId: getAvailableDataStatsConfig
+      parameters:
+        - name: systemId
+          in: query
+          description: systemId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailableDataStatisticsConfig'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/statistics/schedule/available:
+    get:
+      tags:
+        - statistics-controller
+      summary: Get available data monitoring configuration.
+      operationId: getAvailableDataMonitoringConfig
+      parameters:
+        - name: systemId
+          in: query
+          description: systemId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: environmentId
+          in: query
+          description: systemId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestAvailableDataMonitoring'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+    post:
+      tags:
+        - statistics-controller
+      summary: Save available data monitoring configuration.
+      operationId: saveAvailableDataMonitoringConfig
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestAvailableDataMonitoring'
+      responses:
+        '200':
+          description: OK
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+    delete:
+      tags:
+        - statistics-controller
+      summary: Delete available data monitoring configuration.
+      operationId: deleteAvailableDataMonitoringConfig
+      parameters:
+        - name: systemId
+          in: query
+          description: systemId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: environmentId
+          in: query
+          description: systemId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/statistics/data/occupied/available:
+    get:
+      tags:
+        - statistics-controller
+      summary: Get available data by column
+      operationId: getAvailableData
+      parameters:
+        - name: systemId
+          in: query
+          description: systemId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailableDataByColumnStats'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+components:
+  schemas:
+    TableAvailableDataStats:
+      title: TableAvailableDataStats
+      type: object
+      properties:
+        tableName:
+          type: string
+        tableTitle:
+          type: string
+        options:
+          type: object
+          additionalProperties:
+            type: number
+    AvailableDataByColumnStats:
+      title: AvailableDataByColumnStats
+      type: object
+      properties:
+        description:
+          type: string
+        statistics:
+          type: array
+          $ref: '#/components/schemas/TableAvailableDataStats'
+    TableColumnValues:
+      title: TableColumnValues
+      type: object
+      properties:
+        tableName:
+          type: string
+        tableTitle:
+          type: string
+        values:
+          type: array
+          items:
+            type: string
+    AvailableDataStatisticsConfig:
+      title: AvailableDataStatisticsConfig
+      type: object
+      properties:
+        description:
+          type: string
+        activeColumnKey:
+          type: string
+        systemId:
+          type: string
+          format: uuid
+        columnKeys:
+          type: array
+          items:
+            type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableColumnValues'
+    TestAvailableDataMonitoring:
+      title: TestAvailableDataMonitoring
+      type: object
+      properties:
+        scheduled:
+          type: boolean
+        schedule:
+          type: string
+        activeColumn:
+          type: string
+        recipients:
+          type: string
+        environment_id:
+          type: string
+          format: uuid
+        systemId:
+          type: string
+          format: uuid
+        threshold:
+          type: number
+    ConsumedStatistics:
+      title: ConsumedStatistics
+      type: object
+      properties:
+        dates:
+          type: array
+          items:
+            type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsumedStatisticsItem'
+    ConsumedStatisticsItem:
+      title: ConsumedStatisticsItem
+      type: object
+      properties:
+        consumed:
+          type: array
+          items:
+            type: integer
+            format: int64
+        context:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsumedStatisticsItem'
+        environment:
+          type: string
+        system:
+          type: string
+    DateStatistics:
+      title: DateStatistics
+      type: object
+      properties:
+        dates:
+          type: array
+          items:
+            type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DateStatisticsItem'
+    DateStatisticsItem:
+      title: DateStatisticsItem
+      type: object
+      properties:
+        context:
+          type: string
+        created:
+          type: array
+          items:
+            type: integer
+            format: int64
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/DateStatisticsItem'
+        environment:
+          type: string
+        system:
+          type: string
+    GeneralStatisticsItem:
+      title: GeneralStatisticsItem
+      type: object
+      properties:
+        available:
+          type: integer
+          format: int64
+        context:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeneralStatisticsItem'
+        environment:
+          type: string
+        occupied:
+          type: integer
+          format: int64
+        system:
+          type: string
+        total:
+          type: integer
+          format: int64
+    OutdatedStatistics:
+      title: OutdatedStatistics
+      type: object
+      properties:
+        dates:
+          type: array
+          items:
+            type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutdatedStatisticsItem'
+    OutdatedStatisticsItem:
+      title: OutdatedStatisticsItem
+      type: object
+      properties:
+        consumed:
+          type: array
+          items:
+            type: integer
+            format: int64
+        context:
+          type: string
+        created:
+          type: array
+          items:
+            type: integer
+            format: int64
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutdatedStatisticsItem'
+        environment:
+          type: string
+        outdated:
+          type: array
+          items:
+            type: integer
+            format: int64
+        system:
+          type: string
+    TestDataTableMonitoring:
+      title: TestDataTableMonitoring
+      type: object
+      properties:
+        cronExpression:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        recipients:
+          type: string
+        schedule:
+          type: string
+        scheduled:
+          type: boolean
+        threshold:
+          type: integer
+          format: int32
+    TestDataTableUsersMonitoring:
+        title: TestDataTableUsersMonitoring
+        type: object
+        properties:
+          projectId:
+            type: string
+            format: uuid
+          enabled:
+            type: boolean
+          cronExpression:
+            type: string
+          recipients:
+            type: string
+          viewNonOccupied:
+            type: boolean
+          daysCount:
+            type: integer
+            format: int32
+
+    UsersOccupyStatisticRequest:
+      title: UsersOccupyStatisticRequest
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        offset:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int64
+        dateFrom:
+          type: string
+        dateTo:
+          type: string
+        dataTableOrder:
+          $ref: '#/components/schemas/TestDataTableOrder'
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestDataTableFilter'
+    TestDataTableFilter:
+      title: TestDataTableFilter
+      type: object
+      properties:
+        caseSensitive:
+          type: boolean
+        name-column:
+          type: string
+        search-criterion:
+          type: string
+        search-values:
+          type: array
+          items:
+            type: string
+    TestDataTableOrder:
+      title: TestDataTableOrder
+      type: object
+      properties:
+        columnName:
+          type: string
+        orderType:
+          $ref: '#/components/schemas/OrderType'
+    OrderType:
+      type: string
+      enum:
+        - asc
+        - desc
+        - 'true'
+    UsersOccupyStatisticResponse:
+      title: UsersOccupyStatisticResponse
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestDataTableFilter'
+        records:
+          type: integer
+          format: int32
+    OccupiedDataByUsersStatistics:
+      title: OccupiedDataByUsersStatistics
+      type: object
+      properties:
+        userName:
+          type: string
+        tableName:
+          type: string
+        context:
+          type: string
+        system:
+          type: string
+        environment:
+          type: string
+        data:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+            properties: { }

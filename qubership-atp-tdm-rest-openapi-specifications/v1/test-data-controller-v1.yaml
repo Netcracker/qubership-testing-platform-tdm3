@@ -1,0 +1,1205 @@
+openapi: 3.0.3
+info:
+  title: Api Documentation
+  description: Api Documentation
+  version: '1.0'
+servers:
+  - url: http://localhost:8080
+    description: Inferred Url
+tags:
+  - name: test-data-controller
+    description: Test Data Controller
+paths:
+  /api/tdm/alter/created/when:
+    get:
+      tags:
+        - test-data-controller
+      summary: Old update.
+      operationId: alterCreatedWhenColumn
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/alter/occupy/statistic:
+    get:
+      tags:
+        - test-data-controller
+      summary: Old update.
+      operationId: alterOccupyStatistic
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/change/title:
+    put:
+      tags:
+        - test-data-controller
+      summary: Changes table title.
+      operationId: changeTestDataTitle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeTitleRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: boolean
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/delete/rows:
+    put:
+      tags:
+        - test-data-controller
+      summary: Delete selected rows from table.
+      operationId: deleteTestDataTableRows
+      parameters:
+        - name: tableName
+          in: query
+          description: tableName
+          required: true
+          style: form
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                format: uuid
+      responses:
+        '200':
+          description: OK
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/download/csv:
+    get:
+      tags:
+        - test-data-controller
+      summary: Download table as csv file.
+      operationId: getTestDataTableAsCsvFile
+      parameters:
+        - name: tableName
+          in: query
+          description: tableName
+          required: true
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/download/excel:
+    get:
+      tags:
+        - test-data-controller
+      summary: Download table as excel file.
+      operationId: getTestDataTableAsExcelFile
+      parameters:
+        - name: tableName
+          in: query
+          description: tableName
+          required: true
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/evaluate/query:
+    put:
+      tags:
+        - test-data-controller
+      summary: evaluateQuery
+      operationId: evaluateQuery
+      parameters:
+        - name: tableName
+          in: query
+          description: tableName
+          required: true
+          style: form
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/fill/envId:
+    get:
+      tags:
+        - test-data-controller
+      summary: Old update.
+      operationId: fillEnvIdColumn
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/fix/occupied/by/column:
+    get:
+      tags:
+        - test-data-controller
+      summary: Old update.
+      operationId: alterOccupiedByColumn
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/import/excel:
+    post:
+      tags:
+        - test-data-controller
+      summary: Import excel to TDM.
+      operationId: importExcelTestData
+      parameters:
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: environmentId
+          in: query
+          description: environmentId
+          required: false
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: systemId
+          in: query
+          description: systemId
+          required: false
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: tableTitle
+          in: query
+          description: tableTitle
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: runSqlScript
+          in: query
+          description: runSqlScript
+          required: true
+          style: form
+          schema:
+            type: boolean
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              format: binary
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ImportTestDataStatistic'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/import/sql:
+    post:
+      tags:
+        - test-data-controller
+      summary: Import sql to TDM.
+      operationId: importSqlTestData
+      parameters:
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: environmentsIds
+          in: query
+          description: environmentsIds
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+            format: uuid
+        - name: systemName
+          in: query
+          description: systemName
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: tableTitle
+          in: query
+          description: tableTitle
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: query
+          in: query
+          description: query
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: queryTimeout
+          in: query
+          description: queryTimeout
+          required: true
+          style: form
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ImportTestDataStatistic'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/link/preview:
+    post:
+      tags:
+        - test-data-controller
+      summary: Get preview for linker.
+      operationId: getPreviewLink
+      parameters:
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: systemId
+          in: query
+          description: systemId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: columnName
+          in: query
+          description: columnName
+          required: true
+          style: form
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/link/setup:
+    post:
+      tags:
+        - test-data-controller
+      summary: Setup links.
+      operationId: setupColumnLinks
+      parameters:
+        - name: isAll
+          in: query
+          description: isAll
+          required: true
+          style: form
+          schema:
+            type: boolean
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: systemId
+          in: query
+          description: systemId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: tableName
+          in: query
+          description: tableName
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: columnName
+          in: query
+          description: columnName
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: validateUnoccupiedResources
+          in: query
+          description: validateUnoccupiedResources
+          required: true
+          style: form
+          schema:
+            type: boolean
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: OK
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/occupy:
+    put:
+      tags:
+        - test-data-controller
+      summary: Occupy test data.
+      operationId: occupyTestData
+      parameters:
+        - name: tableName
+          in: query
+          description: tableName
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: occupiedBy
+          in: query
+          description: occupiedBy
+          required: true
+          style: form
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                format: uuid
+      responses:
+        '200':
+          description: OK
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/release:
+    put:
+      tags:
+        - test-data-controller
+      summary: Release test data.
+      operationId: releaseTestData
+      parameters:
+        - name: tableName
+          in: query
+          description: tableName
+          required: true
+          style: form
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                format: uuid
+      responses:
+        '200':
+          description: OK
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/table:
+    post:
+      tags:
+        - test-data-controller
+      summary: Get test data table.
+      operationId: getTestData
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestDataRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDataTable'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+    delete:
+      tags:
+        - test-data-controller
+      summary: Drop selected table.
+      operationId: deleteTestData
+      parameters:
+        - name: tableName
+          in: query
+          description: tableName
+          required: true
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '204':
+          description: No Content
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+  /api/tdm/truncate/table:
+    delete:
+      tags:
+        - test-data-controller
+      summary: Truncate data in table.
+      operationId: truncateDataInTable
+      parameters:
+        - name: tableName
+          in: query
+          description: tableName
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: systemId
+          in: query
+          description: systemId
+          required: false
+          style: form
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/table/column/distinct/values:
+    get:
+      tags:
+        - test-data-controller
+      summary: Get column distinct values.
+      operationId: getColumnDistinctValues
+      parameters:
+        - name: tableName
+          in: query
+          description: tableName
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: columnName
+          in: query
+          description: columnName
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: occupied
+          in: query
+          description: occupied
+          required: true
+          style: form
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ColumnValues'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/table/environments:
+    get:
+      tags:
+        - test-data-controller
+      summary: Returns a list of environment IDs that have tables with the requested table title for the specified project.
+      operationId: getTableEnvironments
+      parameters:
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: tableTitle
+          in: query
+          description: tableTitle
+          required: true
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvsList'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/table/row:
+    get:
+      tags:
+        - test-data-controller
+      summary: Get row value.
+      operationId: getTableRow
+      parameters:
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: systemId
+          in: query
+          description: systemId
+          required: false
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: tableTitle
+          in: query
+          description: tableTitle
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: columnName
+          in: query
+          description: columnName
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: searchValue
+          in: query
+          description: searchValue
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: occupied
+          in: query
+          description: occupied
+          required: false
+          style: form
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/tables/catalog:
+    get:
+      tags:
+        - test-data-controller
+      summary: Get test data tables catalog.
+      operationId: getTestDataTablesCatalog
+      parameters:
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: systemId
+          in: query
+          description: systemId
+          required: false
+          style: form
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TestDataTableCatalog'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/tables/list:
+    get:
+      tags:
+        - test-data-controller
+      summary: Get tables under project.
+      operationId: getTestDataTablesList
+      parameters:
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/environment/tables/list:
+    get:
+      tags:
+        - test-data-controller
+      summary: Get tables id and name under project and environment.
+      operationId: getTestDataTablesListByEnvironment
+      parameters:
+        - name: projectId
+          in: query
+          description: projectId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+        - name: envId
+          in: query
+          description: envId
+          required: true
+          style: form
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/update/sql:
+    post:
+      tags:
+        - test-data-controller
+      summary: Update existing table by sql.
+      operationId: updateTableBySql
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestDataTableUpdateByQuery'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportTestDataStatistic'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/data/available/recalculate:
+    get:
+      tags:
+        - test-data-controller
+      summary: Get all distinct values by system_id and column_name
+      operationId: getDistinctColumnValues
+      parameters:
+        - name: systemId
+          in: query
+          description: systemId
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: columnName
+          in: query
+          description: columnName
+          required: true
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ColumnValues'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/validation/unoccupied:
+    get:
+      tags:
+        - test-data-controller
+      summary: Check flag 'is unoccupied validation'.
+      operationId: isUnoccupiedValidation
+      parameters:
+        - name: tableName
+          in: query
+          description: tableName
+          required: true
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDataFlagsTable'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/resolve/discrepancy/testDataFlagsTableAndTestDataTableCatalog:
+    get:
+      tags:
+        - test-data-controller
+      summary: Resolve discrepancy TestDataFlagsTable and TestDataTableCatalog.
+      operationId: resolveDiscrepancyTestDataFlagsTableAndTestDataTableCatalog
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+components:
+  schemas:
+    TableColumnValues:
+      title: TableColumnValues
+      type: object
+      properties:
+        systemId:
+          type: string
+        columnName:
+          type: string
+    TestDataTableUpdateByQuery:
+      title: TestDataTableUpdateByQuery
+      type: object
+      properties:
+        tableName:
+          type: string
+        projectId:
+          type: string
+          format: uuid
+        environmentId:
+          type: string
+          format: uuid
+        systemId:
+          type: string
+          format: uuid
+        query:
+          type: string
+        queryTimeout:
+          type: integer
+    ChangeTitleRequest:
+      title: ChangeTitleRequest
+      type: object
+      properties:
+        tableName:
+          type: string
+        tableTitle:
+          type: string
+    ColumnValues:
+      title: ColumnValues
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+    EnvsList:
+      title: EnvsList
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+            format: uuid
+    ImportTestDataStatistic:
+      title: ImportTestDataStatistic
+      type: object
+      properties:
+        envName:
+          type: string
+        error:
+          type: string
+        processedRows:
+          type: integer
+          format: int32
+    TestDataFlagsTable:
+      title: TestDataFlagsTable
+      type: object
+      properties:
+        tableName:
+          type: string
+        unoccupiedValidation:
+          type: boolean
+    TestDataRequest:
+      title: TestDataRequest
+      type: object
+      properties:
+        dataTableOrder:
+          $ref: '#/components/schemas/TestDataTableOrder'
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestDataTableFilter'
+        limit:
+          type: integer
+          format: int32
+        occupied:
+          type: boolean
+        offset:
+          type: integer
+          format: int32
+        tableName:
+          type: string
+    TestDataTable:
+      title: TestDataTable
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestDataTableColumn'
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: object
+        name:
+          type: string
+        query:
+          type: string
+        records:
+          type: integer
+          format: int32
+        title:
+          type: string
+        type:
+          type: string
+          enum:
+            - ALL
+            - AVAILABLE
+            - OCCUPIED
+    TestDataTableCatalog:
+      title: TestDataTableCatalog
+      type: object
+      properties:
+        cleanupConfigId:
+          type: string
+          format: uuid
+        environmentId:
+          type: string
+          format: uuid
+        importQuery:
+          type: string
+        projectId:
+          type: string
+          format: uuid
+        refreshConfigId:
+          type: string
+          format: uuid
+        systemId:
+          type: string
+          format: uuid
+        tableName:
+          type: string
+        tableTitle:
+          type: string
+    TestDataTableColumn:
+      title: TestDataTableColumn
+      type: object
+      properties:
+        bulkLink:
+          type: boolean
+        columnLink:
+          type: string
+        columnType:
+          $ref: '#/components/schemas/ColumnType'
+        filterType:
+          $ref: '#/components/schemas/FilterType'
+        identity:
+          $ref: '#/components/schemas/TestDataTableColumnIdentity'
+        orderType:
+          $ref: '#/components/schemas/OrderType'
+    TestDataTableColumnIdentity:
+      title: TestDataTableColumnIdentity
+      type: object
+      properties:
+        columnName:
+          type: string
+        tableName:
+          type: string
+    TestDataTableFilter:
+      title: TestDataTableFilter
+      type: object
+      properties:
+        caseSensitive:
+          type: boolean
+        name-column:
+          type: string
+        search-criterion:
+          type: string
+        search-values:
+          type: array
+          items:
+            type: string
+    TestDataTableOrder:
+      title: TestDataTableOrder
+      type: object
+      properties:
+        columnName:
+          type: string
+        orderType:
+          $ref: '#/components/schemas/OrderType'
+    OrderType:
+      type: string
+      enum:
+        - asc
+        - desc
+        - 'true'
+    FilterType:
+      type: string
+      enum:
+        - date
+        - list
+        - none
+        - text
+    ColumnType:
+      type: string
+      enum:
+        - date
+        - link
+        - text

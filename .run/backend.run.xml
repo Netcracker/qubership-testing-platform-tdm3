@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="backend" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <option name="ENABLE_JMX_AGENT" value="false" />
+    <module name="qubership-atp-tdm-backend" />
+    <selectedOptions>
+      <option name="environmentVariables" />
+    </selectedOptions>
+    <option name="SHORTEN_COMMAND_LINE" value="MANIFEST" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="org.qubership.atp.tdm.Main" />
+    <option name="VM_PARAMETERS" value="-Dmaven.test.skip=true -Dconfig.file=qubership-atp-tdm-backend\src\main\config\application.properties -Dspring.config.location=qubership-atp-tdm-backend\src\main\config\application.properties -Dspring.cloud.bootstrap.location=qubership-atp-tdm-backend\src\main\config\bootstrap.properties -Dspring.cloud.vault.enabled=false -Dspring.cloud.consul.config.enabled=false -Dspring.cloud.consul.enabled=false -DJDBC_URL=jdbc:h2:file:./database/atptdm;MODE=PostgreSQL -DTDM_DB_USER=atptdm -DTDM_DB_PASSWORD=atptdm -Dproject.version=0.0.1.LOCAL --add-opens java.base/java.lang=ALL-UNNAMED" />
+    <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

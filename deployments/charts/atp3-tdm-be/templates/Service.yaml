@@ -1,0 +1,16 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: '{{ .Values.LABEL }}{{ .Values.SERVICE_NAME }}'
+spec:
+  ports:
+    - name: web
+      port: 8080
+      protocol: TCP
+    - name: ssl
+      port: 9000
+      protocol: TCP
+  selector:
+    name: '{{ .Values.LABEL }}{{ .Values.SERVICE_NAME }}'
+  type: '{{ .Values.SERVICE_PORT_TYPE }}'

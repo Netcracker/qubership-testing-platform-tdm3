@@ -1,0 +1,50 @@
+{
+  "data": {
+    "header": {
+      "rows": [
+        {
+          "columns": [
+            {
+              "type": "checkbox",
+              "value": false
+            },
+            {
+              "value": "SIM",
+              "filter": true,
+              "filterType": "text",
+              "contentModel": {
+                "id": "SIM"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "body": {
+      "rows": [
+        {
+          "id": "3d88b62b-dd00-426c-9ace-0de10204303d",
+          "columns": [
+            {
+              "type": "checkbox",
+              "value": false
+            },
+            {
+              "value": "this.longCellContent",
+              "type": "content",
+              "contentModel": {
+                "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mor...",
+                "fullValue": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi egestas turpis eu blandit sodales. Nunc varius turpis et felis tincidunt, ac faucibus neque vehicula. Mauris suscipit elit at sollicitudin mattis. Donec in neque at lectus varius lobortis at vitae mi. Nunc nisi turpis, laoreet eu nisi sit amet, maximus molestie sem. Phasellus facilisis magna vitae ligula mattis, sit amet blandit elit rhoncus. Suspendisse potenti. Morbi quis fringilla tellus. Ut quis mollis justo, sit amet porttitor sapien. Duis nec lacus sit amet dui hendrerit malesuada.",
+                "shortValue": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mor..."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "records": 0,
+  "name": null,
+  "query": null,
+  "updateByQuery": null
+}

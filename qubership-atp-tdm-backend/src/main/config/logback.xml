@@ -1,0 +1,107 @@
+<configuration scan="true">
+    <!--You can use attribute debug="true" to output the config location to console, or packagingData="true" to add packages info to stacktrace output-->
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator"/>
+    <property resource="application.properties"/>
+    <if condition='property("log.graylog.on").equals("true")'>
+        <then>
+            <appender name="GELF"
+                      class="org.qubership.atp.integration.configuration.logging.gelf.logback.FailSafeGelfLogbackAppender">
+                <host>${log.graylog.host}</host>
+                <port>${log.graylog.port}</port>
+                <version>1.1</version>
+                <facility>atp-tdm</facility>
+                <extractStackTrace>true</extractStackTrace>
+                <filterStackTrace>true</filterStackTrace>
+                <mdcProfiling>true</mdcProfiling>
+                <timestampPattern>yyyy-MM-dd HH:mm:ss,SSSS</timestampPattern>
+                <maximumMessageSize>8192</maximumMessageSize>
+
+                <!-- This are static fields -->
+                <additionalFields>environment=TA,application=atp-tdm</additionalFields>
+                <!-- Optional: Specify field types -->
+                <additionalFieldTypes>environment=String,application=String</additionalFieldTypes>
+                <mdcFields>mdc.userId,mdc.projectId,mdc.executionRequestId,mdc.testRunId,mdc.bvTestRunId,mdc.bvTestCaseId,mdc.environmentId,mdc.systemId,mdc.subscriberId,mdc.tsgSessionId,mdc.svpSessionId,mdc.dataSetId,mdc.dataSetListId,mdc.attributeId,mdc.itfLiteRequestId,mdc.reportType,mdc.itfSessionId,mdc.itfContextId,mdc.callChainId,mdc.engineName,mdc.requestId</mdcFields>
+                <dynamicMdcFieldTypes>userId=String,projectId=String,executionRequestId=String,testRunId=String,environmentId=String,systemId=String,bvTestRunId=String,bvTestCaseId=String,subscriberId=String,tsgSessionId=String,svpSessionId=String,dataSetId=String,dataSetListId=String,attributeId=String,itfLiteRequestId=String,reportType=String,itfSessionId=String,itfContextId=String,callChainId=String,engineName=String,requestId=String</dynamicMdcFieldTypes>
+                <dynamicMdcFields>mdc.*,(mdc|MDC)fields</dynamicMdcFields>
+                <includeFullMdc>true</includeFullMdc>
+                <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                    <level>${logging.level.org.qubership.atp.tdm}</level>
+                </filter>
+            </appender>
+
+            <appender name="ASYNC_GELF" class="ch.qos.logback.classic.AsyncAppender">
+                <appender-ref ref="GELF"/>
+            </appender>
+
+            <root level="${LOG_LEVEL:-INFO}">
+                <appender-ref ref="ASYNC_GELF"/>
+            </root>
+            <if condition='${ATP_HTTP_LOGGING:-false}'>
+                <then>
+                    <logger name="org.qubership.atp.common.logging.filter.LoggingFilter" level="DEBUG" additivity="false">
+                        <appender-ref ref="ASYNC_GELF"/>
+                    </logger>
+                    <logger name="org.qubership.atp.common.logging.interceptor.RestTemplateLogInterceptor" level="DEBUG" additivity="false">
+                        <appender-ref ref="ASYNC_GELF"/>
+                    </logger>
+                    <logger name="org.qubership.atp.tdm.env.configurator.service.client" level="DEBUG" additivity="false">
+                        <appender-ref ref="ASYNC_GELF"/>
+                    </logger>
+                    <logger name="org.qubership.atp.integration.configuration.feign.MailSenderFeignClient" level="DEBUG" additivity="false">
+                        <appender-ref ref="ASYNC_GELF"/>
+                    </logger>
+                </then>
+            </if>
+        </then>
+        <else>
+            <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+                <encoder>
+                    <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+                </encoder>
+            </appender>
+            <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <!--See also http://logback.qos.ch/manual/appenders.html#RollingFileAppender-->
+                <file>console.log</file>
+                <encoder class="org.qubership.atp.integration.configuration.logging.logback.AtpPatternLayoutEncoder">
+                    <!--See also https://logback.qos.ch/manual/layouts.html-->
+                    <pattern>%date{YYYY-MM-dd HH:mm:ss.SS} %-7([%level]) "%thread" [%logger#%method] - %message%n
+                    </pattern>
+                    <charset>${project.reporting.outputEncoding}</charset>
+                </encoder>
+                <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+                    <maxIndex>10</maxIndex>
+                    <FileNamePattern>console.log.%i</FileNamePattern>
+                </rollingPolicy>
+                <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+                    <maxFileSize>10Mb</maxFileSize>
+                </triggeringPolicy>
+            </appender>
+            <root level="${LOG_LEVEL:-INFO}">
+                <appender-ref ref="CONSOLE" />
+                <appender-ref ref="FILE"/>
+            </root>
+            <if condition='${ATP_HTTP_LOGGING:-false}'>
+                <then>
+                    <logger name="org.qubership.atp.common.logging.filter.LoggingFilter" level="DEBUG" additivity="false">
+                        <appender-ref ref="FILE"/>
+                    </logger>
+                    <logger name="org.qubership.atp.common.logging.interceptor.RestTemplateLogInterceptor" level="DEBUG" additivity="false">
+                        <appender-ref ref="FILE"/>
+                    </logger>
+                    <logger name="client.service.configurator.env.org.qubership.atp.tdm.EnvironmentFeignClient" level="DEBUG" additivity="false">
+                        <appender-ref ref="FILE"/>
+                    </logger>
+                    <logger name="client.service.configurator.env.org.qubership.atp.tdm.ProjectEnvironmentFeignClient" level="DEBUG" additivity="false">
+                        <appender-ref ref="FILE"/>
+                    </logger>
+                    <logger name="client.service.configurator.env.org.qubership.atp.tdm.SystemEnvironmentFeignClient" level="DEBUG" additivity="false">
+                        <appender-ref ref="FILE"/>
+                    </logger>
+                    <logger name="org.qubership.atp.integration.configuration.feign.MailSenderFeignClient" level="DEBUG" additivity="false">
+                        <appender-ref ref="FILE"/>
+                    </logger>
+                </then>
+            </if>
+        </else>
+    </if>
+</configuration>

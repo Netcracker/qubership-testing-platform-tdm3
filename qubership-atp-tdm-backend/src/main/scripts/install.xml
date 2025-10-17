@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+
+    <changeSet id="CREATE_TABLE_TEST_DATA_TABLE_CATALOG" author="atp-tdm-be">
+        <createTable tableName="TEST_DATA_TABLE_CATALOG">
+            <column name="PROJECT_ID" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="SYSTEM_ID" type="uuid">
+                <constraints nullable="true"/>
+            </column>
+            <column name="TABLE_TITLE" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TABLE_NAME" type="VARCHAR">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="CLEANUP_CONFIG_ID" type="uuid">
+                <constraints nullable="true"/>
+            </column>
+            <column name="REFRESH_CONFIG_ID" type="uuid">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+    
+    <changeSet id="CREATE_TABLE_TEST_DATA_TABLE_COLUMN" author="atp-tdm-be">
+        <createTable tableName="TEST_DATA_TABLE_COLUMN">
+            <column name="TABLE_NAME" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="COLUMN_NAME" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="COLUMN_TYPE" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="COLUMN_LINK" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="BULK_LINK" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    
+    <changeSet id="U_TEST_DATA_TABLE_CATALOG(TABLE_NAME)" author="atp-tdm-be">
+        <addUniqueConstraint tableName="TEST_DATA_TABLE_CATALOG" columnNames="TABLE_NAME"
+                             constraintName="U_TEST_DATA_TABLE_CATALOG(TABLE_NAME)"/>
+    </changeSet>
+    
+    <changeSet id="U_TEST_DATA_TABLE_COLUMN(TABLE_NAME, COLUMN_NAME)" author="atp-tdm-be">
+        <addUniqueConstraint tableName="TEST_DATA_TABLE_COLUMN" columnNames="TABLE_NAME, COLUMN_NAME"
+                             constraintName="U_TEST_DATA_TABLE_COLUMN(TABLE_NAME, COLUMN_NAME)"/>
+    </changeSet>
+    
+    <changeSet id="TEST_DATA_TABLE_COLUMN(TABLE_NAME)-FK_TEST_DATA_TABLE_CATALOG(TABLE_NAME)" author="atp-tdm-be">
+        <addForeignKeyConstraint baseTableName="TEST_DATA_TABLE_COLUMN" baseColumnNames="TABLE_NAME"
+                                 referencedTableName="TEST_DATA_TABLE_CATALOG"
+                                 referencedColumnNames="TABLE_NAME"
+                                 constraintName="TEST_DATA_TABLE_COLUMN(TABLE_NAME)-FK_TEST_DATA_TABLE_CATALOG(TABLE_NAME)"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+    
+    <changeSet id="CREATE_TABLE_TEST_DATA_CLEANUP_CONFIG" author="atp-tdm-be">
+        <createTable tableName="TEST_DATA_CLEANUP_CONFIG">
+            <column name="ID" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ENABLED" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="SCHEDULE" type="VARCHAR">
+                <constraints nullable="true"/>
+            </column>
+            <column name="SEARCH_SQL" type="VARCHAR">
+                <constraints nullable="true"/>
+            </column>
+            <column name="SEARCH_CLASS" type="VARCHAR">
+                <constraints nullable="true"/>
+            </column>
+            <column name="SHARED" type="BOOLEAN">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+    
+    <changeSet id="U_CREATE_TABLE_TEST_DATA_CLEANUP_CONFIG(TABLE_NAME)" author="atp-tdm-be">
+        <addUniqueConstraint tableName="TEST_DATA_CLEANUP_CONFIG" columnNames="ID"
+                             constraintName="U_CREATE_TABLE_TEST_DATA_CLEANUP_CONFIG(ID)"/>
+    </changeSet>
+    
+    <changeSet id="CREATE_TABLE_TEST_DATA_REFRESH_CONFIG" author="atp-tdm-be">
+        <createTable tableName="TEST_DATA_REFRESH_CONFIG">
+            <column name="ID" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ENABLED" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="SCHEDULE" type="VARCHAR">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+    
+    <changeSet id="U_TEST_DATA_TABLE_CATALOG(REFRESH_CONFIG_ID)" author="atp-tdm-be">
+        <addUniqueConstraint tableName="TEST_DATA_TABLE_CATALOG" columnNames="REFRESH_CONFIG_ID"
+                             constraintName="TEST_DATA_TABLE_CATALOG(REFRESH_CONFIG_ID)"/>
+    </changeSet>
+    
+    <changeSet id="U_TEST_DATA_REFRESH_CONFIG(ID)" author="atp-tdm-be">
+        <addUniqueConstraint tableName="TEST_DATA_REFRESH_CONFIG" columnNames="ID"
+                             constraintName="U_TEST_DATA_REFRESH_CONFIG(ID)"/>
+    </changeSet>
+    
+    <changeSet id="TABLE_TEST_DATA_REFRESH_CONFIG(ID)-FK_TEST_DATA_TABLE_CATALOG(REFRESH_CONFIG_ID)" author="atp-tdm-be">
+        <addForeignKeyConstraint baseTableName="TEST_DATA_REFRESH_CONFIG"
+                                 baseColumnNames="ID"
+                                 referencedTableName="TEST_DATA_TABLE_CATALOG"
+                                 referencedColumnNames="REFRESH_CONFIG_ID"
+                                 constraintName="TABLE_TEST_DATA_REFRESH_CONFIG(ID)-FK_TEST_DATA_TABLE_CATALOG(REFRESH_CONFIG_ID)"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+    
+    <changeSet id="CREATE_TABLE_TEST_DATA_TABLE_IMPORT_INFO" author="atp-tdm-be">
+        <createTable tableName="TEST_DATA_TABLE_IMPORT_INFO">
+            <column name="TABLE_NAME" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TABLE_QUERY" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    
+    <changeSet id="U_TEST_DATA_TABLE_IMPORT_INFO(TABLE_NAME)" author="atp-tdm-be">
+        <addUniqueConstraint tableName="TEST_DATA_TABLE_IMPORT_INFO" columnNames="TABLE_NAME"
+                             constraintName="U_TEST_DATA_TABLE_IMPORT_INFO(TABLE_NAME)"/>
+    </changeSet>
+    
+    <changeSet id="TEST_DATA_TABLE_IMPORT_INFO(TABLE_NAME)-FK_TEST_DATA_TABLE_CATALOG(TABLE_NAME)" author="atp-tdm-be">
+        <addForeignKeyConstraint baseTableName="TEST_DATA_TABLE_IMPORT_INFO" baseColumnNames="TABLE_NAME"
+                                 referencedTableName="TEST_DATA_TABLE_CATALOG"
+                                 referencedColumnNames="TABLE_NAME"
+                                 constraintName="TEST_DATA_TABLE_IMPORT_INFO(TABLE_NAME)-FK_TEST_DATA_TABLE_CATALOG(TABLE_NAME)"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+    
+    <changeSet id="CREATE_TABLE_TEST_DATA_TABLE_MONITORING" author="atp-tdm-be">
+        <createTable tableName="TEST_DATA_TABLE_MONITORING">
+            <column name="PROJECT_ID" type="uuid">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="ENABLED" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CRON_EXPRESSION" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="THRESHOLD" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="RECIPIENTS" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    
+    <changeSet id="U_TEST_DATA_TABLE_MONITORING(PROJECT_ID)" author="atp-tdm-be">
+        <addUniqueConstraint tableName="TEST_DATA_TABLE_MONITORING" columnNames="PROJECT_ID"
+                             constraintName="U_TEST_DATA_TABLE_MONITORING(PROJECT_ID)"/>
+    </changeSet>
+
+    <changeSet id="CREATE_TABLE_TEST_DATA_TABLE_USERS_MONITORING" author="atp-tdm-be">
+        <createTable tableName="TEST_DATA_TABLE_USERS_MONITORING">
+            <column name="PROJECT_ID" type="uuid">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="ENABLED" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CRON_EXPRESSION" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="RECIPIENTS" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="HTML_REPORT" type="BOOLEAN">
+                <constraints nullable="true"/>
+            </column>
+            <column name="CSV_REPORT" type="BOOLEAN">
+                <constraints nullable="true"/>
+            </column>
+            <column name="DAYS_COUNT" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="U_TEST_DATA_TABLE_USERS_MONITORING(PROJECT_ID)" author="atp-tdm-be">
+        <addUniqueConstraint tableName="TEST_DATA_TABLE_USERS_MONITORING" columnNames="PROJECT_ID"
+                             constraintName="U_TEST_DATA_TABLE_USERS_MONITORING(PROJECT_ID)"/>
+    </changeSet>
+
+    <changeSet id="CREATE_TABLE_TEST_DATA_CLEANUP_STATISTICS" author="atp-tdm-be">
+        <createTable tableName="TEST_DATA_CLEANUP_STATISTICS">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="TABLE_NAME" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="COUNT" type="INTEGER" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="OCCUPIED_DATE" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CLEANUP_DATE" type="TIMESTAMP" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    
+    <changeSet id="U_TEST_DATA_CLEANUP_STATISTICS(TABLE_NAME, OCCUPIED_DATE)" author="atp-tdm-be">
+        <addUniqueConstraint tableName="TEST_DATA_CLEANUP_STATISTICS" columnNames="TABLE_NAME, OCCUPIED_DATE"
+                             constraintName="U_TEST_DATA_CLEANUP_STATISTICS(TABLE_NAME, OCCUPIED_DATE)"/>
+    </changeSet>
+    
+    
+    <changeSet id="CREATE_TABLE_TEST_DATA_OCCUPY_STATISTIC" author="atp-tdm-be">
+        <comment>ATPII-23174</comment>
+        <createTable tableName="TEST_DATA_OCCUPY_STATISTIC">
+            <column name="ROW_ID" type="uuid">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="TABLE_NAME" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="OCCUPIED_BY" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="OCCUPIED_DATE" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="PROJECT_ID" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="SYSTEM_ID" type="uuid">
+                <constraints nullable="true"/>
+            </column>
+            <column name="TABLE_TITLE" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    
+    
+    <changeSet id="CREATE_TABLE_TEST_DATA_FLAGS_TABLE" author="atp-tdm-be">
+        <createTable tableName="TEST_DATA_FLAGS_TABLE">
+            <column name="TABLE_NAME" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="UNOCCUPIED_VALIDATION" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="U_TEST_DATA_FLAGS_TABLE(TABLE_NAME, UNOCCUPIED_VALIDATION)" author="atp-tdm-be">
+        <addUniqueConstraint tableName="TEST_DATA_FLAGS_TABLE" columnNames="TABLE_NAME, UNOCCUPIED_VALIDATION"
+                             constraintName="U_TEST_DATA_FLAGS_TABLE(TABLE_NAME, UNOCCUPIED_VALIDATION)"/>
+    </changeSet>
+
+    <changeSet id="TEST_DATA_FLAGS_TABLE(TABLE_NAME)-FK_TEST_DATA_TABLE_CATALOG(TABLE_NAME)" author="atp-tdm-be">
+        <addForeignKeyConstraint baseTableName="TEST_DATA_FLAGS_TABLE" baseColumnNames="TABLE_NAME"
+                                 referencedTableName="TEST_DATA_TABLE_CATALOG"
+                                 referencedColumnNames="TABLE_NAME"
+                                 constraintName="TEST_DATA_FLAGS_TABLE(TABLE_NAME)-FK_TEST_DATA_TABLE_CATALOG(TABLE_NAME)"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+<!--    <changeSet id="PGCRYPTO_EXTENSION_INSTALLATION" author="atp-tdm-be">-->
+<!--        <comment>ATPII-23452</comment>-->
+<!--        <sqlFile path="migrationScripts/PGCRYPTO_EXTENSION_INSTALLATION_ATPII-23452.sql" splitStatements="false"/>-->
+<!--    </changeSet>-->
+
+    <changeSet id="CREATE_PROJECT_INFORMATION_TABLE" author="atp-tdm-be">
+        <comment>ATPII-31907</comment>
+        <sqlFile path="migrationScripts/CREATE_PROJECT_INFORMATION.sql" splitStatements="false"/>
+    </changeSet>
+
+    <changeSet id="CREATE_SHEDLOCK_TABLE_FOR_LOCK_MANAGER" author="atp-tdm-be">
+        <validCheckSum>8:2f0246abec4be50de1e8bddaf752b77c</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="shedlock"/>
+            </not>
+        </preConditions>
+        <createTable tableName="shedlock">
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="lock_until" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="locked_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="locked_by" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="CREATE_DELETED_TABLE_HISTORY" author="atp-tdm-be">
+        <createTable tableName="DELETED_TABLES_HISTORY">
+            <column name="PROJECT_ID" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="SYSTEM_ID" type="uuid">
+                <constraints nullable="true"/>
+            </column>
+            <column name="ENVIRONMENT_ID" type="uuid">
+                <constraints nullable="true"/>
+            </column>
+            <column name="TABLE_TITLE" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TABLE_NAME" type="VARCHAR">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="DELETE_DAY" type="DATE" defaultValueComputed="CURRENT_DATE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="AVAILABLE_DATA_STATS" author="atp-tdm-be">
+        <createTable tableName="table_column_values">
+            <column name="table_name" type="VARCHAR(100)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="table_title" type="VARCHAR(100)"></column>
+            <column name="values" type="VARCHAR"></column>
+        </createTable>
+        <createTable tableName="test_available_data_monitoring">
+            <column name="environment_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"></constraints>
+            </column>
+            <column name="system_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"></constraints>
+            </column>
+            <column name="active_column" type="VARCHAR">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="threshold" type="INTEGER"></column>
+            <column name="recipients" type="VARCHAR"></column>
+            <column name="scheduled" type="BOOLEAN"></column>
+            <column name="description" type="VARCHAR"></column>
+            <column name="schedule" type="VARCHAR"></column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

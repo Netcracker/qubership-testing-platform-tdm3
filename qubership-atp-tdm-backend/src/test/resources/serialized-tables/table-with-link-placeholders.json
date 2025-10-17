@@ -1,0 +1,53 @@
+{
+  "data": {
+    "header": {
+      "rows": [
+        {
+          "columns": [
+            {
+              "type": "checkbox",
+              "value": false
+            },
+            {
+              "value": "HEADER",
+              "filter": true,
+              "filterType": "text",
+              "contentModel": {
+                "id": "HEADER"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "body": {
+      "rows": [
+        {
+          "id": "3d88b62b-dd00-426c-9ace-0de10204303d",
+          "columns": [
+            {
+              "type": "checkbox",
+              "value": false
+            },
+            {
+              "value": "this.linkCellContent",
+              "type": "content",
+              "contentModel": {
+                "links": [
+                  {
+                    "value": "header_value",
+                    "url": "http://localhost:8000/wizard?header=header_value"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "records": 0,
+  "name": null,
+  "query": null,
+  "updateByQuery": null
+}

@@ -1,0 +1,36 @@
+openapi: 3.0.3
+info:
+  title: Api Documentation
+  description: Api Documentation
+  version: '1.0'
+  contact:
+    name: OurCompany
+    url: https://www.ourcompany.com/company/about-ourcompany/contact-us.html
+servers:
+  - url: 'http://localhost:8080'
+    description: Inferred Url
+tags:
+  - name: chart-controller
+    description: Chart Controller
+paths:
+  /api/v1/create:
+    post:
+      tags:
+        - chart-controller
+      summary: create
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              title: string
+      responses:
+        '201':
+          description: Chart image in PNG format
+          content:
+            'image/png':
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Unauthorized

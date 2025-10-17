@@ -1,0 +1,1 @@
+drop table if exists test_data_cleanup_statistics;

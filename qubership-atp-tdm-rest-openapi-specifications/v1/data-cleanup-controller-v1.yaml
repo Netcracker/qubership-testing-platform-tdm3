@@ -1,0 +1,190 @@
+openapi: 3.0.3
+info:
+  title: Api Documentation
+  description: Api Documentation
+  version: '1.0'
+servers:
+  - url: http://localhost:8080
+    description: Inferred Url
+tags:
+  - name: data-cleanup-controller
+    description: Data Cleanup Controller
+paths:
+  /api/tdm/cleanup/config:
+    post:
+      tags:
+        - data-cleanup-controller
+      summary: Save / update data cleanup settings.
+      operationId: saveCleanupConfig
+      parameters:
+        - name: tableName
+          in: query
+          description: tableName
+          required: true
+          style: form
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestDataCleanupConfig'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDataCleanupConfig'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/cleanup/config/{id}:
+    get:
+      tags:
+        - data-cleanup-controller
+      summary: Get cleanup configuration for specified dataset / table ID.
+      operationId: getCleanupConfig
+      parameters:
+        - name: id
+          in: path
+          description: id
+          required: true
+          style: simple
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDataCleanupConfig'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/cleanup/fill/cleanup/type:
+    get:
+      tags:
+        - data-cleanup-controller
+      summary: Old update.
+      operationId: fillCleanupTypeColumn
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/cleanup/next/run:
+    get:
+      tags:
+        - data-cleanup-controller
+      summary: Get next run's date / time details.
+      operationId: getNextScheduledRun
+      parameters:
+        - name: cronExpression
+          in: query
+          description: cronExpression
+          required: true
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+  /api/tdm/cleanup/run:
+    post:
+      tags:
+        - data-cleanup-controller
+      summary: Force run data cleanup.
+      operationId: runDataCleanup
+      parameters:
+        - name: tableName
+          in: query
+          description: tableName
+          required: true
+          style: form
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestDataCleanupConfig'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupResults'
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+components:
+  schemas:
+    CleanupResults:
+      title: CleanupResults
+      type: object
+      properties:
+        recordsRemoved:
+          type: integer
+          format: int32
+        recordsTotal:
+          type: integer
+          format: int32
+        tableName:
+          type: string
+    TestDataCleanupConfig:
+      title: TestDataCleanupConfig
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        id:
+          type: string
+          format: uuid
+        schedule:
+          type: string
+        searchClass:
+          type: string
+        searchDate:
+          type: string
+        searchSql:
+          type: string
+        shared:
+          type: boolean
+        type:
+          $ref: '#/components/schemas/CleanupType'
+    CleanupType:
+      enum:
+        - CLASS
+        - DATE
+        - SQL

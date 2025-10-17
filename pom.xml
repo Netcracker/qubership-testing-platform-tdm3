@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.qubership.atp.tdm</groupId>
+    <artifactId>qubership-atp-tdm</artifactId>
+    <version>${atp.service.version}</version>
+
+    <modules>
+        <module>qubership-atp-tdm-rest-openapi-specifications</module>
+        <module>qubership-atp-tdm-env-configurator</module>
+        <module>qubership-atp-tdm-backend</module>
+        <module>parent/qubership-atp-tdm-parent-java</module>
+        <module>parent/qubership-atp-tdm-parent-db</module>
+        <module>qubership-atp-tdm-distribution</module>
+        <module>qubership-atp-tdm-benchmarks</module>
+        <module>qubership-atp-tdm-contract-test-pacts</module>
+    </modules>
+
+    <packaging>pom</packaging>
+
+    <properties>
+        <java.version>21</java.version>
+        <atp.service.version>0.0.1.LOCAL</atp.service.version>
+        <toolBuildStatus>PRODUCTION</toolBuildStatus>
+
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <console.encoding>UTF-8</console.encoding>
+        <scm.revision>${project.scm}</scm.revision>
+        <tool.config.keys.prefix>${project.name}</tool.config.keys.prefix>
+
+        <atp.codechecks>1.1</atp.codechecks>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-scm-plugin</artifactId>
+                <version>1.9.5</version>
+                <configuration>
+                    <tag>atp-tdm-${project.version}</tag>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.17</version>
+                <configuration>
+                    <configLocation>org/qubership/atp/codechecks/checkstyle.xml</configLocation>
+                    <outputFile>${project.build.directory}/checkstyle/checkstyle-result.xml</outputFile>
+                    <linkXRef>false</linkXRef>
+                    <failsOnError>false</failsOnError>
+                    <failOnViolation>false</failOnViolation>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>verify-style</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>7.8.2</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.qubership.atp.codechecks</groupId>
+                        <artifactId>qubership-atp-codechecks</artifactId>
+                        <version>${atp.codechecks}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>3.8</version>
+                <configuration>
+                    <rulesets>
+                        <ruleset>org/qubership/atp/codechecks/pmd-ruleset.xml</ruleset>
+                    </rulesets>
+                    <printFailingErrors>true</printFailingErrors>
+                    <failOnViolation>false</failOnViolation>
+                    <targetDirectory>${project.build.directory}/pmd</targetDirectory>
+                    <includeTests>false</includeTests>
+                    <outputEncoding>${project.reporting.outputEncoding}</outputEncoding>
+                    <linkXRef>false</linkXRef>
+                    <excludeRoots>
+                        <excludeRoot>${project.build.directory}/generated-sources</excludeRoot>
+                    </excludeRoots>
+                    <format>xml</format>
+                    <minimumTokens>100</minimumTokens>
+                    <language>java</language>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>pmd</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>pmd</goal>
+                            <goal>cpd</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.qubership.atp.codechecks</groupId>
+                        <artifactId>qubership-atp-codechecks</artifactId>
+                        <version>${atp.codechecks}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.7.3.0</version>
+                <configuration>
+                    <!--Enables analysis which takes more memory but finds more bugs.
+                        If you run out of memory, changes the value of the effort element to 'Low' -->
+                    <effort>Max</effort>
+                    <!--Build doesn't fail if problems are found -->
+                    <failOnError>false</failOnError>
+                    <!--Reports all bugs (other values are medium and max) -->
+                    <threshold>Low</threshold>
+                    <!--Produces XML report -->
+                    <xmlOutput>true</xmlOutput>
+                    <spotbugsXmlOutput>true</spotbugsXmlOutput>
+                    <!--Configures the directory in which the XML report is created -->
+                    <spotbugsXmlOutputDirectory>${project.build.directory}/spotbugs/xml</spotbugsXmlOutputDirectory>
+                    <includeFilterFile>org/qubership/atp/codechecks/findbugs-filter.xml</includeFilterFile>
+                </configuration>
+                <executions>
+                    <!--Ensures that FindBugs inspects source code when project is compiled -->
+                    <execution>
+                        <id>analyze-compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+
+                <dependencies>
+                    <dependency>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs</artifactId>
+                        <version>4.7.3</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.qubership.atp.codechecks</groupId>
+                        <artifactId>qubership-atp-codechecks</artifactId>
+                        <version>${atp.codechecks}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm</artifactId>
+                        <version>9.5</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm-analysis</artifactId>
+                        <version>9.5</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm-commons</artifactId>
+                        <version>9.5</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm-tree</artifactId>
+                        <version>9.5</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm-util</artifactId>
+                        <version>9.5</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+
+    <repositories>
+       <repository>
+           <id>central</id>
+           <name>Maven Central</name>
+           <url>https://repo1.maven.org/maven2/</url>
+       </repository>
+    </repositories>
+
+    <distributionManagement>
+       <repository>
+           <id>central</id>
+           <name>Maven Central</name>
+           <url>https://repo1.maven.org/maven2/</url>
+       </repository>
+    </distributionManagement>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>oss.sonatype.org</id>
+            <url>https://central.sonatype.com</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+
+        <pluginRepository>
+            <id>oss.sonatype.org-snapshot</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+
+        <pluginRepository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/netcracker/*</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
+</project>

@@ -1,0 +1,196 @@
+{
+  "projectId" : "6b90558d-f0c7-448a-b701-f04d95ad655d",
+  "testDataMonitoring" : null,
+  "tables" : [ {
+    "systemId" : "eef70313-1ccc-4be7-ba3c-787654abf863",
+    "environmentId" : "9fd33044-d693-4b24-8d9b-67277e120631",
+    "tableName" : "tdm_test_data_export_import",
+    "tableTitle" : "TDM Test Data Run Export Import",
+    "cleanupConfig" : {
+      "id" : "fc3b6966-3d6a-46d9-9e99-c616162bfb44",
+      "enabled" : true,
+      "schedule" : "0 0/1 * * * ?",
+      "type" : "DATE",
+      "searchSql" : null,
+      "searchClass" : null,
+      "searchDate" : "3w 4d",
+      "shared" : false,
+      "scheduled" : null
+    },
+    "columns" : [ {
+      "identity" : {
+        "tableName" : "tdm_test_data_export_import",
+        "columnName" : "sim"
+      },
+      "columnType" : "TEXT",
+      "columnLink" : "link",
+      "bulkLink" : false,
+      "orderType" : null,
+      "filterType" : null
+    }, {
+      "identity" : {
+        "tableName" : "tdm_test_data_export_import",
+        "columnName" : "Status"
+      },
+      "columnType" : "TEXT",
+      "columnLink" : "link",
+      "bulkLink" : false,
+      "orderType" : null,
+      "filterType" : null
+    }, {
+      "identity" : {
+        "tableName" : "tdm_test_data_export_import",
+        "columnName" : "Partner"
+      },
+      "columnType" : "TEXT",
+      "columnLink" : "link",
+      "bulkLink" : false,
+      "orderType" : null,
+      "filterType" : null
+    }, {
+      "identity" : {
+        "tableName" : "tdm_test_data_export_import",
+        "columnName" : "Partner category"
+      },
+      "columnType" : "TEXT",
+      "columnLink" : "link",
+      "bulkLink" : false,
+      "orderType" : null,
+      "filterType" : null
+    }, {
+      "identity" : {
+        "tableName" : "tdm_test_data_export_import",
+        "columnName" : "Partner ID"
+      },
+      "columnType" : "TEXT",
+      "columnLink" : "link",
+      "bulkLink" : false,
+      "orderType" : null,
+      "filterType" : null
+    }, {
+      "identity" : {
+        "tableName" : "tdm_test_data_export_import",
+        "columnName" : "Operator ID"
+      },
+      "columnType" : "TEXT",
+      "columnLink" : "link",
+      "bulkLink" : false,
+      "orderType" : null,
+      "filterType" : null
+    }, {
+      "identity" : {
+        "tableName" : "tdm_test_data_export_import",
+        "columnName" : "environment"
+      },
+      "columnType" : "TEXT",
+      "columnLink" : "link",
+      "bulkLink" : false,
+      "orderType" : null,
+      "filterType" : null
+    }, {
+      "identity" : {
+        "tableName" : "tdm_test_data_export_import",
+        "columnName" : "Assignment"
+      },
+      "columnType" : "TEXT",
+      "columnLink" : "link",
+      "bulkLink" : false,
+      "orderType" : null,
+      "filterType" : null
+    } ],
+    "importInfo" : {
+      "tableName" : "tdm_test_data_export_import",
+      "tableQuery" : "select sim from tdm_test_data_refresh_unoccupied_table"
+    },
+    "refreshConfig" : null,
+    "flagsTable" : {
+      "tableName" : "tdm_test_data_export_import",
+      "unoccupiedValidation" : false
+    },
+    "data" : [ {
+      "Status" : "51",
+      "Partner ID" : "1",
+      "environment" : "ZLAB01",
+      "Operator ID" : "2501",
+      "ROW_ID" : "e2c66cd0-81d8-49e7-bee5-de22c30874ba",
+      "SELECTED" : false,
+      "Assignment" : "Test Automation' 1",
+      "OCCUPIED_BY" : null,
+      "sim" : "8901260720040140811",
+      "CREATED_WHEN" : "2021-09-27 17:13:48",
+      "Partner category" : "MVNO",
+      "OCCUPIED_DATE" : null,
+      "Partner" : "CINTEX"
+    }, {
+      "Status" : "52",
+      "Partner ID" : "2",
+      "environment" : "ZLAB02",
+      "Operator ID" : "2502",
+      "ROW_ID" : "9b7b1022-7702-4c27-814c-4427edea9956",
+      "SELECTED" : false,
+      "Assignment" : "TeSt AutoMatioN 2",
+      "OCCUPIED_BY" : null,
+      "sim" : "8901260720040140822",
+      "CREATED_WHEN" : "2021-09-27 17:13:48",
+      "Partner category" : "MVNO",
+      "OCCUPIED_DATE" : null,
+      "Partner" : "CINTEX"
+    }, {
+      "Status" : "53",
+      "Partner ID" : "3",
+      "environment" : "ZLAB03",
+      "Operator ID" : "2503",
+      "ROW_ID" : "0874ea77-0a6d-40e8-b777-1fde9a7a9e2a",
+      "SELECTED" : false,
+      "Assignment" : "Test Automation 3",
+      "OCCUPIED_BY" : null,
+      "sim" : "8901260720040140973",
+      "CREATED_WHEN" : "2021-09-27 17:13:48",
+      "Partner category" : "MVNO",
+      "OCCUPIED_DATE" : null,
+      "Partner" : "CINTEX"
+    }, {
+      "Status" : "54",
+      "Partner ID" : "4",
+      "environment" : "ZLAB04",
+      "Operator ID" : "2504",
+      "ROW_ID" : "b31e5ce6-e6d6-4870-b55d-12a592b7183b",
+      "SELECTED" : false,
+      "Assignment" : "Test Automation 4",
+      "OCCUPIED_BY" : null,
+      "sim" : "8901260720040141084",
+      "CREATED_WHEN" : "2021-09-27 17:13:48",
+      "Partner category" : "MVNO",
+      "OCCUPIED_DATE" : null,
+      "Partner" : "CINTEX"
+    }, {
+      "Status" : "55",
+      "Partner ID" : "5",
+      "environment" : "ZLAB05",
+      "Operator ID" : "2505",
+      "ROW_ID" : "579ece9b-d2be-4107-b9c0-1b8a0aabfe92",
+      "SELECTED" : false,
+      "Assignment" : "Test Automation 5",
+      "OCCUPIED_BY" : null,
+      "sim" : "8901260720040140975",
+      "CREATED_WHEN" : "2021-09-27 17:13:48",
+      "Partner category" : "MVNO",
+      "OCCUPIED_DATE" : null,
+      "Partner" : "CINTEX"
+    }, {
+      "Status" : "56",
+      "Partner ID" : "6",
+      "environment" : "ZLAB06",
+      "Operator ID" : "2506",
+      "ROW_ID" : "b8224f56-2354-4583-9459-6378bf4bbad0",
+      "SELECTED" : false,
+      "Assignment" : "Test Automation 6",
+      "OCCUPIED_BY" : null,
+      "sim" : "8901260720040141106",
+      "CREATED_WHEN" : "2021-09-27 17:13:48",
+      "Partner category" : "MVNO",
+      "OCCUPIED_DATE" : null,
+      "Partner" : "CINTEX"
+    } ]
+  } ]
+}

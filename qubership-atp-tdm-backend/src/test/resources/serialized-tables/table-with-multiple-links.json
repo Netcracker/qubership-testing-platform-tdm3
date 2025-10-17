@@ -1,0 +1,53 @@
+{
+	"data": {
+		"header": {
+			"rows": [
+				{
+					"columns": [
+						{
+							"type": "checkbox",
+							"value": false
+						},
+						{
+							"value": "SIM",
+							"filter": true,
+							"filterType": "text",
+							"contentModel": {
+								"id": "SIM"
+							}
+						}
+					]
+				}
+			]
+		},
+		"body": {
+			"rows": [
+				{
+					"id": "3d88b62b-dd00-426c-9ace-0de10204303d",
+					"columns": [
+						{
+							"type": "checkbox",
+							"value": false
+						},
+						{
+							"value": "this.linkCellContent",
+							"type": "content",
+							"contentModel": {
+								"links": [
+									{
+										"value": "item",
+										"url": "http://localhost:8000/endpoint?&=item"
+									}
+								]
+							}
+						}
+					]
+				}
+			]
+		}
+	},
+	"records": 0,
+	"name": null,
+	"query": null,
+	"updateByQuery": null
+}

@@ -1,0 +1,38 @@
+{
+ "projectId": "NC.ATP.TDM",
+ "files": [
+  {
+   "fileId": "qubership-atp-tdm-rest-openapi-specifications/v1/atp-action-controller-v1.yaml",
+   "publish": true
+  },
+  {
+   "fileId": "qubership-atp-tdm-rest-openapi-specifications/v1/data-cleanup-controller-v1.yaml",
+   "publish": true
+  },
+  {
+   "fileId": "qubership-atp-tdm-rest-openapi-specifications/v1/data-refresh-controller-v1.yaml",
+   "publish": true
+  },
+  {
+   "fileId": "qubership-atp-tdm-rest-openapi-specifications/v1/deployment-controller-v1.yaml",
+   "publish": true
+  },
+  {
+   "fileId": "qubership-atp-tdm-rest-openapi-specifications/v1/environments-controller-v1.yaml",
+   "publish": true
+  },
+  {
+   "fileId": "qubership-atp-tdm-rest-openapi-specifications/v1/statistics-controller-v1.yaml",
+   "publish": true
+  },
+  {
+   "fileId": "qubership-atp-tdm-rest-openapi-specifications/v1/test-data-controller-v1.yaml",
+   "publish": true
+  },
+  {
+   "fileId": "qubership-atp-tdm-rest-openapi-specifications/v1/versions-controller-v1.yaml",
+   "publish": true
+  }
+ ],
+ "refs": []
+}
