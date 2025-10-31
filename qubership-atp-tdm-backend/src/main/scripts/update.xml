@@ -140,4 +140,12 @@
         </sql>
     </changeSet>
 
+    <changeSet id="rename-values-col" author="elbe0116">
+        <renameColumn tableName="table_column_values"
+                      oldColumnName="values"
+                      newColumnName="vals"
+                      columnDataType="VARCHAR(1024)"/>
+    </changeSet>
+
+
 </databaseChangeLog>
