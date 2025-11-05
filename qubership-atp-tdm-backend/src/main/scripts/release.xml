@@ -6,7 +6,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-    <changeSet id="RELEASE_LOCK" author="elbe0116">
+    <changeSet id="RELEASE_LOCK" author="tdm3 support/dev team">
         <update tableName="DATABASECHANGELOGLOCK">
             <column name="LOCKED" valueBoolean="false"/>
             <column name="LOCKGRANTED" valueComputed="NULL"/>

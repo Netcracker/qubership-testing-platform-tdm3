@@ -140,7 +140,7 @@
         </sql>
     </changeSet>
 
-    <changeSet id="rename-values-col" author="elbe0116">
+    <changeSet id="rename-values-col" author="tdm3 support/dev team">
         <renameColumn tableName="table_column_values"
                       oldColumnName="values"
                       newColumnName="vals"
