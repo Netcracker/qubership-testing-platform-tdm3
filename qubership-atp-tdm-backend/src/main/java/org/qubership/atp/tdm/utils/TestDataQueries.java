@@ -201,7 +201,7 @@ public class TestDataQueries {
 
     public static final String GET_ALL_COLUMN_NAMES_BY_SYSTEM_ID =
             "SELECT DISTINCT column_name FROM information_schema.COLUMNS "
-            + "WHERE LOWER(table_name) IN (SELECT LOWER (table_name) FROM test_data_table_catalog "
+            + "WHERE LOWER(table_name) IN (SELECT LOWER(table_name) FROM test_data_table_catalog "
             + "WHERE system_id = ?)";
 
     public static final String GET_AVAILABLE_DATA_FOR_EACH_VALUE =
