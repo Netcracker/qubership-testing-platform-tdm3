@@ -73,7 +73,7 @@ public class QuartzConfig {
     /**
      * Returns a scheduler based on properties from quartz.properties file.
      *
-     * @return A scheduler instance or <tt>null</tt> if scheduler has been turned off
+     * @return A scheduler instance or null if scheduler is turned off.
      */
     @Nullable
     @Bean

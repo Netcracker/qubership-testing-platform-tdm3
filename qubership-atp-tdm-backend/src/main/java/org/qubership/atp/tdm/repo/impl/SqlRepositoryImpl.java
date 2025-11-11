@@ -62,10 +62,10 @@ public class SqlRepositoryImpl implements SqlRepository {
     }
 
     /**
-     * Returns <tt>java.sql.Connection</tt> that is instantiated by the provided server object.
+     * Create and return java.sql.Connection that is instantiated by the provided server object.
      *
      * @param server server representation object
-     * @return Returns <tt>java.sql.Connection</tt>
+     * @return java.sql.Connection object created and configured.
      */
     @Override
     public Connection createConnection(Server server) {

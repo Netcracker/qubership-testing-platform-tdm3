@@ -3,6 +3,7 @@
           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
     <includeBaseDirectory>false</includeBaseDirectory>
 
+    <id>dist</id>
     <formats>
         <format>zip</format>
     </formats>

@@ -4,13 +4,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>qubership-atp-tdm</artifactId>
-        <groupId>org.qubership.atp.tdm</groupId>
-        <version>${atp.service.version}</version>
+        <groupId>org.qubership.atp.tdm3</groupId>
+        <version>1.0.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>qubership-atp-tdm-parent-java</artifactId>
+    <name>qubership-atp-tdm-parent-java</name>
     <packaging>pom</packaging>
 
     <properties>
@@ -35,7 +36,7 @@
 
         <atp.crypt.version>0.0.23</atp.crypt.version>
         <atp.integration.spring.boot.starter.version>0.2.41</atp.integration.spring.boot.starter.version>
-        <atp.auth.spring.boot.starter.version>1.2.75</atp.auth.spring.boot.starter.version>
+        <atp.auth.spring.boot.starter.version>1.2.76</atp.auth.spring.boot.starter.version>
         <atp.common.version>0.0.46</atp.common.version>
     </properties>
 
@@ -100,12 +101,12 @@
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-handler</artifactId>
-                <version>4.1.118.Final</version>
+                <version>4.1.124.Final</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-codec-http2</artifactId>
-                <version>4.1.118.Final</version>
+                <version>4.1.124.Final</version>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
@@ -224,11 +225,6 @@
                         <artifactId>netty-codec-http2</artifactId>
                     </exclusion>
                 </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-codec-http2</artifactId>
-                <version>4.1.124.Final</version>
             </dependency>
             <dependency>
                 <groupId>org.qubership.atp.common</groupId>

@@ -5,14 +5,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>qubership-atp-tdm-parent-java</artifactId>
-        <groupId>org.qubership.atp.tdm</groupId>
-        <version>${atp.service.version}</version>
+        <groupId>org.qubership.atp.tdm3</groupId>
+        <version>1.0.0-SNAPSHOT</version>
         <relativePath>../parent/qubership-atp-tdm-parent-java/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>qubership-atp-tdm-distribution</artifactId>
-
+    <name>qubership-atp-tdm-distribution</name>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
