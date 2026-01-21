@@ -137,7 +137,7 @@ jobs:
     uses: netcracker/qubership-testing-platform-helm-hook-helper/.github/workflows/deploy-run-tests.yaml@main
     with:
       repository_name: 'qubership-testing-platform-tdm3'
-      service_name: 'atp-tdm3'
+      service_name: 'tdm3'
       namespace: 'tdm3'
       pipeline_branch: 'test_workflow'
       enable_test: disable
