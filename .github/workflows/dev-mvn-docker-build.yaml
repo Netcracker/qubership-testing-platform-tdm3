@@ -140,4 +140,4 @@ jobs:
       service_name: 'atp3-tdm-be'
       namespace: 'tdm3'
       pipeline_branch: 'test_workflow'
-      enable_test: disable
+      enable_test: enable
