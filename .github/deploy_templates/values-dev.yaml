@@ -4,7 +4,6 @@ DOCKER_TAG: ""
 GRAYLOG_ON: "false"
 keepHookLogs: true
 HELPER_IMAGE: "ghcr.io/netcracker/qubership-testing-platform-helm-hook-helper:main_latest"
-CONTENT_SECURITY_POLICY: "*"
 MEM_ARGS: "-XX:MaxRAMPercentage=75.0"
 MEMORY_REQUEST: "512Mi"
 MEMORY_LIMIT: "1Gi"
