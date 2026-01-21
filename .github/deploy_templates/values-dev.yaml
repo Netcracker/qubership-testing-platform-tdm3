@@ -13,3 +13,5 @@ CPU_REQUEST: "0.05"
 CPU_LIMIT: "0.5"
 REPLICAS: 1
 CLOUD_PUBLIC_HOST: "kuber.cloud"
+atp3tdm:
+  storageClassName: "standard"
