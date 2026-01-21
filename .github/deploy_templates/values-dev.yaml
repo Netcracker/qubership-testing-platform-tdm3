@@ -13,3 +13,4 @@ CPU_REQUEST: "0.05"
 CPU_LIMIT: "0.5"
 REPLICAS: 1
 SERVICE_NAME: "atp3-tdm-be"
+CLOUD_PUBLIC_HOST: "kuber.cloud"
