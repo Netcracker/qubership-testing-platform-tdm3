@@ -1,0 +1,115 @@
+openapi: 3.0.3
+info:
+  title: Api Documentation
+  description: Api Documentation v2 - Enhanced with request body endpoints
+  version: '2.0'
+  contact:
+    name: OurCompany
+    url: https://www.some-domain.com/company/about-some-domain/contact-us.html
+servers:
+  - url: http://localhost:8080
+    description: Inferred Url
+tags:
+  - name: test-data-controller-v2
+    description: Test Data Controller V2
+paths:
+  /api/tdm/v2/import/sql:
+    post:
+      tags:
+        - test-data-controller-v2
+      summary: Import sql to TDM v2 - with request body.
+      description: Import SQL test data using request body instead of query parameters for better compatibility
+      operationId: importSqlTestDataV2
+      requestBody:
+        description: SQL import request parameters
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportSqlTestDataRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ImportTestDataStatistic'
+        '201':
+          description: Created
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+
+components:
+  schemas:
+    ImportSqlTestDataRequest:
+      title: ImportSqlTestDataRequest
+      type: object
+      description: Request model for SQL test data import containing all required parameters
+      required:
+        - projectId
+        - environmentsIds
+        - systemName
+        - tableTitle
+        - query
+        - queryTimeout
+      properties:
+        projectId:
+          type: string
+          format: uuid
+          description: Project identifier
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        environmentsIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of environment identifiers where data will be imported
+          example: ["123e4567-e89b-12d3-a456-426614174001", "123e4567-e89b-12d3-a456-426614174002"]
+        systemName:
+          type: string
+          description: Name of the system/database
+          example: "PostgreSQL_DB"
+        tableTitle:
+          type: string
+          description: Title for the imported table
+          example: "User Data Import"
+        query:
+          type: string
+          description: SQL query to execute for data import
+          example: "SELECT * FROM users WHERE active = true"
+        queryTimeout:
+          type: integer
+          format: int32
+          description: Timeout in seconds for query execution
+          minimum: 1
+          maximum: 3600
+          example: 300
+
+    ImportTestDataStatistic:
+      title: ImportTestDataStatistic
+      type: object
+      description: Statistics for imported test data
+      properties:
+        envName:
+          type: string
+          description: Environment name where data was imported
+          example: "development"
+        error:
+          type: string
+          description: Error message if import failed
+          example: "Connection timeout"
+        processedRows:
+          type: integer
+          format: int32
+          description: Number of rows processed during import
+          example: 1500
