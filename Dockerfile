@@ -35,7 +35,8 @@ RUN echo "https://dl-cdn.alpinelinux.org/alpine/v3.23/community/" >/etc/apk/repo
         tcpdump=4.99.5-r1 \
         wget=1.25.0-r2 \
         xz-libs=5.8.2-r0 \
-        zip=3.0-r13 && \
+        zip=3.0-r13 \
+        zlib=1.3.2-r0 && \
       rm -rf /var/cache/apk/*
 
 COPY build-context/qubership-atp-tdm-distribution/target/ /tmp/
