@@ -12,7 +12,7 @@ WORKDIR $HOME_EX
 
 RUN echo "https://dl-cdn.alpinelinux.org/alpine/v3.23/community/" >/etc/apk/repositories && \
     echo "https://dl-cdn.alpinelinux.org/alpine/v3.23/main/" >>/etc/apk/repositories && \
-    apk add -v --update --no-cache --no-check-certificate \
+    apk add --update --no-cache --no-check-certificate \
         bash=5.3.3-r1 \
         curl=8.19.0-r0 \
         font-dejavu=2.37-r6 \
