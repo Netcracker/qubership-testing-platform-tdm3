@@ -28,21 +28,30 @@ import org.apache.commons.lang3.StringUtils;
 import org.qubership.atp.tdm.env.configurator.model.LazyEnvironment;
 import org.qubership.atp.tdm.env.configurator.model.LazyProject;
 import org.qubership.atp.tdm.env.configurator.model.LazySystem;
+import org.qubership.atp.tdm.env.configurator.model.envgen.ConnectionType;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
+import org.qubership.atp.tdm.model.DynamicEnvironment;
 import org.qubership.atp.tdm.model.rest.ResponseMessage;
 import org.qubership.atp.tdm.model.rest.ResponseType;
 import org.qubership.atp.tdm.model.rest.requests.AddInfoToRowRequest;
+import org.qubership.atp.tdm.model.rest.requests.EnvironmentConnectionRequest;
 import org.qubership.atp.tdm.model.rest.requests.GetRowRequest;
 import org.qubership.atp.tdm.model.rest.requests.OccupyFullRowRequest;
 import org.qubership.atp.tdm.model.rest.requests.OccupyRowRequest;
 import org.qubership.atp.tdm.model.rest.requests.ReleaseRowRequest;
 import org.qubership.atp.tdm.model.rest.requests.UpdateRowRequest;
 import org.qubership.atp.tdm.repo.AtpActionRepository;
+import org.qubership.atp.tdm.repo.DynamicEnvironmentRepository;
 import org.qubership.atp.tdm.service.AtpActionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
@@ -58,8 +67,11 @@ public class AtpActionServiceImpl implements AtpActionService {
     private static final Pattern TEMP_ENV_TIMESTAMP_PATTERN = Pattern.compile(" [0-9]{1,4}-[0-9]{1,2}-[0-9]{1,2}"
             + "T[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}.*");
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private final EnvironmentsService environmentsService;
     private final AtpActionRepository repository;
+    private final DynamicEnvironmentRepository dynamicEnvironmentRepository;
 
     private String tdmUrl = "";
 
@@ -71,9 +83,11 @@ public class AtpActionServiceImpl implements AtpActionService {
      */
     @Autowired
     public AtpActionServiceImpl(@Nonnull EnvironmentsService environmentsService,
-                                @Nonnull AtpActionRepository repository) {
+                                @Nonnull AtpActionRepository repository,
+                                @Nonnull DynamicEnvironmentRepository dynamicEnvironmentRepository) {
         this.environmentsService = environmentsService;
         this.repository = repository;
+        this.dynamicEnvironmentRepository = dynamicEnvironmentRepository;
     }
 
     @Override
@@ -93,9 +107,10 @@ public class AtpActionServiceImpl implements AtpActionService {
     @Override
     public ResponseMessage insertTestData(@Nonnull String projectName, @Nullable String envName,
                                           @Nullable String systemName, @Nonnull String tableTitle,
-                                          List<Map<String, Object>> records) {
+                                          List<Map<String, Object>> records,
+                                          @Nullable EnvironmentConnectionRequest connection) {
         log.info("ATP Action. Inserting test data. Table Title: {}", tableTitle);
-        EnvironmentContext environmentContext = getEnvironmentContext(projectName, envName, systemName);
+        EnvironmentContext environmentContext = getEnvironmentContext(projectName, envName, systemName, connection);
         String link = this.formResultLink(environmentContext.getProjectId(), environmentContext.getEnvId(),
                 environmentContext.getSystemId());
         ResponseMessage response = repository.insertTestData(environmentContext.getProjectId(),
@@ -242,20 +257,27 @@ public class AtpActionServiceImpl implements AtpActionService {
 
     private EnvironmentContext getEnvironmentContext(@Nonnull String projectName, @Nullable String envName,
                                                      @Nullable String systemName) {
+        return getEnvironmentContext(projectName, envName, systemName, null);
+    }
+
+    private EnvironmentContext getEnvironmentContext(@Nonnull String projectName, @Nullable String envName,
+                                                     @Nullable String systemName,
+                                                     @Nullable EnvironmentConnectionRequest connection) {
         log.info("Loading data from the environments tool. Project: [{}], Env: [{}], System: [{}]",
                 projectName, envName, systemName);
         LazyProject lazyProject = environmentsService.getLazyProjectByName(projectName);
         UUID projectId = lazyProject.getId();
-        return getEnvironmentContextByProjectId(projectId, envName, systemName);
+        return getEnvironmentContextByProjectId(projectId, envName, systemName, connection);
     }
 
     private EnvironmentContext getEnvironmentContext(@Nonnull UUID projectId, @Nullable String envName,
                                                      @Nullable String systemName) {
-        return getEnvironmentContextByProjectId(projectId, envName, systemName);
+        return getEnvironmentContextByProjectId(projectId, envName, systemName, null);
     }
 
     private EnvironmentContext getEnvironmentContextByProjectId(@Nonnull UUID projectId, @Nullable String envName,
-                                                                @Nullable String systemName) {
+                                                                @Nullable String systemName,
+                                                                @Nullable EnvironmentConnectionRequest connection) {
         UUID systemId = null;
         UUID envId = null;
         if (Objects.nonNull(envName) && Objects.nonNull(systemName)) {
@@ -266,7 +288,13 @@ public class AtpActionServiceImpl implements AtpActionService {
                 log.info("Env: [{}]", envName);
             }
 
-            LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(projectId, envName);
+            LazyEnvironment lazyEnvironment;
+            try {
+                lazyEnvironment = environmentsService.getLazyEnvironmentByName(projectId, envName);
+            } catch (Exception e) {
+                log.warn("Environment [{}] not found for project [{}]: {}", envName, projectId, e.getMessage());
+                lazyEnvironment = createEnvironmentFromConnection(projectId, envName, systemName, connection);
+            }
 
             envId = lazyEnvironment.getId();
             LazySystem lazySystemByName =
@@ -275,6 +303,85 @@ public class AtpActionServiceImpl implements AtpActionService {
         }
         log.info("Data from the environments tool is loaded.");
         return new EnvironmentContext(projectId, envId, systemId);
+    }
+
+    /**
+     * Creates a dynamic environment in the cache and persists it to H2 when the environment is not found
+     * and a connection is provided. Throws an informative exception when no connection is available.
+     */
+    private LazyEnvironment createEnvironmentFromConnection(@Nonnull UUID projectId, @Nonnull String envName,
+                                                            @Nonnull String systemName,
+                                                            @Nullable EnvironmentConnectionRequest connection) {
+        if (connection == null) {
+            throw new IllegalArgumentException(
+                    String.format("Environment [%s] not found and no connection provided to create it.", envName));
+        }
+
+        if (StringUtils.isBlank(connection.getName())) {
+            throw new IllegalArgumentException("Connection 'name' must not be blank.");
+        }
+        if (StringUtils.isBlank(connection.getType())) {
+            throw new IllegalArgumentException("Connection 'type' must not be blank.");
+        }
+        try {
+            ConnectionType.fromValue(connection.getType());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    String.format("Connection 'type' value [%s] is not valid.", connection.getType()));
+        }
+        if (connection.getParameters() == null || connection.getParameters().isEmpty()) {
+            throw new IllegalArgumentException("Connection 'parameters' must not be null or empty.");
+        }
+
+        log.info("Creating dynamic environment [{}] with system [{}] for project [{}].",
+                envName, systemName, projectId);
+
+        LazyEnvironment lazyEnvironment = environmentsService.registerEnvironmentInCache(
+                projectId, envName, systemName,
+                connection.getName(), connection.getType(), connection.getParameters());
+
+        if (!dynamicEnvironmentRepository.existsByEnvNameAndProjectId(envName, projectId)) {
+            String parametersJson;
+            try {
+                parametersJson = OBJECT_MAPPER.writeValueAsString(connection.getParameters());
+            } catch (JsonProcessingException ex) {
+                log.warn("Failed to serialize connection parameters, storing as empty.", ex);
+                parametersJson = "{}";
+            }
+            DynamicEnvironment record = new DynamicEnvironment(
+                    lazyEnvironment.getId(), projectId, envName, systemName,
+                    connection.getName(), connection.getType(), parametersJson);
+            dynamicEnvironmentRepository.save(record);
+            log.info("Dynamic environment [{}] persisted to H2.", envName);
+        }
+
+        return lazyEnvironment;
+    }
+
+    /**
+     * On startup, reload all previously persisted dynamic environments back into the in-memory cache.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void loadDynamicEnvironmentsFromDb() {
+        List<DynamicEnvironment> all = dynamicEnvironmentRepository.findAll();
+        log.info("Loading {} dynamic environment(s) from H2 into cache.", all.size());
+        for (DynamicEnvironment record : all) {
+            Map<String, String> parameters;
+            try {
+                parameters = OBJECT_MAPPER.readValue(record.getConnectionParameters(),
+                        new TypeReference<Map<String, String>>() {});
+            } catch (Exception e) {
+                log.warn("Failed to deserialize parameters for dynamic env [{}], skipping.", record.getEnvName(), e);
+                continue;
+            }
+            try {
+                environmentsService.registerEnvironmentInCache(
+                        record.getProjectId(), record.getEnvName(), record.getSystemName(),
+                        record.getConnectionName(), record.getConnectionType(), parameters);
+            } catch (Exception e) {
+                log.warn("Failed to restore dynamic env [{}] into cache.", record.getEnvName(), e);
+            }
+        }
     }
 
     private String formResultLink(@Nonnull UUID projectName, @Nullable UUID envName,

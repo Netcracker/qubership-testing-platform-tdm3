@@ -147,5 +147,31 @@
                       columnDataType="VARCHAR(1024)"/>
     </changeSet>
 
+    <changeSet id="CREATE_TABLE_DYNAMIC_ENVIRONMENT" author="atp-tdm-be">
+        <createTable tableName="dynamic_environment">
+            <column name="id" type="uuid">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="project_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="env_name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="system_name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="connection_name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="connection_type" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="connection_parameters" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
 
 </databaseChangeLog>

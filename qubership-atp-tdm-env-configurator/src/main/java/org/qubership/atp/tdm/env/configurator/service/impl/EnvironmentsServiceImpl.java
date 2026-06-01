@@ -19,7 +19,9 @@ package org.qubership.atp.tdm.env.configurator.service.impl;
 import static java.lang.String.format;
 
 import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -41,6 +43,11 @@ import org.qubership.atp.tdm.env.configurator.model.LazyEnvironment;
 import org.qubership.atp.tdm.env.configurator.model.LazyProject;
 import org.qubership.atp.tdm.env.configurator.model.LazySystem;
 import org.qubership.atp.tdm.env.configurator.model.Project;
+import org.qubership.atp.tdm.env.configurator.model.envgen.ConnectionType;
+import org.qubership.atp.tdm.env.configurator.model.envgen.YamlConnection;
+import org.qubership.atp.tdm.env.configurator.model.envgen.YamlEnvironment;
+import org.qubership.atp.tdm.env.configurator.model.envgen.YamlSystem;
+import org.qubership.atp.tdm.env.configurator.service.CacheService;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
 import org.qubership.atp.tdm.env.configurator.service.GitService;
 import org.qubership.atp.tdm.env.configurator.utils.CacheNames;
@@ -59,6 +66,7 @@ import lombok.extern.slf4j.Slf4j;
 public class EnvironmentsServiceImpl implements EnvironmentsService {
 
     private final GitService gitService;
+    private final CacheService cacheService;
     private final CacheManager cacheManager;
 
     /**
@@ -327,6 +335,39 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         }
         log.info("Lazy systems by project ID successfully loaded");
         return systems;
+    }
+
+    @Override
+    public LazyEnvironment registerEnvironmentInCache(@Nonnull UUID projectId, @Nonnull String envName,
+                                                      @Nonnull String systemName, @Nonnull String connectionName,
+                                                      @Nonnull String connectionType,
+                                                      @Nonnull Map<String, String> parameters) {
+        log.info("Registering dynamic environment in cache. Env: [{}], System: [{}]", envName, systemName);
+
+        YamlConnection yamlConnection = new YamlConnection();
+        yamlConnection.setName(connectionName);
+        yamlConnection.setType(ConnectionType.fromValue(connectionType));
+        yamlConnection.setParameters(parameters);
+
+        YamlSystem yamlSystem = new YamlSystem();
+        yamlSystem.setName(systemName);
+        yamlSystem.setProjectId(projectId);
+        yamlSystem.setConnections(Collections.singletonList(yamlConnection));
+
+        YamlEnvironment yamlEnvironment = new YamlEnvironment(envName);
+        yamlEnvironment.setProjectId(projectId);
+        yamlEnvironment.setYamlSystems(Collections.singletonList(yamlSystem));
+
+        cacheService.put(yamlEnvironment);
+        log.info("Dynamic environment [{}] registered in cache with id [{}].", envName, yamlEnvironment.getId());
+
+        return LazyEnvironment.builder()
+                .id(yamlEnvironment.getId())
+                .name(yamlEnvironment.getName())
+                .projectId(projectId)
+                .systems(Collections.singletonList(
+                        yamlEnvironment.getYamlSystems().get(0).getId().toString()))
+                .build();
     }
 
     @Override

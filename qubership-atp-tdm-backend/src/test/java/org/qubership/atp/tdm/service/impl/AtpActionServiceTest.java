@@ -1036,7 +1036,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
         List<Map<String, Object>> records = buildTestDataTable().getData();
 
         ResponseMessage responseMessage = atpActionService.insertTestData(projectName, envName, systemName,
-                tableTitle, records);
+                tableTitle, records, null);
 
         TestDataTableCatalog tableCatalog = catalogRepository
                 .findByProjectIdAndSystemIdAndTableTitle(projectId, systemId, tableTitle);

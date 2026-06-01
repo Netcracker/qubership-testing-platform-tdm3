@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.qubership.atp.tdm.model.rest.ResponseMessage;
 import org.qubership.atp.tdm.model.rest.requests.AddInfoToRowRequest;
+import org.qubership.atp.tdm.model.rest.requests.EnvironmentConnectionRequest;
 import org.qubership.atp.tdm.model.rest.requests.GetRowRequest;
 import org.qubership.atp.tdm.model.rest.requests.OccupyFullRowRequest;
 import org.qubership.atp.tdm.model.rest.requests.OccupyRowRequest;
@@ -33,7 +34,8 @@ import jakarta.annotation.Nullable;
 public interface AtpActionService {
 
     ResponseMessage insertTestData(@Nonnull String projectName, @Nullable String envName, @Nullable String systemName,
-                                   @Nonnull String tableTitle, List<Map<String, Object>> records);
+                                   @Nonnull String tableTitle, List<Map<String, Object>> records,
+                                   @Nullable EnvironmentConnectionRequest connection);
 
     List<ResponseMessage> occupyTestData(@Nonnull String projectName, @Nullable String envName,
                                          @Nullable String systemName, @Nonnull String tableTitle,

@@ -17,6 +17,7 @@
 package org.qubership.atp.tdm.env.configurator.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.qubership.atp.tdm.env.configurator.model.Connection;
@@ -62,4 +63,9 @@ public interface EnvironmentsService {
     List<LazySystem> getLazySystemsByProjectIdWithConnections(UUID projectId);
 
     boolean resetCaches();
+
+    LazyEnvironment registerEnvironmentInCache(@Nonnull UUID projectId, @Nonnull String envName,
+                                               @Nonnull String systemName, @Nonnull String connectionName,
+                                               @Nonnull String connectionType,
+                                               @Nonnull Map<String, String> parameters);
 }

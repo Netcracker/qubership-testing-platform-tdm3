@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 
 @Data
@@ -28,6 +29,7 @@ public class RestApiRequest {
     private String projectName;
     private String envName;
     private String systemName;
+    private EnvironmentConnectionRequest connection;
     @JsonProperty("title-table")
     private String titleTable;
     @JsonProperty("insert-records")
@@ -50,5 +52,10 @@ public class RestApiRequest {
         this.projectName = (String) environment.get("projectName");
         this.envName = (String) environment.get("envName");
         this.systemName = (String) environment.get("systemName");
+        Object connectionObj = environment.get("connection");
+        if (connectionObj instanceof Map) {
+            ObjectMapper mapper = new ObjectMapper();
+            this.connection = mapper.convertValue(connectionObj, EnvironmentConnectionRequest.class);
+        }
     }
 }
