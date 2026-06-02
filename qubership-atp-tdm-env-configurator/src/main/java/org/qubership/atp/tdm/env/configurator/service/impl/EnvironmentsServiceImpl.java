@@ -493,13 +493,14 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         YamlEnvironment yamlEnvironment = cacheService.get(environmentId);
         YamlSystem yamlSystem = yamlEnvironment.getSystemByName(systemName);
         if (yamlSystem == null) {
+            log.error("System not found [{}] for environment id [{}].", systemName, environmentId);
             throw new TdmEnvConvertFullSystemByNameException(systemName);
         }
 
         List<Connection> connections = yamlSystem.getConnections().stream().map(yamlConnection -> {
             Connection connection = new Connection();
             connection.setId(yamlConnection.getId());
-            connection.setName(yamlConnection.getName());
+            connection.setName(yamlConnection.getType().toString());
             connection.setSystemId(yamlSystem.getId());
             connection.setConnectionType(yamlConnection.getType().toString());
             connection.setParameters(yamlConnection.getParameters());
@@ -509,12 +510,14 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         boolean hasDbConnection = connections.stream()
                 .anyMatch(connection -> "DB".equalsIgnoreCase(connection.getName()));
         if (!hasDbConnection) {
+            log.error("No connection named DB under system [{}] for environment id [{}].", systemName, environmentId);
             throw new TdmEnvDbConnectionException("DB");
         }
 
         System system = System.builder()
                 .environmentId(environmentId)
-                .connections(connections).build();
+                .connections(connections)
+                .build();
         system.setId(yamlSystem.getId());
         system.setName(systemName.toLowerCase());
         return system;
