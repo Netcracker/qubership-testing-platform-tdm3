@@ -73,11 +73,11 @@ public class YamlEnvironment {
         mergeConnections(yamlSystems);
     }
 
-    private UUID composeSystemId(String envName, String systemName) {
+    public static UUID composeSystemId(String envName, String systemName) {
         return UUID.nameUUIDFromBytes(String.format("%s/%s", envName, systemName).getBytes());
     }
 
-    private UUID composeConnectionId(String envName, String systemName, String connectionName) {
+    public static UUID composeConnectionId(String envName, String systemName, String connectionName) {
         return UUID.nameUUIDFromBytes(String.format("%s/%s/%s", envName, systemName, connectionName).getBytes());
     }
 
@@ -109,9 +109,9 @@ public class YamlEnvironment {
     }
 
     public YamlSystem getSystemByName(String name) {
-        return yamlSystems
+        return getYamlSystems()
                 .stream()
-                .filter(yamlSystem -> yamlSystem.getName().equals(name))
+                .filter(yamlSystem -> yamlSystem.getName().equalsIgnoreCase(name))
                 .findFirst()
                 .orElse(null);
     }

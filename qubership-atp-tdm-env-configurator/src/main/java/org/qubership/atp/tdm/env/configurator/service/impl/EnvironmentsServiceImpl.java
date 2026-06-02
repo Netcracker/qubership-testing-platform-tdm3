@@ -253,8 +253,7 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
                         .projectId(projectId)
                         .systems(yamlEnv.getYamlSystems() != null
                                 ? yamlEnv.getYamlSystems().stream()
-                                .map(system -> UUID.nameUUIDFromBytes(String.format("%s/%s",
-                                        yamlEnv.getName(), system.getName()).getBytes()).toString())
+                                .map(system -> YamlEnvironment.composeSystemId(yamlEnv.getName(), system.getName()).toString())
                                 .collect(Collectors.toList()) : new ArrayList<>())
                         .build();
                 cachedEnvironments.add(lazyEnv);
@@ -493,6 +492,9 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         log.info("Loading full system by name [{}] for environment id [{}].", systemName, environmentId);
         YamlEnvironment yamlEnvironment = cacheService.get(environmentId);
         YamlSystem yamlSystem = yamlEnvironment.getSystemByName(systemName);
+        if (yamlSystem == null) {
+            throw new TdmEnvConvertFullSystemByNameException(systemName);
+        }
 
         List<Connection> connections = yamlSystem.getConnections().stream().map(yamlConnection -> {
             Connection connection = new Connection();
@@ -514,7 +516,7 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
                 .environmentId(environmentId)
                 .connections(connections).build();
         system.setId(yamlSystem.getId());
-        system.setName(systemName);
+        system.setName(systemName.toLowerCase());
         return system;
     }
 
