@@ -44,15 +44,6 @@ FEIGN_ATP_MAILSENDER_ROUTE: "api/atp-mail-sender/v1"
 FEIGN_ATP_HIGHCHARTS_NAME: "ATP-CHARTS"
 FEIGN_ATP_HIGHCHARTS_ROUTE: "api/atp-charts/v1"
 FEIGN_ATP_HIGHCHARTS_URL: ""
-# EnvGene configuration
-ENVGENE_AGE_PRIVATE_KEY: ""
-ENVGENE_GIT_REPO_URL: ""
-ENVGENE_GIT_REPO_TOKEN: ""
-ENVGENE_GIT_REPO_BRANCH: ""
-ENVGENE_GIT_REPO_DEPLOYMENT_PATH: "effective-set/deployment"
-ENVGENE_GIT_REPO_NC_APP_PATH: "atp/atp3-playwright-runner"
-ENVGENE_GIT_REPO_CREDENTIALS_PATH: "values/credentials.yaml"
-ENVGENE_GIT_REPO_DEPLOYMENT_PARAMETERS_PATH: "values/deployment-parameters.yaml"
 
 atp3tdm:
   externalQueryDefaultTimeout: "1800"

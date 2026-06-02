@@ -162,11 +162,6 @@ public class StatisticsServiceTest extends AbstractTestDataTest {
 
         projectInformationService.saveProjectInformation(new ProjectInformation(projectId, "GMT+03:00", "d MMM yyyy", "hh:mm:ss a", 1));
         when(environmentsService.getFullProject(any())).thenReturn(project);
-        try {
-            when(gitEnvironmentsService.getFullProject(any())).thenReturn(project);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
         // create table for env first
         createTestDataTableCatalog(projectId, systemId, environmentId, TABLE_TITLE, TABLE_NAME_FIRST);
         createTestDataTable(TABLE_NAME_FIRST);
@@ -346,18 +341,6 @@ public class StatisticsServiceTest extends AbstractTestDataTest {
         when(environmentsService.getEnvNameById(environmentId)).thenReturn("Test Environment");
         when(environmentsService.getEnvNameById(environmentIdSecond)).thenReturn("Test Environment second");
 
-        when(gitEnvironmentsService.getLazyProjectById(any())).thenReturn(lazyProject);
-        try {
-            when(gitEnvironmentsService.getLazyEnvironments(any())).thenReturn(lazyEnvironments);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        when(gitEnvironmentsService.getLazySystemById(environmentId, systemId)).thenReturn(lazySystem);
-        when(gitEnvironmentsService.getLazySystemById(environmentIdSecond, systemIdSecond)).thenReturn(lazySystemSecond);
-        when(gitEnvironmentsService.getLazyEnvironment(environmentId)).thenReturn(lazyEnvironment);
-        when(gitEnvironmentsService.getLazyEnvironment(environmentIdSecond)).thenReturn(lazyEnvironmentSecond);
-        when(gitEnvironmentsService.getEnvNameById(environmentId)).thenReturn("Test Environment");
-        when(gitEnvironmentsService.getEnvNameById(environmentIdSecond)).thenReturn("Test Environment second");
     }
 
     protected void cleanUp() {
@@ -371,10 +354,6 @@ public class StatisticsServiceTest extends AbstractTestDataTest {
         when(environmentsService.getLazyEnvironment(any())).thenReturn(lazyEnvironment);
         when(environmentsService.getLazySystemById(any(), any())).thenReturn(lazySystem);
         when(environmentsService.getEnvNameById(environmentId)).thenReturn("Test Environment");
-
-        when(gitEnvironmentsService.getLazyEnvironment(any())).thenReturn(lazyEnvironment);
-        when(gitEnvironmentsService.getLazySystemById(any(), any())).thenReturn(lazySystem);
-        when(gitEnvironmentsService.getEnvNameById(environmentId)).thenReturn("Test Environment");
     }
 
     @Test
@@ -724,7 +703,6 @@ public class StatisticsServiceTest extends AbstractTestDataTest {
     @Test
     public void statisticsService_checkUserStatisticsReport_returnsEmptyUserStatisticsReport() {
         when(environmentsService.getLazyProjectById(any())).thenReturn(lazyProject);
-        when(gitEnvironmentsService.getLazyProjectById(any())).thenReturn(lazyProject);
         TestDataTableUsersMonitoring usersMonitoring = getTestDataTableUsersMonitoring(cron);
 
         UsersStatisticsReportObject expect = new UsersStatisticsReportObject();

@@ -35,7 +35,6 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.io.IOUtils;
 
-import org.qubership.atp.tdm.env.configurator.service.GitService;
 import org.qubership.atp.tdm.mdc.TdmMdcHelper;
 import org.qubership.atp.tdm.model.ColumnType;
 import org.qubership.atp.tdm.model.FilterType;
@@ -220,9 +219,6 @@ public abstract class AbstractTestDataTest extends AbstractTest {
 
     @MockBean
     protected EnvironmentsService environmentsService;
-
-    @MockBean
-    protected GitService gitEnvironmentsService;
 
     @MockBean
     protected CurrentTime currentTime;

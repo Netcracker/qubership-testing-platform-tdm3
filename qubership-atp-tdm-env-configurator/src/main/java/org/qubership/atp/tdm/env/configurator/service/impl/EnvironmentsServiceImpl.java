@@ -19,11 +19,15 @@ package org.qubership.atp.tdm.env.configurator.service.impl;
 import static java.lang.String.format;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.qubership.atp.auth.springbootstarter.exceptions.AtpException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertFullProjectByIdException;
@@ -38,36 +42,44 @@ import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertL
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazySystemsByEnvIdException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazySystemsByProjectIdException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvResetCachesException;
+import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvDbConnectionException;
 import org.qubership.atp.tdm.env.configurator.model.Connection;
+import org.qubership.atp.tdm.env.configurator.model.Environment;
 import org.qubership.atp.tdm.env.configurator.model.LazyEnvironment;
 import org.qubership.atp.tdm.env.configurator.model.LazyProject;
 import org.qubership.atp.tdm.env.configurator.model.LazySystem;
 import org.qubership.atp.tdm.env.configurator.model.Project;
+import org.qubership.atp.tdm.env.configurator.model.System;
 import org.qubership.atp.tdm.env.configurator.model.envgen.ConnectionType;
 import org.qubership.atp.tdm.env.configurator.model.envgen.YamlConnection;
 import org.qubership.atp.tdm.env.configurator.model.envgen.YamlEnvironment;
 import org.qubership.atp.tdm.env.configurator.model.envgen.YamlSystem;
 import org.qubership.atp.tdm.env.configurator.service.CacheService;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
-import org.qubership.atp.tdm.env.configurator.service.GitService;
 import org.qubership.atp.tdm.env.configurator.utils.CacheNames;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Nonnull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class EnvironmentsServiceImpl implements EnvironmentsService {
 
-    private final GitService gitService;
+    @Value("#{${projects.info}}")
+    private Map<UUID, String> projects;
+
     private final CacheService cacheService;
     private final CacheManager cacheManager;
+
+    public EnvironmentsServiceImpl(CacheService cacheService, CacheManager cacheManager) {
+        this.cacheService = cacheService;
+        this.cacheManager = cacheManager;
+    }
 
     /**
      * Project:
@@ -79,7 +91,34 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         log.info("Loading project by id: [{}]", projectId);
         Project project;
         try {
-            project = gitService.getFullProject(projectId);
+            project = new Project();
+            project.setId(projectId);
+            project.setName(projects.get(projectId));
+
+            List<Environment> environments = getLazyEnvironmentsFromCache(projectId).stream()
+                    .map(lazyEnvironment -> {
+                        YamlEnvironment yamlEnv = cacheService.get(lazyEnvironment.getId());
+                        List<Connection> connections = new ArrayList<>();
+                        if (yamlEnv != null) {
+                            for (YamlSystem yamlSystem : yamlEnv.getYamlSystems()) {
+                                for (YamlConnection yamlConn : yamlSystem.getConnections()) {
+                                    Connection conn = new Connection();
+                                    conn.setId(yamlConn.getId());
+                                    conn.setName(yamlConn.getName());
+                                    conn.setSystemId(yamlSystem.getId());
+                                    conn.setConnectionType(yamlConn.getType().toString());
+                                    conn.setParameters(yamlConn.getParameters());
+                                    connections.add(conn);
+                                }
+                            }
+                        }
+                        System system = new System();
+                        system.setId(yamlEnv != null && !yamlEnv.getYamlSystems().isEmpty()
+                                ? yamlEnv.getYamlSystems().get(0).getId() : null);
+                        system.setConnections(connections);
+                        return Environment.of(lazyEnvironment, Collections.singletonList(system));
+                    }).collect(Collectors.toList());
+            project.setEnvironments(environments);
         } catch (Exception e) {
             log.error(format(TdmEnvConvertFullProjectByIdException.DEFAULT_MESSAGE, projectId), e);
             throw new TdmEnvConvertFullProjectByIdException(projectId.toString());
@@ -95,7 +134,7 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
     @Cacheable(value = CacheNames.TDM_LAZY_PROJECT_CACHE)
     public LazyProject getLazyProjectById(@Nonnull UUID projectId) {
         log.info("Loading lazy project by Id.");
-        LazyProject lazyProject = gitService.getLazyProjectById(projectId);
+        LazyProject lazyProject = new LazyProject(projectId, projects.get(projectId));
         log.info("Lazy project by Id successfully loaded.");
         return lazyProject;
     }
@@ -107,7 +146,13 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
     @Cacheable(value = CacheNames.TDM_LAZY_PROJECT_BY_NAME_CACHE)
     public LazyProject getLazyProjectByName(@Nonnull String projectName) {
         log.info("Loading lazy project by name: {}.", projectName);
-        LazyProject lazyProject = gitService.getLazyProjectByName(projectName);
+        LazyProject lazyProject = null;
+        for (Map.Entry<UUID, String> entry : projects.entrySet()) {
+            if (projectName.equals(entry.getValue())) {
+                lazyProject = new LazyProject(entry.getKey(), entry.getValue());
+                break;
+            }
+        }
         log.info("Lazy project by name successfully loaded.");
         return lazyProject;
     }
@@ -121,7 +166,10 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         log.info("Loading lazy projects.");
         List<LazyProject> lazyProjects;
         try {
-            lazyProjects = gitService.getLazyProjects();
+            lazyProjects = projects.entrySet()
+                    .stream()
+                    .map(entry -> new LazyProject(entry.getKey(), entry.getValue()))
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             log.error(TdmEnvConvertLazyProjectsException.DEFAULT_MESSAGE, e);
             throw new TdmEnvConvertLazyProjectsException();
@@ -140,7 +188,17 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         log.info("Loading lazy environment by environment id: [{}]", environmentId);
         LazyEnvironment environment;
         try {
-            environment = gitService.getLazyEnvironment(environmentId);
+            YamlEnvironment yamlEnvironment = cacheService.get(environmentId);
+            if (yamlEnvironment == null) {
+                log.warn("Environment not found in cache for ID: {}", environmentId);
+                return null;
+            }
+            environment = LazyEnvironment.builder()
+                    .id(yamlEnvironment.getId())
+                    .name(yamlEnvironment.getName())
+                    .clusterName(yamlEnvironment.getClusterName())
+                    .projectId(yamlEnvironment.getProjectId())
+                    .build();
         } catch (Exception e) {
             log.error(format(TdmEnvConvertLazyEnvironmentByEnvIdtException.DEFAULT_MESSAGE,
                     environmentId), e);
@@ -157,26 +215,19 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
     @Cacheable(value = CacheNames.TDM_ENV_NAME_BY_ENVIRONMENT_ID_CACHE)
     public String getEnvNameById(@Nonnull UUID environmentId) {
         log.info("Loading environment name by environment id: [{}]", environmentId);
-        return gitService.getEnvNameById(environmentId);
+        YamlEnvironment yamlEnvironment = cacheService.get(environmentId);
+        return yamlEnvironment != null ? yamlEnvironment.getName() : null;
     }
 
     /**
-     * Get lazy environments by project ID - with systems.
+     * Get lazy environments by project ID.
      */
     @Override
-//    @Cacheable(value = CacheNames.TDM_LAZY_ENVIRONMENTS_CACHE)
     public List<LazyEnvironment> getLazyEnvironments(@Nonnull UUID projectId) {
         log.info("Loading lazy environments by project id: [{}]", projectId);
         List<LazyEnvironment> lazyEnvironments;
         try {
-            lazyEnvironments = gitService.getLazyEnvironmentsFromCache(projectId);
-            if (lazyEnvironments.isEmpty()) {
-                // If cache is empty, fallback to Git
-                log.info("No cached environments found, loading from Git for project: {}", projectId);
-                lazyEnvironments = gitService.getLazyEnvironments(projectId);
-            } else {
-                log.info("Using cached environments for project: {}", projectId);
-            }
+            lazyEnvironments = getLazyEnvironmentsFromCache(projectId);
         } catch (Exception e) {
             log.error(format(TdmEnvConvertLazyEnvironmentsException.DEFAULT_MESSAGE, projectId), e);
             throw new TdmEnvConvertLazyEnvironmentsException(projectId.toString());
@@ -191,20 +242,38 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
     @Override
     public List<LazyEnvironment> getLazyEnvironmentsFromCache(@Nonnull UUID projectId) {
         log.info("Getting lazy environments from cache by project id: [{}]", projectId);
-        List<LazyEnvironment> lazyEnvironments = gitService.getLazyEnvironmentsFromCache(projectId);
-        log.info("Retrieved {} cached environments for project: {}", lazyEnvironments.size(), projectId);
-        return lazyEnvironments;
+        List<LazyEnvironment> cachedEnvironments = new ArrayList<>();
+
+        for (YamlEnvironment yamlEnv : cacheService.getEnvironments()) {
+            if (yamlEnv.getProjectId() != null && yamlEnv.getProjectId().equals(projectId)) {
+                LazyEnvironment lazyEnv = LazyEnvironment.builder()
+                        .id(yamlEnv.getId())
+                        .name(yamlEnv.getName())
+                        .clusterName(yamlEnv.getClusterName())
+                        .projectId(projectId)
+                        .systems(yamlEnv.getYamlSystems() != null
+                                ? yamlEnv.getYamlSystems().stream()
+                                .map(system -> UUID.nameUUIDFromBytes(String.format("%s/%s",
+                                        yamlEnv.getName(), system.getName()).getBytes()).toString())
+                                .collect(Collectors.toList()) : new ArrayList<>())
+                        .build();
+                cachedEnvironments.add(lazyEnv);
+            }
+        }
+
+        log.info("Retrieved {} cached environments for project: {}", cachedEnvironments.size(), projectId);
+        return cachedEnvironments;
     }
 
     /**
-     * Get lazy environments by project ID - refresh without cache.
+     * Environments are now sourced exclusively from H2-persisted DynamicEnvironment records (loaded on
+     * startup). There is no Git backend to refresh from, so this returns the current cached list.
      */
     @Override
     public List<LazyEnvironment> getLazyEnvironmentsRefresh(@Nonnull UUID projectId) {
-        log.info("Refreshing lazy environments by project id: [{}]", projectId);
-        List<LazyEnvironment> lazyEnvironments = gitService.getLazyEnvironmentsRefresh(projectId);
-        log.info("Lazy environments refresh completed. Found {} environments", lazyEnvironments.size());
-        return lazyEnvironments;
+        log.info("getLazyEnvironmentsRefresh called for project [{}] - returning current cache (no Git backend).",
+                projectId);
+        return getLazyEnvironmentsFromCache(projectId);
     }
 
     /**
@@ -215,7 +284,13 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
     public LazyEnvironment getLazyEnvironmentByName(@Nonnull UUID projectId, @Nonnull String environmentName) {
         LazyEnvironment lazyEnvironment;
         try {
-            lazyEnvironment = gitService.getLazyEnvironmentByName(projectId, environmentName);
+            YamlEnvironment yamlEnvironment = cacheService.get(UUID.nameUUIDFromBytes(environmentName.getBytes()));
+            lazyEnvironment = LazyEnvironment.builder()
+                    .id(yamlEnvironment.getId())
+                    .name(yamlEnvironment.getName())
+                    .clusterName(yamlEnvironment.getClusterName())
+                    .projectId(yamlEnvironment.getProjectId())
+                    .build();
         } catch (Exception e) {
             log.error(format(TdmEnvConvertLazyEnvironmentByNameException.DEFAULT_MESSAGE,
                     environmentName, projectId), e);
@@ -233,7 +308,35 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         log.info("Loading connections by system ID: {}", systemId);
         List<Connection> connections;
         try {
-            connections = gitService.getConnectionsSystemById(environmentId, systemId);
+            YamlSystem yamlSystem = null;
+            if (environmentId != null) {
+                YamlEnvironment yamlEnvironment = cacheService.get(environmentId);
+                if (yamlEnvironment != null) {
+                    yamlSystem = yamlEnvironment.getSystemById(systemId);
+                }
+            }
+            if (yamlSystem == null) {
+                Optional<YamlEnvironment> systemEnv = cacheService.getEnvironments().stream()
+                        .filter(yamlEnvironment -> yamlEnvironment.getSystemById(systemId) != null)
+                        .findAny();
+                if (systemEnv.isPresent()) {
+                    yamlSystem = systemEnv.get().getSystemById(systemId);
+                }
+            }
+            if (yamlSystem != null) {
+                YamlSystem finalYamlSystem = yamlSystem;
+                connections = yamlSystem.getConnections().stream().map(yamlConnection -> {
+                    Connection connection = new Connection();
+                    connection.setId(yamlConnection.getId());
+                    connection.setName(yamlConnection.getName());
+                    connection.setSystemId(finalYamlSystem.getId());
+                    connection.setConnectionType(yamlConnection.getType().toString());
+                    connection.setParameters(yamlConnection.getParameters());
+                    return connection;
+                }).collect(Collectors.toList());
+            } else {
+                connections = new ArrayList<>();
+            }
         } catch (Exception e) {
             log.error(format(TdmEnvConvertFullSystemBySysIdException.DEFAULT_MESSAGE, systemId), e);
             throw new TdmEnvConvertFullSystemBySysIdException(systemId.toString());
@@ -251,7 +354,13 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         log.info("Loading lazy system by system ID: {}", systemId);
         LazySystem lazySystem;
         try {
-            lazySystem = gitService.getLazySystemById(environmentId, systemId);
+            YamlEnvironment yamlEnvironment = cacheService.get(environmentId);
+            YamlSystem yamlSystem = yamlEnvironment.getSystemById(systemId);
+            lazySystem = LazySystem.builder()
+                    .id(yamlSystem.getId())
+                    .name(yamlSystem.getName())
+                    .connections(yamlSystem.getListConnections())
+                    .build();
         } catch (Exception e) {
             log.error(format(TdmEnvConvertLazySystemBySysIdException.DEFAULT_MESSAGE, systemId), e);
             throw new TdmEnvConvertLazySystemBySysIdException(systemId.toString());
@@ -271,7 +380,13 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
                 environmentId, systemName);
         LazySystem lazySystem;
         try {
-            lazySystem = gitService.getLazySystemByName(projectId, environmentId, systemName);
+            YamlEnvironment yamlEnvironment = cacheService.get(environmentId);
+            YamlSystem yamlSystem = yamlEnvironment.getSystemByName(systemName);
+            lazySystem = LazySystem.builder()
+                    .id(yamlSystem.getId())
+                    .name(yamlSystem.getName())
+                    .connections(yamlSystem.getListConnections())
+                    .build();
         } catch (Exception e) {
             log.error(format(TdmEnvConvertFullSystemByNameException.DEFAULT_MESSAGE, systemName), e);
             throw new TdmEnvConvertFullSystemByNameException(systemName);
@@ -291,7 +406,18 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         log.info("Loading lazy systems by env ID: [{}].", environmentId);
         List<LazySystem> systems;
         try {
-            systems = gitService.getLazySystems(environmentId);
+            YamlEnvironment yamlEnvironment = cacheService.get(environmentId);
+            if (yamlEnvironment == null) {
+                log.warn("Environment not found in cache for ID: {}", environmentId);
+                return new ArrayList<>();
+            }
+            systems = yamlEnvironment.getYamlSystems().stream()
+                    .map(yamlSystem -> LazySystem.builder()
+                            .id(yamlSystem.getId())
+                            .name(yamlSystem.getName())
+                            .connections(yamlSystem.getListConnections())
+                            .build())
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             log.error(format(TdmEnvConvertLazySystemsByEnvIdByNameException.DEFAULT_MESSAGE, environmentId), e);
             throw new TdmEnvConvertLazySystemsByEnvIdException(environmentId);
@@ -306,7 +432,25 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         log.info("Loading lazy systems by project ID: [{}]", projectId);
         List<LazySystem> lazySystems;
         try {
-            lazySystems = gitService.getLazySystemsByProjectWithEnvIds(projectId);
+            Map<UUID, LazySystem.LazySystemBuilder> systemBuilders = new HashMap<>();
+            for (YamlEnvironment yamlEnvironment : cacheService.getEnvironments()) {
+                for (YamlSystem yamlSystem : yamlEnvironment.getYamlSystems()) {
+                    LazySystem.LazySystemBuilder builder = systemBuilders.computeIfAbsent(
+                            yamlSystem.getId(),
+                            id -> LazySystem.builder()
+                                    .id(yamlSystem.getId())
+                                    .name(yamlSystem.getName())
+                                    .connections(yamlSystem.getListConnections())
+                                    .environmentIds(new ArrayList<>())
+                    );
+                    List<UUID> envIds = new ArrayList<>(builder.build().getEnvironmentIds());
+                    envIds.add(yamlEnvironment.getId());
+                    builder.environmentIds(envIds);
+                }
+            }
+            lazySystems = systemBuilders.values().stream()
+                    .map(LazySystem.LazySystemBuilder::build)
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             log.error(format(TdmEnvConvertLazySystemsByProjectIdException.DEFAULT_MESSAGE, projectId), e);
             throw new TdmEnvConvertLazySystemsByProjectIdException(projectId.toString());
@@ -316,7 +460,7 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
     }
 
     /**
-     * Get all systems from feign client by project id.
+     * Get all systems from cache by project id.
      * @param projectId ATP projectId
      * @return list of LazySystem's
      */
@@ -326,7 +470,14 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         log.info("Loading lazy systems by project ID: [{}]", projectId);
         List<LazySystem> systems;
         try {
-            systems = gitService.getLazySystemsByProjectIdWithConnections(projectId);
+            systems = cacheService.getEnvironments().stream()
+                    .flatMap(yamlEnvironment -> yamlEnvironment.getYamlSystems().stream()
+                            .map(yamlSystem -> LazySystem.builder()
+                                    .id(yamlSystem.getId())
+                                    .name(yamlSystem.getName())
+                                    .connections(yamlSystem.getListConnections())
+                                    .build()))
+                    .collect(Collectors.toList());
         } catch (AtpException ae) {
             throw ae;
         } catch (Exception e) {
@@ -335,6 +486,36 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         }
         log.info("Lazy systems by project ID successfully loaded");
         return systems;
+    }
+
+    @Override
+    public System getFullSystemByName(@Nonnull UUID environmentId, @Nonnull String systemName) {
+        log.info("Loading full system by name [{}] for environment id [{}].", systemName, environmentId);
+        YamlEnvironment yamlEnvironment = cacheService.get(environmentId);
+        YamlSystem yamlSystem = yamlEnvironment.getSystemByName(systemName);
+
+        List<Connection> connections = yamlSystem.getConnections().stream().map(yamlConnection -> {
+            Connection connection = new Connection();
+            connection.setId(yamlConnection.getId());
+            connection.setName(yamlConnection.getName());
+            connection.setSystemId(yamlSystem.getId());
+            connection.setConnectionType(yamlConnection.getType().toString());
+            connection.setParameters(yamlConnection.getParameters());
+            return connection;
+        }).collect(Collectors.toList());
+
+        boolean hasDbConnection = connections.stream()
+                .anyMatch(connection -> "DB".equalsIgnoreCase(connection.getName()));
+        if (!hasDbConnection) {
+            throw new TdmEnvDbConnectionException("DB");
+        }
+
+        System system = System.builder()
+                .environmentId(environmentId)
+                .connections(connections).build();
+        system.setId(yamlSystem.getId());
+        system.setName(systemName);
+        return system;
     }
 
     @Override

@@ -90,12 +90,6 @@ FEIGN_CONNECT_TIMEOUT: {{ .Values.FEIGN_CONNECT_TIMEOUT | int | quote }}
 FEIGN_READ_TIMEOUT: {{ .Values.FEIGN_READ_TIMEOUT | int | quote }}
 FROM_EMAIL_ADDRESS: "{{ .Values.atp3tdm.fromEmailAddress }}"
 
-ENVGENE_GIT_REPO_URL: "{{ .Values.ENVGENE_GIT_REPO_URL }}"
-ENVGENE_GIT_REPO_BRANCH: "{{ .Values.ENVGENE_GIT_REPO_BRANCH }}"
-ENVGENE_GIT_REPO_DEPLOYMENT_PATH: "{{ .Values.ENVGENE_GIT_REPO_DEPLOYMENT_PATH }}"
-ENVGENE_GIT_REPO_NC_APP_PATH: "{{ .Values.ENVGENE_GIT_REPO_NC_APP_PATH }}"
-ENVGENE_GIT_REPO_CREDENTIALS_PATH: "{{ .Values.ENVGENE_GIT_REPO_CREDENTIALS_PATH }}"
-ENVGENE_GIT_REPO_DEPLOYMENT_PARAMETERS_PATH: "{{ .Values.ENVGENE_GIT_REPO_DEPLOYMENT_PARAMETERS_PATH }}"
 
 IDENTITY_PROVIDER_URL: "{{ default .Values.atp3tdm.identityProviderUrl .Values.ATP_TDM_URL }}"
 JAVA_OPTIONS: "{{ if .Values.atp3tdm.heapDumpEnabled }}-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/diagnostic{{ end }} -Djdbc.Url=jdbc:h2:file:./{{ .Values.atp3tdm.h2DbAddr }}/{{ include "tdmbe.env.default" (dict "ctx" . "val" .Values.atp3tdm.tdmDb "def" .Values.SERVICE_NAME ) }};{{ .Values.atp3tdm.h2DbProperty }} -Dcom.sun.management.jmxremote={{ .Values.atp3tdm.jmxEnable }} -Dcom.sun.management.jmxremote.port={{ .Values.atp3tdm.jmxPort }} -Dcom.sun.management.jmxremote.rmi.port={{ .Values.atp3tdm.jmxRmiPort }} -Djava.rmi.server.hostname=127.0.0.1 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false {{ .Values.MEM_ARGS }}"
@@ -141,8 +135,6 @@ TDM_DB_PASSWORD: "{{ include "tdmbe.env.default" (dict "ctx" . "val" .Values.atp
 TDM_DB_USER: "{{ include "tdmbe.env.default" (dict "ctx" . "val" .Values.atp3tdm.tdmDbUser "def" .Values.SERVICE_NAME ) }}"
 KEYCLOAK_CLIENT_NAME: "{{ default "atp-tdm" .Values.atp3tdm.keycloakClientName }}"
 KEYCLOAK_SECRET: "{{ default "10870611-a4a4-4ad1-acaa-b587f54ead40" .Values.atp3tdm.keycloakSecret }}"
-ENVGENE_GIT_REPO_TOKEN: "{{ .Values.ENVGENE_GIT_REPO_TOKEN }}"
-ENVGENE_AGE_PRIVATE_KEY: "{{ .Values.ENVGENE_AGE_PRIVATE_KEY }}"
 {{- end }}
 
 {{- define "tdmbe.env.deploy" }}
