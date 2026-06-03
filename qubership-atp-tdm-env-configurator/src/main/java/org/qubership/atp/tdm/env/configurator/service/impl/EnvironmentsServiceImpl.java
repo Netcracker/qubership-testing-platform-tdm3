@@ -153,6 +153,10 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
                 break;
             }
         }
+
+        if (lazyProject == null) {
+            throw new IllegalArgumentException("Project [" + projectName + "] not found.");
+        }
         log.info("Lazy project by name successfully loaded.");
         return lazyProject;
     }
@@ -407,7 +411,7 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         try {
             YamlEnvironment yamlEnvironment = cacheService.get(environmentId);
             if (yamlEnvironment == null) {
-                log.warn("Environment not found in cache for ID: {}", environmentId);
+                log.warn("Environment (systems) not found in cache for ID: {}", environmentId);
                 return new ArrayList<>();
             }
             systems = yamlEnvironment.getYamlSystems().stream()
@@ -418,7 +422,7 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
                             .build())
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            log.error(format(TdmEnvConvertLazySystemsByEnvIdByNameException.DEFAULT_MESSAGE, environmentId), e);
+            log.error(format(TdmEnvConvertLazySystemsByEnvIdException.DEFAULT_MESSAGE, environmentId), e);
             throw new TdmEnvConvertLazySystemsByEnvIdException(environmentId);
         }
         log.info("Lazy systems by envId and name successfully loaded.");
@@ -624,6 +628,7 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         updatedConnection.setParameters(parameters);
 
         yamlSystem.setConnections(Collections.singletonList(updatedConnection));
+        yamlEnvironment.setYamlSystems(yamlEnvironment.getYamlSystems());
         cacheService.put(yamlEnvironment);
 
         Cache systemByNameCache = cacheManager.getCache(CacheNames.TDM_LAZY_SYSTEM_BY_NAME_CACHE);

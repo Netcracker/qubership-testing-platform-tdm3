@@ -266,9 +266,6 @@ public class AtpActionServiceImpl implements AtpActionService {
         log.info("Loading data from the environments tool. Project: [{}], Env: [{}], System: [{}]",
                 projectName, envName, systemName);
         LazyProject lazyProject = environmentsService.getLazyProjectByName(projectName);
-        if (lazyProject == null) {
-            throw new IllegalArgumentException("Project [" + projectName + "] not found.");
-        }
         UUID projectId = lazyProject.getId();
         return getEnvironmentContextByProjectId(projectId, envName, systemName, connection);
     }
