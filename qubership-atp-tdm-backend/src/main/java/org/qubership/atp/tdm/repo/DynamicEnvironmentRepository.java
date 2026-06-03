@@ -16,6 +16,7 @@
 
 package org.qubership.atp.tdm.repo;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.qubership.atp.tdm.model.DynamicEnvironment;
@@ -26,4 +27,6 @@ import org.springframework.stereotype.Repository;
 public interface DynamicEnvironmentRepository extends JpaRepository<DynamicEnvironment, UUID> {
 
     boolean existsByEnvNameAndProjectId(String envName, UUID projectId);
+
+    Optional<DynamicEnvironment> findByEnvNameAndProjectId(String envName, UUID projectId);
 }

@@ -71,4 +71,13 @@ public interface EnvironmentsService {
                                                @Nonnull String systemName, @Nonnull String connectionName,
                                                @Nonnull String connectionType,
                                                @Nonnull Map<String, String> parameters);
+
+    void addSystemToEnvironment(@Nonnull UUID projectId, @Nonnull UUID envId,
+                                @Nonnull String systemName, @Nonnull String connectionName,
+                                @Nonnull String connectionType,
+                                @Nonnull Map<String, String> parameters);
+
+    void updateConnectionInCache(@Nonnull UUID envId, @Nonnull String systemName,
+                                 String connectionName, String connectionType,
+                                 @Nonnull Map<String, String> parameters);
 }

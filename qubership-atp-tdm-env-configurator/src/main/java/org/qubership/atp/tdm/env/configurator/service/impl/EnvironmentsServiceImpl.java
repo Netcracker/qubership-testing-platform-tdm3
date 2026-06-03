@@ -557,6 +557,92 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
     }
 
     @Override
+    public void addSystemToEnvironment(@Nonnull UUID projectId, @Nonnull UUID envId,
+                                       @Nonnull String systemName, @Nonnull String connectionName,
+                                       @Nonnull String connectionType,
+                                       @Nonnull Map<String, String> parameters) {
+        log.info("Adding system [{}] to environment [{}] for project [{}].", systemName, envId, projectId);
+
+        YamlEnvironment yamlEnvironment = cacheService.get(envId);
+        if (yamlEnvironment == null) {
+            log.error("Cannot add system [{}]: environment [{}] not found in cache.", systemName, envId);
+            throw new IllegalArgumentException(
+                    String.format("Environment [%s] not found in cache.", envId));
+        }
+
+        YamlConnection yamlConnection = new YamlConnection();
+        yamlConnection.setName(connectionName);
+        yamlConnection.setType(ConnectionType.fromValue(connectionType));
+        yamlConnection.setParameters(parameters);
+
+        YamlSystem yamlSystem = new YamlSystem();
+        yamlSystem.setName(systemName);
+        yamlSystem.setProjectId(projectId);
+        yamlSystem.setConnections(Collections.singletonList(yamlConnection));
+
+        List<YamlSystem> updatedSystems = new ArrayList<>(yamlEnvironment.getYamlSystems());
+        updatedSystems.add(yamlSystem);
+        yamlEnvironment.setYamlSystems(updatedSystems);
+
+        cacheService.put(yamlEnvironment);
+
+        Cache systemByNameCache = cacheManager.getCache(CacheNames.TDM_LAZY_SYSTEM_BY_NAME_CACHE);
+        if (systemByNameCache != null) {
+            systemByNameCache.clear();
+        }
+        Cache systemsCache = cacheManager.getCache(CacheNames.TDM_LAZY_SYSTEMS_CACHE);
+        if (systemsCache != null) {
+            systemsCache.clear();
+        }
+
+        log.info("System [{}] added to environment [{}].", systemName, envId);
+    }
+
+    @Override
+    public void updateConnectionInCache(@Nonnull UUID envId, @Nonnull String systemName,
+                                        String connectionName, String connectionType,
+                                        @Nonnull Map<String, String> parameters) {
+        log.info("Updating connection parameters for system [{}] in environment [{}].", systemName, envId);
+
+        YamlEnvironment yamlEnvironment = cacheService.get(envId);
+        if (yamlEnvironment == null) {
+            log.warn("Cannot update connection: environment [{}] not found in cache.", envId);
+            return;
+        }
+
+        YamlSystem yamlSystem = yamlEnvironment.getSystemByName(systemName);
+        if (yamlSystem == null) {
+            log.warn("Cannot update connection: system [{}] not found in environment [{}].", systemName, envId);
+            return;
+        }
+
+        YamlConnection updatedConnection = new YamlConnection();
+        updatedConnection.setName(connectionName != null ? connectionName
+                : (yamlSystem.getConnections().isEmpty() ? "" : yamlSystem.getConnections().get(0).getName()));
+        updatedConnection.setType(connectionType != null ? ConnectionType.fromValue(connectionType)
+                : (yamlSystem.getConnections().isEmpty() ? null : yamlSystem.getConnections().get(0).getType()));
+        updatedConnection.setParameters(parameters);
+
+        yamlSystem.setConnections(Collections.singletonList(updatedConnection));
+        cacheService.put(yamlEnvironment);
+
+        Cache systemByNameCache = cacheManager.getCache(CacheNames.TDM_LAZY_SYSTEM_BY_NAME_CACHE);
+        if (systemByNameCache != null) {
+            systemByNameCache.clear();
+        }
+        Cache systemCache = cacheManager.getCache(CacheNames.TDM_LAZY_SYSTEM_CACHE);
+        if (systemCache != null) {
+            systemCache.clear();
+        }
+        Cache connectionsCache = cacheManager.getCache(CacheNames.TDM_CONNECTIONS_BY_SYSTEM_ID_CACHE);
+        if (connectionsCache != null) {
+            connectionsCache.clear();
+        }
+
+        log.info("Connection parameters updated for system [{}] in environment [{}].", systemName, envId);
+    }
+
+    @Override
     public boolean resetCaches() {
         log.info("Reset caches.");
         try {

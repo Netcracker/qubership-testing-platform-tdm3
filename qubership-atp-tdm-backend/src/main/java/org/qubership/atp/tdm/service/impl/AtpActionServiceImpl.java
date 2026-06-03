@@ -266,6 +266,9 @@ public class AtpActionServiceImpl implements AtpActionService {
         log.info("Loading data from the environments tool. Project: [{}], Env: [{}], System: [{}]",
                 projectName, envName, systemName);
         LazyProject lazyProject = environmentsService.getLazyProjectByName(projectName);
+        if (lazyProject == null) {
+            throw new IllegalArgumentException("Project [" + projectName + "] not found.");
+        }
         UUID projectId = lazyProject.getId();
         return getEnvironmentContextByProjectId(projectId, envName, systemName, connection);
     }
@@ -297,9 +300,17 @@ public class AtpActionServiceImpl implements AtpActionService {
             }
 
             envId = lazyEnvironment.getId();
-            LazySystem lazySystemByName =
-                    environmentsService.getLazySystemByName(projectId, lazyEnvironment.getId(), systemName);
-            systemId = lazySystemByName.getId();
+            LazySystem lazySystem;
+            try {
+                lazySystem = environmentsService.getLazySystemByName(projectId, envId, systemName);
+                if (connection != null) {
+                    updateConnectionInCache(projectId, envId, envName, systemName, connection);
+                }
+            } catch (Exception e) {
+                log.warn("System [{}] not found for project [{}]: {}", systemName, projectId, e.getMessage());
+                lazySystem = createSystemFromConnection(projectId, envId, systemName, connection);
+            }
+            systemId = lazySystem.getId();
         }
         log.info("Data from the environments tool is loaded.");
         return new EnvironmentContext(projectId, envId, systemId);
@@ -317,9 +328,6 @@ public class AtpActionServiceImpl implements AtpActionService {
                     String.format("Environment [%s] not found and no connection provided to create it.", envName));
         }
 
-        if (StringUtils.isBlank(connection.getName())) {
-            throw new IllegalArgumentException("Connection 'name' must not be blank.");
-        }
         if (StringUtils.isBlank(connection.getType())) {
             throw new IllegalArgumentException("Connection 'type' must not be blank.");
         }
@@ -356,6 +364,73 @@ public class AtpActionServiceImpl implements AtpActionService {
         }
 
         return lazyEnvironment;
+    }
+
+    /**
+     * Adds a new system to an existing environment in the cache and updates the H2 record if present.
+     * Throws an informative exception when no connection is available.
+     */
+    private LazySystem createSystemFromConnection(@Nonnull UUID projectId, @Nonnull UUID envId,
+                                                  @Nonnull String systemName,
+                                                  @Nullable EnvironmentConnectionRequest connection) {
+        if (connection == null) {
+            throw new IllegalArgumentException(
+                    String.format("System [%s] not found and no connection provided to create it.", systemName));
+        }
+        if (StringUtils.isBlank(connection.getType())) {
+            throw new IllegalArgumentException("Connection 'type' must not be blank.");
+        }
+        try {
+            ConnectionType.fromValue(connection.getType());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    String.format("Connection 'type' value [%s] is not valid.", connection.getType()));
+        }
+        if (connection.getParameters() == null || connection.getParameters().isEmpty()) {
+            throw new IllegalArgumentException("Connection 'parameters' must not be null or empty.");
+        }
+
+        log.info("Adding system [{}] to existing environment [{}] for project [{}].", systemName, envId, projectId);
+
+        environmentsService.addSystemToEnvironment(projectId, envId, systemName,
+                connection.getName(), connection.getType(), connection.getParameters());
+
+        return environmentsService.getLazySystemByName(projectId, envId, systemName);
+    }
+
+    /**
+     * Updates the connection parameters for an existing system in cache and in H2 (if persisted).
+     */
+    private void updateConnectionInCache(@Nonnull UUID projectId, @Nonnull UUID envId,
+                                         @Nonnull String envName, @Nonnull String systemName,
+                                         @Nonnull EnvironmentConnectionRequest connection) {
+        if (connection.getParameters() == null || connection.getParameters().isEmpty()) {
+            log.warn("Skipping connection update for system [{}]: parameters are empty.", systemName);
+            return;
+        }
+        log.info("Updating connection parameters for system [{}] in environment [{}].", systemName, envId);
+
+        environmentsService.updateConnectionInCache(envId, systemName,
+                connection.getName(), connection.getType(), connection.getParameters());
+
+        dynamicEnvironmentRepository.findByEnvNameAndProjectId(envName, projectId).ifPresent(record -> {
+            String parametersJson;
+            try {
+                parametersJson = OBJECT_MAPPER.writeValueAsString(connection.getParameters());
+            } catch (JsonProcessingException ex) {
+                log.warn("Failed to serialize updated connection parameters, skipping H2 update.", ex);
+                return;
+            }
+            record.setConnectionParameters(parametersJson);
+            if (connection.getName() != null) {
+                record.setConnectionName(connection.getName());
+            }
+            if (connection.getType() != null) {
+                record.setConnectionType(connection.getType());
+            }
+            dynamicEnvironmentRepository.save(record);
+            log.info("Updated connection parameters in H2 for dynamic environment [{}].", envName);
+        });
     }
 
     /**

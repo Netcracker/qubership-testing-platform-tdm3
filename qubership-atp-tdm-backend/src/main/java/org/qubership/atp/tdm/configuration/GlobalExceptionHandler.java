@@ -38,4 +38,13 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.FORBIDDEN)
                 .body(exception.getMessage());
     }
+
+    /**
+     * Handle IllegalArgumentException with a 400 Bad Request response.
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    protected ResponseEntity<Object> handleIllegalArgument(IllegalArgumentException ex) {
+        log.error(ex.getMessage(), ex);
+        return ResponseEntity.badRequest().body(ex.getMessage());
+    }
 }
