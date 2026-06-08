@@ -80,4 +80,6 @@ public interface EnvironmentsService {
     void updateConnectionInCache(@Nonnull UUID envId, @Nonnull String systemName,
                                  String connectionName, String connectionType,
                                  @Nonnull Map<String, String> parameters);
+
+    void removeEnvironmentFromCache(@Nonnull UUID envId);
 }

@@ -16,39 +16,29 @@
 
 package org.qubership.atp.tdm.model.rest.requests;
 
-import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 
 @Data
-public class RestApiRequest {
+public class EnvironmentManagementRequest {
 
     private String projectName;
     private String envName;
     private String systemName;
-    @JsonProperty("title-table")
-    private String titleTable;
-    @JsonProperty("insert-records")
-    private List<Map<String, Object>> records;
-    @JsonProperty("occupy-row-requests")
-    private List<OccupyRowRequest> occupyRowRequests;
-    @JsonProperty("occupy-full-row-requests")
-    private List<OccupyFullRowRequest> occupyFullRowRequests;
-    @JsonProperty("release-row-requests")
-    private List<ReleaseRowRequest> releaseRowRequests;
-    @JsonProperty("update-row-requests")
-    private List<UpdateRowRequest> updateRowRequests;
-    @JsonProperty("get-row-requests")
-    private List<GetRowRequest> getRowRequests;
-    @JsonProperty("add-info-to-row-requests")
-    private List<AddInfoToRowRequest> addInfoToRowRequests;
+    private EnvironmentConnectionRequest connection;
 
     @JsonProperty("environment")
     private void unpackEnvironment(Map<String, Object> environment) {
         this.projectName = (String) environment.get("projectName");
         this.envName = (String) environment.get("envName");
         this.systemName = (String) environment.get("systemName");
+        Object connectionObj = environment.get("connection");
+        if (connectionObj instanceof Map) {
+            ObjectMapper mapper = new ObjectMapper();
+            this.connection = mapper.convertValue(connectionObj, EnvironmentConnectionRequest.class);
+        }
     }
 }

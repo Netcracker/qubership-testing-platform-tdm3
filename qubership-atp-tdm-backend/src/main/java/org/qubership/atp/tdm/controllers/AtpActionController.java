@@ -48,8 +48,7 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
     @PostMapping(value = "/insert-records")
     public ResponseMessage insertTestData(@RequestBody RestApiRequest request) {
         return service.insertTestData(request.getProjectName(), request.getEnvName(),
-                request.getSystemName(), request.getTitleTable(), request.getRecords(),
-                request.getConnection());
+                request.getSystemName(), request.getTitleTable(), request.getRecords());
     }
 
     /**

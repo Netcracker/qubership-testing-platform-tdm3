@@ -17,8 +17,6 @@
 package org.qubership.atp.tdm.service.impl;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -28,8 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-
-import org.qubership.atp.tdm.model.rest.requests.EnvironmentConnectionRequest;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -1040,7 +1036,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
         List<Map<String, Object>> records = buildTestDataTable().getData();
 
         ResponseMessage responseMessage = atpActionService.insertTestData(projectName, envName, systemName,
-                tableTitle, records, null);
+                tableTitle, records);
 
         TestDataTableCatalog tableCatalog = catalogRepository
                 .findByProjectIdAndSystemIdAndTableTitle(projectId, systemId, tableTitle);
@@ -1187,58 +1183,6 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         deleteTestDataTableIfExists(tableName);
         catalogRepository.deleteByTableName(tableName);
-    }
-
-    @Test
-    public void atpInsertTestData_sameEnvAndSystemSecondRequest_connectionParametersUpdated() {
-        Map<String, String> initialParams = new HashMap<>();
-        initialParams.put("db_login", "user1");
-        initialParams.put("db_password", "secret");
-        initialParams.put("jdbc_url", "jdbc:h2:mem:test");
-        initialParams.put("db_type", "postgresql");
-
-        EnvironmentConnectionRequest connection = new EnvironmentConnectionRequest();
-        connection.setName("DB");
-        connection.setType("DB");
-        connection.setParameters(initialParams);
-
-        List<Map<String, Object>> records = buildTestDataTable().getData();
-
-        atpActionService.insertTestData(lazyProject.getName(), lazyEnvironment.getName(),
-                system.getName(), "SomeTable", records, connection);
-
-        Map<String, String> updatedParams = new HashMap<>(initialParams);
-        updatedParams.put("db_login", "user2_updated");
-
-        EnvironmentConnectionRequest updatedConnection = new EnvironmentConnectionRequest();
-        updatedConnection.setName("DB");
-        updatedConnection.setType("DB");
-        updatedConnection.setParameters(updatedParams);
-
-        atpActionService.insertTestData(lazyProject.getName(), lazyEnvironment.getName(),
-                system.getName(), "SomeTable", records, updatedConnection);
-
-        verify(environmentsService).updateConnectionInCache(
-                eq(lazyEnvironment.getId()),
-                eq(system.getName()),
-                eq(updatedConnection.getName()),
-                eq(updatedConnection.getType()),
-                eq(updatedParams));
-    }
-
-    @Test
-    public void atpInsertTestData_unknownProject_returns400() {
-        String unknownProject = "NonExistentProject";
-        when(environmentsService.getLazyProjectByName(eq(unknownProject)))
-                .thenThrow(new IllegalArgumentException("Project [" + unknownProject + "] not found."));
-
-        List<Map<String, Object>> records = buildTestDataTable().getData();
-
-        IllegalArgumentException ex = Assertions.assertThrows(IllegalArgumentException.class,
-                () -> atpActionService.insertTestData(unknownProject, lazyEnvironment.getName(),
-                        system.getName(), "SomeTable", records, null));
-
-        Assertions.assertTrue(ex.getMessage().contains(unknownProject));
     }
 
     @Test

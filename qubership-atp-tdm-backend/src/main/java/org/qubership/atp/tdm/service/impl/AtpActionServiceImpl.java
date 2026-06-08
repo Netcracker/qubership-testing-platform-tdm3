@@ -28,13 +28,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.qubership.atp.tdm.env.configurator.model.LazyEnvironment;
 import org.qubership.atp.tdm.env.configurator.model.LazyProject;
 import org.qubership.atp.tdm.env.configurator.model.LazySystem;
-import org.qubership.atp.tdm.env.configurator.model.envgen.ConnectionType;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
 import org.qubership.atp.tdm.model.DynamicEnvironment;
 import org.qubership.atp.tdm.model.rest.ResponseMessage;
 import org.qubership.atp.tdm.model.rest.ResponseType;
 import org.qubership.atp.tdm.model.rest.requests.AddInfoToRowRequest;
-import org.qubership.atp.tdm.model.rest.requests.EnvironmentConnectionRequest;
 import org.qubership.atp.tdm.model.rest.requests.GetRowRequest;
 import org.qubership.atp.tdm.model.rest.requests.OccupyFullRowRequest;
 import org.qubership.atp.tdm.model.rest.requests.OccupyRowRequest;
@@ -49,7 +47,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nonnull;
@@ -107,10 +104,9 @@ public class AtpActionServiceImpl implements AtpActionService {
     @Override
     public ResponseMessage insertTestData(@Nonnull String projectName, @Nullable String envName,
                                           @Nullable String systemName, @Nonnull String tableTitle,
-                                          List<Map<String, Object>> records,
-                                          @Nullable EnvironmentConnectionRequest connection) {
+                                          List<Map<String, Object>> records) {
         log.info("ATP Action. Inserting test data. Table Title: {}", tableTitle);
-        EnvironmentContext environmentContext = getEnvironmentContext(projectName, envName, systemName, connection);
+        EnvironmentContext environmentContext = getEnvironmentContext(projectName, envName, systemName);
         String link = this.formResultLink(environmentContext.getProjectId(), environmentContext.getEnvId(),
                 environmentContext.getSystemId());
         ResponseMessage response = repository.insertTestData(environmentContext.getProjectId(),
@@ -257,27 +253,20 @@ public class AtpActionServiceImpl implements AtpActionService {
 
     private EnvironmentContext getEnvironmentContext(@Nonnull String projectName, @Nullable String envName,
                                                      @Nullable String systemName) {
-        return getEnvironmentContext(projectName, envName, systemName, null);
-    }
-
-    private EnvironmentContext getEnvironmentContext(@Nonnull String projectName, @Nullable String envName,
-                                                     @Nullable String systemName,
-                                                     @Nullable EnvironmentConnectionRequest connection) {
         log.info("Loading data from the environments tool. Project: [{}], Env: [{}], System: [{}]",
                 projectName, envName, systemName);
         LazyProject lazyProject = environmentsService.getLazyProjectByName(projectName);
         UUID projectId = lazyProject.getId();
-        return getEnvironmentContextByProjectId(projectId, envName, systemName, connection);
+        return getEnvironmentContextByProjectId(projectId, envName, systemName);
     }
 
     private EnvironmentContext getEnvironmentContext(@Nonnull UUID projectId, @Nullable String envName,
                                                      @Nullable String systemName) {
-        return getEnvironmentContextByProjectId(projectId, envName, systemName, null);
+        return getEnvironmentContextByProjectId(projectId, envName, systemName);
     }
 
     private EnvironmentContext getEnvironmentContextByProjectId(@Nonnull UUID projectId, @Nullable String envName,
-                                                                @Nullable String systemName,
-                                                                @Nullable EnvironmentConnectionRequest connection) {
+                                                                @Nullable String systemName) {
         UUID systemId = null;
         UUID envId = null;
         if (Objects.nonNull(envName) && Objects.nonNull(systemName)) {
@@ -288,147 +277,17 @@ public class AtpActionServiceImpl implements AtpActionService {
                 log.info("Env: [{}]", envName);
             }
 
-            LazyEnvironment lazyEnvironment;
-            try {
-                lazyEnvironment = environmentsService.getLazyEnvironmentByName(projectId, envName);
-            } catch (Exception e) {
-                log.warn("Environment [{}] not found for project [{}]: {}", envName, projectId, e.getMessage());
-                lazyEnvironment = createEnvironmentFromConnection(projectId, envName, systemName, connection);
-            }
+            LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(projectId, envName);
 
             envId = lazyEnvironment.getId();
-            LazySystem lazySystem;
-            try {
-                lazySystem = environmentsService.getLazySystemByName(projectId, envId, systemName);
-                if (connection != null) {
-                    updateConnectionInCache(projectId, envId, envName, systemName, connection);
-                }
-            } catch (Exception e) {
-                log.warn("System [{}] not found for project [{}]: {}", systemName, projectId, e.getMessage());
-                lazySystem = createSystemFromConnection(projectId, envId, systemName, connection);
-            }
-            systemId = lazySystem.getId();
+            LazySystem lazySystemByName =
+                    environmentsService.getLazySystemByName(projectId, lazyEnvironment.getId(), systemName);
+            systemId = lazySystemByName.getId();
         }
         log.info("Data from the environments tool is loaded.");
         return new EnvironmentContext(projectId, envId, systemId);
     }
 
-    /**
-     * Creates a dynamic environment in the cache and persists it to H2 when the environment is not found
-     * and a connection is provided. Throws an informative exception when no connection is available.
-     */
-    private LazyEnvironment createEnvironmentFromConnection(@Nonnull UUID projectId, @Nonnull String envName,
-                                                            @Nonnull String systemName,
-                                                            @Nullable EnvironmentConnectionRequest connection) {
-        if (connection == null) {
-            throw new IllegalArgumentException(
-                    String.format("Environment [%s] not found and no connection provided to create it.", envName));
-        }
-
-        if (StringUtils.isBlank(connection.getType())) {
-            throw new IllegalArgumentException("Connection 'type' must not be blank.");
-        }
-        try {
-            ConnectionType.fromValue(connection.getType());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(
-                    String.format("Connection 'type' value [%s] is not valid.", connection.getType()));
-        }
-        if (connection.getParameters() == null || connection.getParameters().isEmpty()) {
-            throw new IllegalArgumentException("Connection 'parameters' must not be null or empty.");
-        }
-
-        log.info("Creating dynamic environment [{}] with system [{}] for project [{}].",
-                envName, systemName, projectId);
-
-        LazyEnvironment lazyEnvironment = environmentsService.registerEnvironmentInCache(
-                projectId, envName, systemName,
-                connection.getName(), connection.getType(), connection.getParameters());
-
-        if (!dynamicEnvironmentRepository.existsByEnvNameAndProjectId(envName, projectId)) {
-            String parametersJson;
-            try {
-                parametersJson = OBJECT_MAPPER.writeValueAsString(connection.getParameters());
-            } catch (JsonProcessingException ex) {
-                log.warn("Failed to serialize connection parameters, storing as empty.", ex);
-                parametersJson = "{}";
-            }
-            DynamicEnvironment record = new DynamicEnvironment(
-                    lazyEnvironment.getId(), projectId, envName, systemName,
-                    connection.getName(), connection.getType(), parametersJson);
-            dynamicEnvironmentRepository.save(record);
-            log.info("Dynamic environment [{}] persisted to H2.", envName);
-        }
-
-        return lazyEnvironment;
-    }
-
-    /**
-     * Adds a new system to an existing environment in the cache and updates the H2 record if present.
-     * Throws an informative exception when no connection is available.
-     */
-    private LazySystem createSystemFromConnection(@Nonnull UUID projectId, @Nonnull UUID envId,
-                                                  @Nonnull String systemName,
-                                                  @Nullable EnvironmentConnectionRequest connection) {
-        if (connection == null) {
-            throw new IllegalArgumentException(
-                    String.format("System [%s] not found and no connection provided to create it.", systemName));
-        }
-        if (StringUtils.isBlank(connection.getType())) {
-            throw new IllegalArgumentException("Connection 'type' must not be blank.");
-        }
-        try {
-            ConnectionType.fromValue(connection.getType());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(
-                    String.format("Connection 'type' value [%s] is not valid.", connection.getType()));
-        }
-        if (connection.getParameters() == null || connection.getParameters().isEmpty()) {
-            throw new IllegalArgumentException("Connection 'parameters' must not be null or empty.");
-        }
-
-        log.info("Adding system [{}] to existing environment [{}] for project [{}].", systemName, envId, projectId);
-
-        environmentsService.addSystemToEnvironment(projectId, envId, systemName,
-                connection.getName(), connection.getType(), connection.getParameters());
-
-        return environmentsService.getLazySystemByName(projectId, envId, systemName);
-    }
-
-    /**
-     * Updates the connection parameters for an existing system in cache and in H2 (if persisted).
-     */
-    private void updateConnectionInCache(@Nonnull UUID projectId, @Nonnull UUID envId,
-                                         @Nonnull String envName, @Nonnull String systemName,
-                                         @Nonnull EnvironmentConnectionRequest connection) {
-        if (connection.getParameters() == null || connection.getParameters().isEmpty()) {
-            log.warn("Skipping connection update for system [{}]: parameters are empty.", systemName);
-            return;
-        }
-        log.info("Updating connection parameters for system [{}] in environment [{}].", systemName, envId);
-
-        environmentsService.updateConnectionInCache(envId, systemName,
-                connection.getName(), connection.getType(), connection.getParameters());
-
-        dynamicEnvironmentRepository.findByEnvNameAndProjectId(envName, projectId).ifPresent(record -> {
-            String parametersJson;
-            try {
-                parametersJson = OBJECT_MAPPER.writeValueAsString(connection.getParameters());
-            } catch (JsonProcessingException ex) {
-                log.warn("Failed to serialize updated connection parameters, skipping H2 update.", ex);
-                return;
-            }
-            record.setConnectionParameters(parametersJson);
-            if (connection.getName() != null) {
-                record.setConnectionName(connection.getName());
-            }
-            if (connection.getType() != null) {
-                record.setConnectionType(connection.getType());
-            }
-            dynamicEnvironmentRepository.save(record);
-            log.info("Updated connection parameters in H2 for dynamic environment [{}].", envName);
-        });
-    }
 
     /**
      * On startup, reload all previously persisted dynamic environments back into the in-memory cache.

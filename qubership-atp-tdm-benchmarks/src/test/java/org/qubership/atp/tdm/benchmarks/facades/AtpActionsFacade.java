@@ -45,7 +45,7 @@ public class AtpActionsFacade extends GeneralFacade {
     public ResponseMessage insertTestData(@Nonnull String projectName, @Nullable String envName,
                                           @Nullable String systemName, @Nonnull String tableTitle,
                                           List<Map<String, Object>> records) {
-        return atpActionService.insertTestData(projectName, envName, systemName, tableTitle, records, null);
+        return atpActionService.insertTestData(projectName, envName, systemName, tableTitle, records);
     }
 
     public List<ResponseMessage> occupyTestData(@Nonnull String projectName, @Nullable String envName,

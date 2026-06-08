@@ -16,6 +16,7 @@
 
 package org.qubership.atp.tdm.env.configurator.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -30,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class CacheService {
-    private final Map<UUID, YamlEnvironment> envGenCache = new ConcurrentHashMap();
+    private final Map<UUID, YamlEnvironment> envGenCache = new ConcurrentHashMap<>();
 
     public void put(YamlEnvironment yamlEnvironment) {
         envGenCache.put(yamlEnvironment.getId(), yamlEnvironment);
@@ -40,7 +41,11 @@ public class CacheService {
         return envGenCache.get(environmentId);
     }
 
+    public void remove(UUID environmentId) {
+        envGenCache.remove(environmentId);
+    }
+
     public List<YamlEnvironment> getEnvironments() {
-        return envGenCache.values().stream().collect(Collectors.toList());
+        return new ArrayList<>(envGenCache.values());
     }
 }

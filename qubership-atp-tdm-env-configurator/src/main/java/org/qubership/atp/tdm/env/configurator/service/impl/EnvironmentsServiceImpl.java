@@ -38,7 +38,6 @@ import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertL
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazyEnvironmentsException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazyProjectsException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazySystemBySysIdException;
-import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazySystemsByEnvIdByNameException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazySystemsByEnvIdException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazySystemsByProjectIdException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvResetCachesException;
@@ -645,6 +644,34 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         }
 
         log.info("Connection parameters updated for system [{}] in environment [{}].", systemName, envId);
+    }
+
+    @Override
+    public void removeEnvironmentFromCache(@Nonnull UUID envId) {
+        log.info("Removing environment [{}] from cache.", envId);
+        cacheService.remove(envId);
+
+        Cache envByIdCache = cacheManager.getCache(CacheNames.TDM_LAZY_ENVIRONMENT_BY_ID_CACHE);
+        if (envByIdCache != null) {
+            envByIdCache.evict(envId);
+        }
+        Cache envByNameCache = cacheManager.getCache(CacheNames.TDM_LAZY_ENVIRONMENT_BY_NAME_CACHE);
+        if (envByNameCache != null) {
+            envByNameCache.clear();
+        }
+        Cache systemByNameCache = cacheManager.getCache(CacheNames.TDM_LAZY_SYSTEM_BY_NAME_CACHE);
+        if (systemByNameCache != null) {
+            systemByNameCache.clear();
+        }
+        Cache systemsCache = cacheManager.getCache(CacheNames.TDM_LAZY_SYSTEMS_CACHE);
+        if (systemsCache != null) {
+            systemsCache.clear();
+        }
+        Cache connectionsCache = cacheManager.getCache(CacheNames.TDM_CONNECTIONS_BY_SYSTEM_ID_CACHE);
+        if (connectionsCache != null) {
+            connectionsCache.clear();
+        }
+        log.info("Environment [{}] removed from cache.", envId);
     }
 
     @Override
