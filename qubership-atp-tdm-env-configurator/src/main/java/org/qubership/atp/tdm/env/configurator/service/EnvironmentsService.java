@@ -82,4 +82,9 @@ public interface EnvironmentsService {
                                  @Nonnull Map<String, String> parameters);
 
     void removeEnvironmentFromCache(@Nonnull UUID envId);
+
+    void renameEnvironmentInCache(@Nonnull UUID envId, @Nonnull String newEnvName);
+
+    void renameSystemInCache(@Nonnull UUID envId, @Nonnull String currentSystemName,
+                             @Nonnull String newSystemName);
 }

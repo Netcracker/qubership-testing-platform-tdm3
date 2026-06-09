@@ -28,5 +28,9 @@ public interface DynamicEnvironmentRepository extends JpaRepository<DynamicEnvir
 
     boolean existsByEnvNameAndProjectId(String envName, UUID projectId);
 
+    boolean existsByEnvNameAndProjectIdAndSystemName(String envName, UUID projectId, String systemName);
+
     Optional<DynamicEnvironment> findByEnvNameAndProjectId(String envName, UUID projectId);
+
+    void deleteByEnvNameAndProjectId(String envName, UUID projectId);
 }

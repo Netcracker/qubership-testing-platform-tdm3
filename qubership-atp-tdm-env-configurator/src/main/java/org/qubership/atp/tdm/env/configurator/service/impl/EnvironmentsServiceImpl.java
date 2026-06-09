@@ -647,6 +647,74 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
     }
 
     @Override
+    public void renameEnvironmentInCache(@Nonnull UUID envId, @Nonnull String newEnvName) {
+        log.info("Renaming environment [{}] to [{}] in cache.", envId, newEnvName);
+
+        YamlEnvironment yamlEnvironment = cacheService.get(envId);
+        if (yamlEnvironment == null) {
+            throw new IllegalArgumentException(
+                    String.format("Environment [%s] not found in cache.", envId));
+        }
+
+        List<YamlSystem> existingSystems = new ArrayList<>(yamlEnvironment.getYamlSystems());
+        UUID projectId = yamlEnvironment.getProjectId();
+
+        cacheService.remove(envId);
+
+        YamlEnvironment renamed = new YamlEnvironment(newEnvName);
+        renamed.setProjectId(projectId);
+        renamed.setClusterName(yamlEnvironment.getClusterName());
+        renamed.setParameters(yamlEnvironment.getParameters());
+        renamed.setYamlSystems(existingSystems);
+
+        cacheService.put(renamed);
+
+        Cache envByNameCache = cacheManager.getCache(CacheNames.TDM_LAZY_ENVIRONMENT_BY_NAME_CACHE);
+        if (envByNameCache != null) {
+            envByNameCache.clear();
+        }
+        Cache systemByNameCache = cacheManager.getCache(CacheNames.TDM_LAZY_SYSTEM_BY_NAME_CACHE);
+        if (systemByNameCache != null) {
+            systemByNameCache.clear();
+        }
+
+        log.info("Environment renamed to [{}] with id [{}].", newEnvName, renamed.getId());
+    }
+
+    @Override
+    public void renameSystemInCache(@Nonnull UUID envId, @Nonnull String currentSystemName,
+                                    @Nonnull String newSystemName) {
+        log.info("Renaming system [{}] to [{}] in environment [{}].", currentSystemName, newSystemName, envId);
+
+        YamlEnvironment yamlEnvironment = cacheService.get(envId);
+        if (yamlEnvironment == null) {
+            throw new IllegalArgumentException(
+                    String.format("Environment [%s] not found in cache.", envId));
+        }
+
+        YamlSystem yamlSystem = yamlEnvironment.getSystemByName(currentSystemName);
+        if (yamlSystem == null) {
+            throw new IllegalArgumentException(
+                    String.format("System [%s] not found in environment [%s].", currentSystemName, envId));
+        }
+
+        yamlSystem.setName(newSystemName);
+        yamlEnvironment.setYamlSystems(yamlEnvironment.getYamlSystems());
+        cacheService.put(yamlEnvironment);
+
+        Cache systemByNameCache = cacheManager.getCache(CacheNames.TDM_LAZY_SYSTEM_BY_NAME_CACHE);
+        if (systemByNameCache != null) {
+            systemByNameCache.clear();
+        }
+        Cache systemsCache = cacheManager.getCache(CacheNames.TDM_LAZY_SYSTEMS_CACHE);
+        if (systemsCache != null) {
+            systemsCache.clear();
+        }
+
+        log.info("System renamed to [{}] in environment [{}].", newSystemName, envId);
+    }
+
+    @Override
     public void removeEnvironmentFromCache(@Nonnull UUID envId) {
         log.info("Removing environment [{}] from cache.", envId);
         cacheService.remove(envId);

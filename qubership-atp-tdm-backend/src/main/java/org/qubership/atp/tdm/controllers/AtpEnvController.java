@@ -57,7 +57,8 @@ public class AtpEnvController {
     @PutMapping
     public ResponseMessage updateEnvironment(@RequestBody EnvironmentManagementRequest request) {
         return service.updateEnvironment(request.getProjectName(), request.getEnvName(),
-                request.getSystemName(), request.getConnection());
+                request.getSystemName(), request.getConnection(),
+                request.getNewEnvName(), request.getNewSystemName());
     }
 
     @Operation(description = "ATP Action. Delete a dynamic environment.")

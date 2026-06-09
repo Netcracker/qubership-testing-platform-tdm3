@@ -28,6 +28,8 @@ public class EnvironmentManagementRequest {
     private String projectName;
     private String envName;
     private String systemName;
+    private String newEnvName;
+    private String newSystemName;
     private EnvironmentConnectionRequest connection;
 
     @JsonProperty("environment")
@@ -35,6 +37,12 @@ public class EnvironmentManagementRequest {
         this.projectName = (String) environment.get("projectName");
         this.envName = (String) environment.get("envName");
         this.systemName = (String) environment.get("systemName");
+        if (environment.containsKey("newEnvName")) {
+            this.newEnvName = (String) environment.get("newEnvName");
+        }
+        if (environment.containsKey("newSystemName")) {
+            this.newSystemName = (String) environment.get("newSystemName");
+        }
         Object connectionObj = environment.get("connection");
         if (connectionObj instanceof Map) {
             ObjectMapper mapper = new ObjectMapper();

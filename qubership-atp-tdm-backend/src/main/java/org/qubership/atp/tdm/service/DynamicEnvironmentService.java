@@ -20,6 +20,7 @@ import org.qubership.atp.tdm.model.rest.ResponseMessage;
 import org.qubership.atp.tdm.model.rest.requests.EnvironmentConnectionRequest;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 public interface DynamicEnvironmentService {
 
@@ -29,7 +30,8 @@ public interface DynamicEnvironmentService {
 
     ResponseMessage updateEnvironment(@Nonnull String projectName, @Nonnull String envName,
                                       @Nonnull String systemName,
-                                      @Nonnull EnvironmentConnectionRequest connection);
+                                      @Nonnull EnvironmentConnectionRequest connection,
+                                      @Nullable String newEnvName, @Nullable String newSystemName);
 
     ResponseMessage deleteEnvironment(@Nonnull String projectName, @Nonnull String envName);
 }
