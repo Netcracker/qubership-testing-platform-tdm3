@@ -83,6 +83,8 @@ public interface EnvironmentsService {
 
     void removeEnvironmentFromCache(@Nonnull UUID envId);
 
+    void removeSystemFromCache(@Nonnull UUID envId, @Nonnull String systemName);
+
     void renameEnvironmentInCache(@Nonnull UUID envId, @Nonnull String newEnvName);
 
     void renameSystemInCache(@Nonnull UUID envId, @Nonnull String currentSystemName,

@@ -33,5 +33,6 @@ public interface DynamicEnvironmentService {
                                       @Nonnull EnvironmentConnectionRequest connection,
                                       @Nullable String newEnvName, @Nullable String newSystemName);
 
-    ResponseMessage deleteEnvironment(@Nonnull String projectName, @Nonnull String envName);
+    ResponseMessage deleteEnvironment(@Nonnull String projectName, @Nonnull String envName,
+                                      @Nullable String systemName);
 }

@@ -17,15 +17,20 @@
 package org.qubership.atp.tdm.controllers;
 
 import org.qubership.atp.integration.configuration.configuration.AuditAction;
+import org.qubership.atp.tdm.exceptions.internal.EnvironmentNotFoundException;
 import org.qubership.atp.tdm.model.rest.ResponseMessage;
+import org.qubership.atp.tdm.model.rest.ResponseType;
 import org.qubership.atp.tdm.model.rest.requests.EnvironmentManagementRequest;
 import org.qubership.atp.tdm.service.DynamicEnvironmentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -61,11 +66,18 @@ public class AtpEnvController {
                 request.getNewEnvName(), request.getNewSystemName());
     }
 
-    @Operation(description = "ATP Action. Delete a dynamic environment.")
+    @Operation(description = "ATP Action. Delete a dynamic environment or a single system within it.")
     @AuditAction(auditAction = "ATP Action. Delete environment {{#request.envName}} "
             + "in project {{#request.projectName}}")
     @DeleteMapping
     public ResponseMessage deleteEnvironment(@RequestBody EnvironmentManagementRequest request) {
-        return service.deleteEnvironment(request.getProjectName(), request.getEnvName());
+        return service.deleteEnvironment(request.getProjectName(), request.getEnvName(),
+                request.getSystemDeleteName());
+    }
+
+    @ExceptionHandler(EnvironmentNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseMessage handleEnvironmentNotFound(EnvironmentNotFoundException ex) {
+        return new ResponseMessage(ResponseType.ERROR, ex.getMessage());
     }
 }

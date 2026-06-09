@@ -16,6 +16,7 @@
 
 package org.qubership.atp.tdm.repo;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,6 +32,11 @@ public interface DynamicEnvironmentRepository extends JpaRepository<DynamicEnvir
     boolean existsByEnvNameAndProjectIdAndSystemName(String envName, UUID projectId, String systemName);
 
     Optional<DynamicEnvironment> findByEnvNameAndProjectId(String envName, UUID projectId);
+
+    List<DynamicEnvironment> findAllByEnvNameAndProjectId(String envName, UUID projectId);
+
+    Optional<DynamicEnvironment> findByEnvNameAndSystemNameAndProjectId(String envName, String systemName,
+                                                                        UUID projectId);
 
     void deleteByEnvNameAndProjectId(String envName, UUID projectId);
 }

@@ -30,6 +30,8 @@ public class EnvironmentManagementRequest {
     private String systemName;
     private String newEnvName;
     private String newSystemName;
+    /** For DELETE requests: when set, only this system is deleted; otherwise the whole env is deleted. */
+    private String systemDeleteName;
     private EnvironmentConnectionRequest connection;
 
     @JsonProperty("environment")
@@ -42,6 +44,9 @@ public class EnvironmentManagementRequest {
         }
         if (environment.containsKey("newSystemName")) {
             this.newSystemName = (String) environment.get("newSystemName");
+        }
+        if (environment.containsKey("systemDeleteName")) {
+            this.systemDeleteName = (String) environment.get("systemDeleteName");
         }
         Object connectionObj = environment.get("connection");
         if (connectionObj instanceof Map) {

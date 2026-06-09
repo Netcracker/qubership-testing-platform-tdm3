@@ -652,6 +652,37 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
     }
 
     @Override
+    public void removeSystemFromCache(@Nonnull UUID envId, @Nonnull String systemName) {
+        log.info("Removing system [{}] from environment [{}] in cache.", systemName, envId);
+
+        YamlEnvironment yamlEnvironment = cacheService.get(envId);
+        if (yamlEnvironment == null) {
+            log.warn("Cannot remove system [{}]: environment [{}] not found in cache.", systemName, envId);
+            return;
+        }
+
+        List<YamlSystem> updatedSystems = yamlEnvironment.getYamlSystems().stream()
+                .filter(s -> !systemName.equalsIgnoreCase(s.getName()))
+                .collect(Collectors.toList());
+        yamlEnvironment.setYamlSystems(updatedSystems);
+        cacheService.put(yamlEnvironment);
+
+        Cache systemByNameCache = cacheManager.getCache(CacheNames.TDM_LAZY_SYSTEM_BY_NAME_CACHE);
+        if (systemByNameCache != null) {
+            systemByNameCache.clear();
+        }
+        Cache systemsCache = cacheManager.getCache(CacheNames.TDM_LAZY_SYSTEMS_CACHE);
+        if (systemsCache != null) {
+            systemsCache.clear();
+        }
+        Cache connectionsCache = cacheManager.getCache(CacheNames.TDM_CONNECTIONS_BY_SYSTEM_ID_CACHE);
+        if (connectionsCache != null) {
+            connectionsCache.clear();
+        }
+        log.info("System [{}] removed from environment [{}] in cache.", systemName, envId);
+    }
+
+    @Override
     public void renameEnvironmentInCache(@Nonnull UUID envId, @Nonnull String newEnvName) {
         log.info("Renaming environment [{}] to [{}] in cache.", envId, newEnvName);
 
