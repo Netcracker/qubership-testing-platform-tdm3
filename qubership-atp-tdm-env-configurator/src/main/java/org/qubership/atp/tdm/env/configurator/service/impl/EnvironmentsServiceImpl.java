@@ -287,12 +287,17 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         LazyEnvironment lazyEnvironment;
         try {
             YamlEnvironment yamlEnvironment = cacheService.get(UUID.nameUUIDFromBytes(environmentName.getBytes()));
+            if (yamlEnvironment == null) {
+                throw new TdmEnvConvertLazyEnvironmentByNameException(environmentName, projectId.toString());
+            }
             lazyEnvironment = LazyEnvironment.builder()
                     .id(yamlEnvironment.getId())
                     .name(yamlEnvironment.getName())
                     .clusterName(yamlEnvironment.getClusterName())
                     .projectId(yamlEnvironment.getProjectId())
                     .build();
+        } catch (TdmEnvConvertLazyEnvironmentByNameException e) {
+            throw e;
         } catch (Exception e) {
             log.error(format(TdmEnvConvertLazyEnvironmentByNameException.DEFAULT_MESSAGE,
                     environmentName, projectId), e);

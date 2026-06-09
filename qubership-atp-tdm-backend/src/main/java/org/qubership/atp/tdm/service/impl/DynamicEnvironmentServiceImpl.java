@@ -37,6 +37,7 @@ import org.qubership.atp.tdm.repo.DynamicEnvironmentRepository;
 import org.qubership.atp.tdm.service.DynamicEnvironmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -72,8 +73,7 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
         try {
             lazyProject = environmentsService.getLazyProjectByName(projectName);
         } catch (IllegalArgumentException e) {
-            return new ResponseMessage(ResponseType.ERROR,
-                    String.format("Project [%s] not found.", projectName));
+            throw new IllegalArgumentException(String.format("Project [%s] not found.", projectName));
         }
         UUID projectId = lazyProject.getId();
 
@@ -82,9 +82,10 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
             UUID envId = lazyEnvironment.getId();
             try {
                 environmentsService.getLazySystemByName(projectId, envId, systemName);
-                return new ResponseMessage(ResponseType.ERROR,
+                throw new IllegalArgumentException(
                         String.format("System [%s] already exists in environment [%s]. Use PUT to update.",
-                                systemName, envName));
+                                systemName, envName)
+                );
             } catch (TdmEnvConvertFullSystemByNameException e) {
                 LazySystem lazySystem = createSystemFromConnection(projectId, envId, systemName, connection);
                 String parametersJson = serializeParameters(connection.getParameters(), envName);
@@ -113,6 +114,7 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
     }
 
     @Override
+    @Transactional
     public ResponseMessage updateEnvironment(@Nonnull String projectName, @Nonnull String envName,
                                              @Nonnull String systemName,
                                              @Nonnull EnvironmentConnectionRequest connection,
@@ -170,23 +172,24 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
 
         recordOpt.ifPresent(record -> {
             String parametersJson = serializeParameters(connection.getParameters(), finalEnvName);
-            record.setConnectionParameters(parametersJson);
-            if (connection.getName() != null) {
-                record.setConnectionName(connection.getName());
-            }
-            if (connection.getType() != null) {
-                record.setConnectionType(connection.getType());
-            }
-            if (StringUtils.isNotBlank(newSystemName)) {
-                record.setSystemName(newSystemName);
-            }
-            if (StringUtils.isNotBlank(newEnvName)) {
-                record.setEnvName(newEnvName);
-            }
+            String resolvedConnectionName = connection.getName() != null
+                    ? connection.getName() : record.getConnectionName();
+            String resolvedConnectionType = connection.getType() != null
+                    ? connection.getType() : record.getConnectionType();
+
             if (StringUtils.isNotBlank(newEnvName) || StringUtils.isNotBlank(newSystemName)) {
-                record.setId(finalSystemId);
+                dynamicEnvironmentRepository.delete(record);
+                dynamicEnvironmentRepository.flush();
+                DynamicEnvironment updated = new DynamicEnvironment(
+                        finalSystemId, record.getProjectId(), finalEnvName, finalSystemName,
+                        resolvedConnectionName, resolvedConnectionType, parametersJson);
+                dynamicEnvironmentRepository.save(updated);
+            } else {
+                record.setConnectionParameters(parametersJson);
+                record.setConnectionName(resolvedConnectionName);
+                record.setConnectionType(resolvedConnectionType);
+                dynamicEnvironmentRepository.save(record);
             }
-            dynamicEnvironmentRepository.save(record);
             log.info("Updated dynamic environment record in H2 for [{}].", finalEnvName);
         });
 
@@ -195,6 +198,7 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
     }
 
     @Override
+    @Transactional
     public ResponseMessage deleteEnvironment(@Nonnull String projectName, @Nonnull String envName) {
         log.info("Deleting dynamic environment [{}] for project [{}].", envName, projectName);
 
@@ -223,6 +227,9 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
     }
 
     private void validateConnection(@Nonnull EnvironmentConnectionRequest connection) {
+        if (StringUtils.isBlank(connection.getName())) {
+            throw new IllegalArgumentException("Connection 'name' must not be blank.");
+        }
         if (StringUtils.isBlank(connection.getType())) {
             throw new IllegalArgumentException("Connection 'type' must not be blank.");
         }

@@ -598,7 +598,7 @@ public class AtpActionRepositoryImpl implements AtpActionRepository {
         return Optional.ofNullable(
                 catalogRepository.findByProjectIdAndSystemIdAndTableTitle(projectId, systemId, tableTitle))
                 .map(table -> new ResponseMessage(ResponseType.SUCCESS, table.getTableName()))
-                .orElse(new ResponseMessage(ResponseType.ERROR,
+                .orElseThrow(() -> new IllegalArgumentException(
                         String.format("Table with title \"%s\" was not found!", tableTitle))
                 );
     }
