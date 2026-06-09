@@ -16,6 +16,7 @@
 
 package org.qubership.atp.tdm.service.impl;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -48,6 +49,7 @@ import org.qubership.atp.tdm.model.table.TestDataTable;
 import org.qubership.atp.tdm.model.table.TestDataTableFilter;
 import org.qubership.atp.tdm.service.AtpActionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 
 public class AtpActionServiceTest extends AbstractTestDataTest {
 
@@ -1271,39 +1273,26 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
     public void resolveTableName_catalogRowNotFound_error() {
         String tableTitle = "TDM API Test Resolve Table Name - Not Found";
 
-        ResponseMessage responseMessage = atpActionService.resolveTableName(lazyProject.getName(),
-                lazyEnvironment.getName(), system.getName(), tableTitle);
-
-        Assertions.assertEquals(ResponseType.ERROR, responseMessage.getType());
-        Assertions.assertEquals(String.format("Table with title \"%s\" was not found!", tableTitle),
-                responseMessage.getContent());
+        assertThrows(InvalidDataAccessApiUsageException.class, () -> atpActionService.resolveTableName(lazyProject.getName(),
+                lazyEnvironment.getName(), system.getName(), tableTitle));
     }
 
     @Test
     public void resolveTableName_missingEnvName_validationError() {
-        ResponseMessage responseMessage = atpActionService.resolveTableName(lazyProject.getName(),
-                "   ", system.getName(), "someTitle");
-
-        Assertions.assertEquals(ResponseType.ERROR, responseMessage.getType());
-        Assertions.assertEquals("Environment name is missed", responseMessage.getContent());
+        assertThrows(IllegalArgumentException.class, () -> atpActionService.resolveTableName(lazyProject.getName(),
+                "   ", system.getName(), "someTitle"));
     }
 
     @Test
     public void resolveTableName_missingSystemName_validationError() {
-        ResponseMessage responseMessage = atpActionService.resolveTableName(lazyProject.getName(),
-                lazyEnvironment.getName(), "", "someTitle");
-
-        Assertions.assertEquals(ResponseType.ERROR, responseMessage.getType());
-        Assertions.assertEquals("System name is missed", responseMessage.getContent());
+        assertThrows(IllegalArgumentException.class, () -> atpActionService.resolveTableName(lazyProject.getName(),
+                lazyEnvironment.getName(), "", "someTitle"));
     }
 
     @Test
     public void resolveTableName_missingTitleTable_validationError() {
-        ResponseMessage responseMessage = atpActionService.resolveTableName(lazyProject.getName(),
-                lazyEnvironment.getName(), system.getName(), " ");
-
-        Assertions.assertEquals(ResponseType.ERROR, responseMessage.getType());
-        Assertions.assertEquals("Title table name is missed", responseMessage.getContent());
+        assertThrows(IllegalArgumentException.class, () -> atpActionService.resolveTableName(lazyProject.getName(),
+                lazyEnvironment.getName(), system.getName(), " "));
     }
 
 }

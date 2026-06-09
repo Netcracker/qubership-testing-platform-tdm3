@@ -108,11 +108,9 @@ class DynamicEnvironmentServiceImplTest {
         when(environmentsService.getLazyProjectByName(PROJECT_NAME))
                 .thenThrow(new IllegalArgumentException("Project [" + PROJECT_NAME + "] not found."));
 
-        ResponseMessage response = dynamicEnvironmentService.createEnvironment(
-                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection);
+        assertThrows(IllegalArgumentException.class, () -> dynamicEnvironmentService.createEnvironment(
+                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection));
 
-        assertEquals(ResponseType.ERROR, response.getType());
-        assertTrue(response.getContent().contains(PROJECT_NAME));
         verify(environmentsService, never()).registerEnvironmentInCache(
                 any(), anyString(), anyString(), anyString(), anyString(), anyMap());
         verify(dynamicEnvironmentRepository, never()).save(any());
@@ -126,11 +124,9 @@ class DynamicEnvironmentServiceImplTest {
         when(environmentsService.getLazySystemByName(
                 lazyProject.getId(), lazyEnvironment.getId(), SYSTEM_NAME)).thenReturn(lazySystem);
 
-        ResponseMessage response = dynamicEnvironmentService.createEnvironment(
-                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection);
+        assertThrows(IllegalArgumentException.class, () -> dynamicEnvironmentService.createEnvironment(
+                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection));
 
-        assertEquals(ResponseType.ERROR, response.getType());
-        assertTrue(response.getContent().toLowerCase().contains("use put"));
         verify(environmentsService, never()).addSystemToEnvironment(
                 any(), any(), anyString(), anyString(), anyString(), anyMap());
         verify(dynamicEnvironmentRepository, never()).save(any());
