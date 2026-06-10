@@ -16,6 +16,7 @@
 
 package org.qubership.atp.tdm.controllers;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -59,6 +61,20 @@ class AtpEnvControllerMvcTest extends AbstractEnvTest {
         assertEquals(1, countH2Rows(ENV_NAME));
         verify(environmentsService).registerEnvironmentInCache(
                 eq(PROJECT_ID), eq(ENV_NAME), eq(SYSTEM_NAME), anyString(), anyString(), anyMap());
+    }
+
+    @Test
+    void createEnv_existingSystem_returns400() throws Exception {
+        mockMvc.perform(post(API_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(ENV_NAME, SYSTEM_NAME)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post(API_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(ENV_NAME, SYSTEM_NAME)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("Use PUT to update.")));
     }
 
     @Test
@@ -223,7 +239,76 @@ class AtpEnvControllerMvcTest extends AbstractEnvTest {
         UUID newSystemId = YamlEnvironment.composeSystemId(ENV_NAME, NEW_SYSTEM_NAME);
         assertEquals(1, countH2Rows(ENV_NAME));
         assertEquals(newSystemId, findH2Rows(ENV_NAME).get(0).getId());
-//        assertEquals(newSystemId, catalogRepository.findByTableName(catalog.getTableName()).getSystemId());
+        assertEquals(newSystemId, catalogRepository.findByTableName(catalog.getTableName()).getSystemId());
+        assertEquals(ENVIRONMENT_ID, catalogRepository.findByTableName(catalog.getTableName()).getEnvironmentId());
+    }
+
+    @Test
+    void renameSystem_preservesCatalogEnvironmentId() throws Exception {
+        mockMvc.perform(post(API_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(ENV_NAME, SYSTEM_NAME)))
+                .andExpect(status().isOk());
+
+        UUID oldSystemId = YamlEnvironment.composeSystemId(ENV_NAME, SYSTEM_NAME);
+        TestDataTableCatalog catalog = createCatalogEntry(oldSystemId, ENVIRONMENT_ID, "table1");
+
+        mockMvc.perform(put(API_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateRequestBody(ENV_NAME, SYSTEM_NAME, null, NEW_SYSTEM_NAME)))
+                .andExpect(status().isOk());
+
+        assertEquals(ENVIRONMENT_ID, catalogRepository.findByTableName(catalog.getTableName()).getEnvironmentId());
+    }
+
+    @Test
+    void renameEnvAndSystem_updatesH2AndCatalog() throws Exception {
+        mockMvc.perform(post(API_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(ENV_NAME, SYSTEM_NAME)))
+                .andExpect(status().isOk());
+
+        UUID oldSystemId = YamlEnvironment.composeSystemId(ENV_NAME, SYSTEM_NAME);
+        TestDataTableCatalog catalog = createCatalogEntry(oldSystemId, ENVIRONMENT_ID, "table1");
+
+        mockMvc.perform(put(API_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateRequestBody(ENV_NAME, SYSTEM_NAME, NEW_ENV_NAME, NEW_SYSTEM_NAME)))
+                .andExpect(status().isOk());
+
+        assertEquals(1, countH2Rows(NEW_ENV_NAME));
+        DynamicEnvironment row = findH2Rows(NEW_ENV_NAME).get(0);
+        assertEquals(NEW_ENV_NAME, row.getEnvName());
+        assertEquals(NEW_SYSTEM_NAME, row.getSystemName());
+
+        UUID newSystemId = YamlEnvironment.composeSystemId(NEW_ENV_NAME, NEW_SYSTEM_NAME);
+        assertEquals(newSystemId, catalogRepository.findByTableName(catalog.getTableName()).getSystemId());
+    }
+
+    @Test
+    void updateEnv_notFound() throws Exception {
+        mockMvc.perform(put(API_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateRequestBody(ENV_NAME, SYSTEM_NAME, null, null)))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
+    void updateEnv_newSystemNameAlreadyExists_returns400() throws Exception {
+        mockMvc.perform(post(API_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(ENV_NAME, SYSTEM_NAME)))
+                .andExpect(status().isOk());
+        mockMvc.perform(post(API_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(ENV_NAME, SYSTEM_NAME_2)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put(API_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateRequestBody(ENV_NAME, SYSTEM_NAME, null, SYSTEM_NAME_2)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("already exists in environment")));
     }
 
     @Test

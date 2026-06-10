@@ -252,7 +252,7 @@ class AtpEnvControllerRestAssuredTest extends AbstractEnvTest {
         UUID newSystemId = YamlEnvironment.composeSystemId(ENV_NAME, NEW_SYSTEM_NAME);
         assertEquals(1, countH2Rows(ENV_NAME));
         assertEquals(newSystemId, findH2Rows(ENV_NAME).get(0).getId());
-//        assertEquals(newSystemId, catalogRepository.findByTableName(catalog.getTableName()).getSystemId());
+        assertEquals(newSystemId, catalogRepository.findByTableName(catalog.getTableName()).getSystemId());
     }
 
     @Test

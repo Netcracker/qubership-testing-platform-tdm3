@@ -216,12 +216,14 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
                         ? connection.getType() : record.getConnectionType();
 
                 if (StringUtils.isNotBlank(newSystemName)) {
+                    UUID oldSystemId = YamlEnvironment.composeSystemId(envName, systemName);
                     UUID newSystemId = YamlEnvironment.composeSystemId(finalEnvName, finalSystemName);
                     dynamicEnvironmentRepository.delete(record);
                     dynamicEnvironmentRepository.flush();
                     dynamicEnvironmentRepository.save(new DynamicEnvironment(
                             newSystemId, record.getProjectId(), finalEnvName, finalSystemName,
                             resolvedConnectionName, resolvedConnectionType, parametersJson));
+                    catalogRepository.updateSystemAndEnvironmentId(oldSystemId, newSystemId, envId);
                 } else {
                     record.setConnectionParameters(parametersJson);
                     record.setConnectionName(resolvedConnectionName);
