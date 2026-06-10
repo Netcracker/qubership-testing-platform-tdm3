@@ -80,31 +80,31 @@ All endpoints accept `Content-Type: application/json` and return a `ResponseMess
 
 Fields can be sent as a flat JSON object or nested under an `environment` property (both formats are supported):
 
-| Field | Required | Used by | Description |
-|-------|----------|---------|-------------|
-| `projectName` | yes | all | Name of an existing TDM project. |
-| `envName` | yes | all | Environment name to create, update, or delete. |
-| `systemName` | yes (create/update) | POST, PUT | System name within the environment. |
-| `connection` | yes (create/update) | POST, PUT | Connection details for the system (see below). |
-| `newEnvName` | no | PUT | Rename the environment. |
-| `newSystemName` | no | PUT | Rename the target system. |
-| `systemDeleteName` | no | DELETE | When set, deletes only this system; otherwise deletes the whole environment. |
+| Field              | Required            | Used by   | Description                                                                  |
+|--------------------|---------------------|-----------|------------------------------------------------------------------------------|
+| `projectName`      | yes                 | all       | Name of an existing TDM project.                                             |
+| `envName`          | yes                 | all       | Environment name to create, update, or delete.                               |
+| `systemName`       | yes (create/update) | POST, PUT | System name within the environment.                                          |
+| `connection`       | yes (create/update) | POST, PUT | Connection details for the system (see below).                               |
+| `newEnvName`       | no                  | PUT       | Rename the environment.                                                      |
+| `newSystemName`    | no                  | PUT       | Rename the target system.                                                    |
+| `systemDeleteName` | no                  | DELETE    | When set, deletes only this system; otherwise deletes the whole environment. |
 
 **Connection object** (`connection`):
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `name` | yes | Connection display name (e.g. `"DB"`). |
-| `type` | yes | Connection type (case-insensitive). See [supported types](#supported-connection-types). |
-| `parameters` | yes | Key-value map of connection parameters (e.g. host, port, credentials). Must not be empty. |
+| Field        | Required | Description                                                                                                     |
+|--------------|----------|-----------------------------------------------------------------------------------------------------------------|
+| `name`       | yes      | Connection display name (e.g. `"DB"`).                                                                          |
+| `type`       | yes      | Connection type (case-insensitive). See [supported types](#supported-connection-types).                         |
+| `parameters` | yes      | Key-value map of connection parameters (e.g. host, port, credentials). Please use lowercase! Must not be empty. |
 
 ### Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/tdm/rest/create-env` | Create a new environment with a system, or add a system to an existing environment. |
-| `PUT` | `/api/tdm/rest/create-env` | Update connection parameters and optionally rename the environment or system. |
-| `DELETE` | `/api/tdm/rest/create-env` | Delete an entire environment, or a single system within it. |
+| Method   | Path                       | Description                                                                         |
+|----------|----------------------------|-------------------------------------------------------------------------------------|
+| `POST`   | `/api/tdm/rest/create-env` | Create a new environment with a system, or add a system to an existing environment. |
+| `PUT`    | `/api/tdm/rest/create-env` | Update connection parameters and optionally rename the environment or system.       |
+| `DELETE` | `/api/tdm/rest/create-env` | Delete an entire environment, or a single system within it.                         |
 
 ### Supported connection types
 
@@ -112,11 +112,11 @@ Fields can be sent as a flat JSON object or nested under an `environment` proper
 
 ### HTTP status codes
 
-| Code | When |
-|------|------|
-| `200` | Operation completed successfully. |
+| Code  | When                                                                                   |
+|-------|----------------------------------------------------------------------------------------|
+| `200` | Operation completed successfully.                                                      |
 | `400` | Validation error (e.g. duplicate system, invalid connection type, missing parameters). |
-| `404` | Environment not found (DELETE only). |
+| `404` | Environment not found (DELETE only).                                                   |
 
 ### User guide
 

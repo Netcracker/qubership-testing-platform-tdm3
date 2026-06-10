@@ -72,7 +72,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
         String importQuery = "select \"sim\" from " + tableName;
         createTestDataTableCatalog(projectId, systemId, environmentId, tableTitle, tableName, importQuery);
 
-        String msg = String.format("Successfully refreshed %s records fot table: %s.",
+        String msg = String.format("Successfully refreshed %s records for table: %s.",
                 testDataTable.getRecords(), tableTitle);
         String dataRefreshLink = "%s/project/%s/tdm/TEST%%20DATA/%s/%s";
         String tdmUrl = "localhost:8080";

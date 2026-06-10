@@ -756,9 +756,9 @@ public class StatisticsServiceTest extends AbstractTestDataTest {
     public void statisticService_getStatisticsByUsers_returnRightRowsCount() {
         setUp();
         mockEnvForStatistics();
-        UsersOccupyStatisticResponse respone = statisticsService.getOccupiedDataByUsers(usersOccupyStatisticRequest);
+        UsersOccupyStatisticResponse response = statisticsService.getOccupiedDataByUsers(usersOccupyStatisticRequest);
 
-        Assertions.assertEquals(2, respone.getRecords());
+        Assertions.assertEquals(2, response.getRecords());
     }
 
     @Test
@@ -887,7 +887,7 @@ public class StatisticsServiceTest extends AbstractTestDataTest {
             AvailableDataStatisticsConfig config = statisticsService.getAvailableStatsConfig(system2, environmentId);
             List<TableColumnValues> values = testDataService.getDistinctTablesColumnValues(system2, environmentId, "sim");
             config.setTablesColumns(values);
-            config.setDescription("Descirption");
+            config.setDescription("Description");
             config.setActiveColumnKey("sim");
             statisticsService.saveAvailableStatsConfig(config);
             AvailableDataStatisticsConfig actConfig = statisticsService.getAvailableStatsConfig(system2, environmentId);
