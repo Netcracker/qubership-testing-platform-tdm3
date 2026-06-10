@@ -248,11 +248,11 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
         UUID projectId = lazyProject.getId();
 
         List<DynamicEnvironment> rows = dynamicEnvironmentRepository.findAllByEnvNameAndProjectId(envName, projectId);
-        if (rows.isEmpty()) {
-            throw new EnvironmentNotFoundException(envName, projectName);
-        }
 
         if (StringUtils.isNotBlank(systemName)) {
+            if (rows.isEmpty()) {
+                throw new EnvironmentNotFoundException(envName, projectName);
+            }
             DynamicEnvironment row = dynamicEnvironmentRepository
                     .findByEnvNameAndSystemNameAndProjectId(envName, systemName, projectId)
                     .orElseThrow(() -> new EnvironmentNotFoundException(envName, projectName));
@@ -262,8 +262,18 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
             environmentsService.removeSystemFromCache(lazyEnvironment.getId(), systemName);
             log.info("System [{}] deleted from environment [{}] in H2 and cache.", systemName, envName);
         } else {
-            LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(projectId, envName);
-            environmentsService.removeEnvironmentFromCache(lazyEnvironment.getId());
+            LazyEnvironment lazyEnvironment = null;
+            try {
+                lazyEnvironment = environmentsService.getLazyEnvironmentByName(projectId, envName);
+            } catch (TdmEnvConvertLazyEnvironmentByNameException e) {
+                // not in cache — fall through to 404 check below
+            }
+            if (rows.isEmpty() && lazyEnvironment == null) {
+                throw new EnvironmentNotFoundException(envName, projectName);
+            }
+            if (lazyEnvironment != null) {
+                environmentsService.removeEnvironmentFromCache(lazyEnvironment.getId());
+            }
             dynamicEnvironmentRepository.deleteByEnvNameAndProjectId(envName, projectId);
             log.info("Dynamic environment [{}] deleted from H2 and cache.", envName);
         }

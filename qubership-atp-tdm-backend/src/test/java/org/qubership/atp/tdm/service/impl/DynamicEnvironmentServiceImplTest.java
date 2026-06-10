@@ -388,4 +388,19 @@ class DynamicEnvironmentServiceImplTest {
         verify(environmentsService, never()).updateConnectionInCache(
                 any(), anyString(), anyString(), anyString(), anyMap());
     }
+
+    @Test
+    void deleteEnvironment_noSystemsInDb_envInCache_removesFromCache() {
+        when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
+        when(dynamicEnvironmentRepository.findAllByEnvNameAndProjectId(ENV_NAME, lazyProject.getId()))
+                .thenReturn(Collections.emptyList());
+        when(environmentsService.getLazyEnvironmentByName(lazyProject.getId(), ENV_NAME))
+                .thenReturn(lazyEnvironment);
+
+        ResponseMessage response = dynamicEnvironmentService.deleteEnvironment(PROJECT_NAME, ENV_NAME, null);
+
+        assertEquals(ResponseType.SUCCESS, response.getType());
+        verify(environmentsService).removeEnvironmentFromCache(lazyEnvironment.getId());
+        verify(dynamicEnvironmentRepository).deleteByEnvNameAndProjectId(ENV_NAME, lazyProject.getId());
+    }
 }
