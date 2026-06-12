@@ -1,5 +1,11 @@
 openapi: 3.0.3
 info:
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
   title: Api Documentation
   description: Api Documentation
   version: '1.0'
