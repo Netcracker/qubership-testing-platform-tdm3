@@ -1,11 +1,14 @@
 openapi: 3.0.3
 info:
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
   title: Api Documentation
   description: Api Documentation v2 - Enhanced with request body endpoints
   version: '2.0'
-  contact:
-    name: OurCompany
-    url: https://www.some-domain.com/company/about-some-domain/contact-us.html
 servers:
   - url: http://localhost:8080
     description: Inferred Url
