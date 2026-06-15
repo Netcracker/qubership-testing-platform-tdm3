@@ -94,22 +94,11 @@ class EnvironmentsServiceImplSystemLookupTest {
     }
 
     @Test
-    void getLazySystemByName_upperCaseSystemName_returnsLazySystem() {
+    void getLazySystemByName_upperCaseSystemName_throws() {
         when(cacheService.get(environmentId)).thenReturn(yamlEnvironment);
 
-        LazySystem result = environmentsService.getLazySystemByName(projectId, environmentId, "DB");
-
-        assertEquals(yamlSystem.getName(), result.getName());
-        assertEquals(yamlSystem.getId(), result.getId());
-    }
-
-    @Test
-    void getLazySystemByName_mixedCaseSystemName_returnsLazySystem() {
-        when(cacheService.get(environmentId)).thenReturn(yamlEnvironment);
-
-        LazySystem result = environmentsService.getLazySystemByName(projectId, environmentId, "Db");
-
-        assertEquals(yamlSystem.getName(), result.getName());
+        assertThrows(TdmEnvConvertFullSystemByNameException.class,
+                () -> environmentsService.getLazySystemByName(projectId, environmentId, "DB"));
     }
 
     @Test
@@ -133,21 +122,11 @@ class EnvironmentsServiceImplSystemLookupTest {
     }
 
     @Test
-    void getFullSystemByName_upperCaseSystemName_returnsSystem() {
+    void getFullSystemByName_upperCaseSystemName_throwError() {
         when(cacheService.get(environmentId)).thenReturn(yamlEnvironment);
 
-        System result = environmentsService.getFullSystemByName(environmentId, "DB");
-
-        assertEquals(SYSTEM_NAME_LOWER, result.getName());
-    }
-
-    @Test
-    void getFullSystemByName_mixedCaseSystemName_returnsSystem() {
-        when(cacheService.get(environmentId)).thenReturn(yamlEnvironment);
-
-        System result = environmentsService.getFullSystemByName(environmentId, "Db");
-
-        assertEquals(SYSTEM_NAME_LOWER, result.getName());
+        assertThrows(TdmEnvConvertFullSystemByNameException.class,
+                () -> environmentsService.getFullSystemByName(environmentId, "DB"));
     }
 
     @Test

@@ -75,13 +75,7 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
                 envName, systemName, projectName);
         validateConnection(connection);
 
-        LazyProject lazyProject;
-        try {
-            lazyProject = environmentsService.getLazyProjectByName(projectName);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(String.format("Project [%s] not found.", projectName));
-        }
-        UUID projectId = lazyProject.getId();
+        UUID projectId = getLazyProjectCatch(projectName).getId();
 
         try {
             LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(projectId, envName);
@@ -132,12 +126,9 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
                     "Connection 'parameters' must not be null or empty for update.");
         }
 
-        LazyProject lazyProject = environmentsService.getLazyProjectByName(projectName);
-        UUID projectId = lazyProject.getId();
-        LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(projectId, envName);
-        UUID envId = lazyEnvironment.getId();
-
-        environmentsService.getLazySystemByName(projectId, envId, systemName);
+        UUID projectId = getLazyProjectCatch(projectName).getId();
+        UUID envId = environmentsService.getLazyEnvironmentByName(projectId, envName).
+                getId();
 
         if (StringUtils.isNotBlank(newEnvName) && !newEnvName.equals(envName)) {
             try {
@@ -180,6 +171,7 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
             dynamicEnvironmentRepository.deleteAll(allRows);
             dynamicEnvironmentRepository.flush();
             for (DynamicEnvironment row : allRows) {
+                // Find system which we want to rename, if found rename and replace connection, else use existing name.
                 String rowSystemName = row.getSystemName().equals(systemName) ? finalSystemName : row.getSystemName();
                 UUID newSystemId = YamlEnvironment.composeSystemId(finalEnvName, rowSystemName);
                 String parametersJson = row.getSystemName().equals(systemName)
@@ -195,7 +187,7 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
             }
             log.info("Cascaded H2 rename for all systems in env [{}] -> [{}].", envName, finalEnvName);
 
-            // Bug 4b: cascade new systemId/envId into TestDataTableCatalog.
+            // After rename id changed, so update existing ids in TestDataTableCatalog too.
             UUID newEnvId = environmentsService.getLazyEnvironmentByName(projectId, finalEnvName).getId();
             for (DynamicEnvironment row : allRows) {
                 String rowSystemName = row.getSystemName().equals(systemName) ? finalSystemName : row.getSystemName();
@@ -244,8 +236,7 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
                                              @Nullable String systemName) {
         log.info("Deleting dynamic environment [{}] system [{}] for project [{}].", envName, systemName, projectName);
 
-        LazyProject lazyProject = environmentsService.getLazyProjectByName(projectName);
-        UUID projectId = lazyProject.getId();
+        UUID projectId = getLazyProjectCatch(projectName).getId();
 
         List<DynamicEnvironment> rows = dynamicEnvironmentRepository.findAllByEnvNameAndProjectId(envName, projectId);
 
@@ -317,6 +308,14 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
         } catch (JsonProcessingException ex) {
             log.warn("Failed to serialize connection parameters for env [{}], storing as empty.", envName, ex);
             return "{}";
+        }
+    }
+
+    private LazyProject getLazyProjectCatch(String projectName) {
+        try {
+            return environmentsService.getLazyProjectByName(projectName);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(String.format("Project [%s] not found.", projectName));
         }
     }
 }

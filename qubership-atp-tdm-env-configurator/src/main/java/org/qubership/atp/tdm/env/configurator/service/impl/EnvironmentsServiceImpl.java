@@ -192,10 +192,6 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         LazyEnvironment environment;
         try {
             YamlEnvironment yamlEnvironment = cacheService.get(environmentId);
-            if (yamlEnvironment == null) {
-                log.warn("Environment not found in cache for ID: {}", environmentId);
-                return null;
-            }
             environment = LazyEnvironment.builder()
                     .id(yamlEnvironment.getId())
                     .name(yamlEnvironment.getName())
@@ -516,7 +512,7 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         }).collect(Collectors.toList());
 
         boolean hasDbConnection = connections.stream()
-                .anyMatch(connection -> "DB".equalsIgnoreCase(connection.getName()));
+                .anyMatch(connection -> "DB".equalsIgnoreCase(connection.getConnectionType()));
         if (!hasDbConnection) {
             log.error("No connection named DB under system [{}] for environment id [{}].", systemName, environmentId);
             throw new TdmEnvDbConnectionException("DB");
@@ -662,7 +658,7 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         }
 
         List<YamlSystem> updatedSystems = yamlEnvironment.getYamlSystems().stream()
-                .filter(s -> !systemName.equalsIgnoreCase(s.getName()))
+                .filter(s -> !systemName.equals(s.getName()))
                 .collect(Collectors.toList());
         yamlEnvironment.setYamlSystems(updatedSystems);
         cacheService.put(yamlEnvironment);

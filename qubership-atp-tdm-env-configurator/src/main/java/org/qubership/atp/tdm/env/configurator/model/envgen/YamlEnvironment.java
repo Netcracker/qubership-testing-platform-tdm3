@@ -111,7 +111,7 @@ public class YamlEnvironment {
     public YamlSystem getSystemByName(String name) {
         return getYamlSystems()
                 .stream()
-                .filter(yamlSystem -> yamlSystem.getName().equalsIgnoreCase(name))
+                .filter(yamlSystem -> yamlSystem.getName().equals(name))
                 .findFirst()
                 .orElse(null);
     }

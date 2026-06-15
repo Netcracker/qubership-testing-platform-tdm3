@@ -59,17 +59,10 @@ class YamlEnvironmentTest {
     }
 
     @Test
-    void getSystemByName_upperCaseInput_returnsSystem() {
+    void getSystemByName_upperCaseInput_returnNull() {
         YamlSystem result = yamlEnvironment.getSystemByName("DB");
 
-        assertEquals(yamlSystem.getName(), result.getName());
-    }
-
-    @Test
-    void getSystemByName_mixedCaseInput_returnsSystem() {
-        YamlSystem result = yamlEnvironment.getSystemByName("Db");
-
-        assertEquals(yamlSystem.getName(), result.getName());
+        assertNull(result);
     }
 
     @Test
@@ -101,7 +94,7 @@ class YamlEnvironmentTest {
 
         yamlEnvironment.setYamlSystems(Arrays.asList(yamlSystem, anotherSystem));
 
-        YamlSystem result = yamlEnvironment.getSystemByName("DB");
+        YamlSystem result = yamlEnvironment.getSystemByName("db");
 
         assertEquals(SYSTEM_NAME, result.getName());
     }

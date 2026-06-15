@@ -264,20 +264,6 @@ class DynamicEnvironmentServiceImplTest {
     }
 
     @Test
-    void updateEnvironment_systemNotFound_throwsException() {
-        when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
-        when(environmentsService.getLazyEnvironmentByName(lazyProject.getId(), ENV_NAME))
-                .thenReturn(lazyEnvironment);
-        when(environmentsService.getLazySystemByName(
-                lazyProject.getId(), lazyEnvironment.getId(), SYSTEM_NAME))
-                .thenThrow(new TdmEnvConvertFullSystemByNameException(SYSTEM_NAME));
-
-        assertThrows(TdmEnvConvertFullSystemByNameException.class, () ->
-                dynamicEnvironmentService.updateEnvironment(
-                        PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection, null, null));
-    }
-
-    @Test
     void updateEnvironment_envAndSystemExist_updatesConnection() {
         DynamicEnvironment record = new DynamicEnvironment(
                 lazySystem.getId(), lazyProject.getId(), ENV_NAME, SYSTEM_NAME,
@@ -286,8 +272,6 @@ class DynamicEnvironmentServiceImplTest {
         when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
         when(environmentsService.getLazyEnvironmentByName(lazyProject.getId(), ENV_NAME))
                 .thenReturn(lazyEnvironment);
-        when(environmentsService.getLazySystemByName(
-                lazyProject.getId(), lazyEnvironment.getId(), SYSTEM_NAME)).thenReturn(lazySystem);
         when(dynamicEnvironmentRepository.findByEnvNameAndSystemNameAndProjectId(ENV_NAME, SYSTEM_NAME, lazyProject.getId()))
                 .thenReturn(Optional.of(record));
 
@@ -315,8 +299,6 @@ class DynamicEnvironmentServiceImplTest {
         when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
         when(environmentsService.getLazyEnvironmentByName(lazyProject.getId(), ENV_NAME))
                 .thenReturn(lazyEnvironment);
-        when(environmentsService.getLazySystemByName(
-                lazyProject.getId(), lazyEnvironment.getId(), SYSTEM_NAME)).thenReturn(lazySystem);
         when(environmentsService.getLazyEnvironmentByName(lazyProject.getId(), newEnvName))
                 .thenThrow(new TdmEnvConvertLazyEnvironmentByNameException(newEnvName, lazyProject.getId().toString()))
                 .thenReturn(lazyEnvironment);
@@ -352,8 +334,6 @@ class DynamicEnvironmentServiceImplTest {
         when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
         when(environmentsService.getLazyEnvironmentByName(lazyProject.getId(), ENV_NAME))
                 .thenReturn(lazyEnvironment);
-        when(environmentsService.getLazySystemByName(
-                lazyProject.getId(), lazyEnvironment.getId(), SYSTEM_NAME)).thenReturn(lazySystem);
         when(environmentsService.getLazyEnvironmentByName(lazyProject.getId(), newEnvName))
                 .thenReturn(existingEnv);
 
@@ -375,8 +355,6 @@ class DynamicEnvironmentServiceImplTest {
         when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
         when(environmentsService.getLazyEnvironmentByName(lazyProject.getId(), ENV_NAME))
                 .thenReturn(lazyEnvironment);
-        when(environmentsService.getLazySystemByName(
-                lazyProject.getId(), lazyEnvironment.getId(), SYSTEM_NAME)).thenReturn(lazySystem);
         when(environmentsService.getLazySystemByName(
                 lazyProject.getId(), lazyEnvironment.getId(), newSystemName))
                 .thenReturn(existingSystem);
