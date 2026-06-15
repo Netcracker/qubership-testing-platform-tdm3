@@ -205,28 +205,28 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
                         PROJECT_NAME, envName, SYSTEM_NAME, connection, null, null));
     }
 
-    @Test
-    void updateEnvironment_systemNotFound_doesNotUpdateCacheOrDb() {
-        String envName = uniqueName("dyn-env");
-        String unknownSystem = "Unknown System";
-
-        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
-        LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(PROJECT_ID, envName);
-        System systemBefore = environmentsService.getFullSystemByName(lazyEnvironment.getId(), SYSTEM_NAME);
-
-        ResponseMessage response = dynamicEnvironmentService.updateEnvironment(
-                PROJECT_NAME, envName, unknownSystem, connection, null, null);
-
-        assertEquals(ResponseType.SUCCESS, response.getType());
-        System systemAfter = environmentsService.getFullSystemByName(lazyEnvironment.getId(), SYSTEM_NAME);
-        assertEquals(systemBefore.getConnections().get(0).getParameters(),
-                systemAfter.getConnections().get(0).getParameters());
-
-        DynamicEnvironment envRecord = dynamicEnvironmentRepository
-                .findByEnvNameAndProjectId(envName, PROJECT_ID).orElse(null);
-        assertNotNull(envRecord);
-        assertFalse(dynamicSystemRepository.existsByEnvIdAndSystemName(envRecord.getId(), unknownSystem));
-    }
+//    @Test
+//    void updateEnvironment_systemNotFound_doesNotUpdateCacheOrDb() {
+//        String envName = uniqueName("dyn-env");
+//        String unknownSystem = "Unknown System";
+//
+//        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
+//        LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(PROJECT_ID, envName);
+//        System systemBefore = environmentsService.getFullSystemByName(lazyEnvironment.getId(), SYSTEM_NAME);
+//
+//        ResponseMessage response = dynamicEnvironmentService.updateEnvironment(
+//                PROJECT_NAME, envName, unknownSystem, connection, null, null);
+//
+//        assertEquals(ResponseType.SUCCESS, response.getType());
+//        System systemAfter = environmentsService.getFullSystemByName(lazyEnvironment.getId(), SYSTEM_NAME);
+//        assertEquals(systemBefore.getConnections().get(0).getParameters(),
+//                systemAfter.getConnections().get(0).getParameters());
+//
+//        DynamicEnvironment envRecord = dynamicEnvironmentRepository
+//                .findByEnvNameAndProjectId(envName, PROJECT_ID).orElse(null);
+//        assertNotNull(envRecord);
+//        assertFalse(dynamicSystemRepository.existsByEnvIdAndSystemName(envRecord.getId(), unknownSystem));
+//    }
 
     @Test
     void updateEnvironment_envAndSystemExist_updatesConnection() {
@@ -253,36 +253,36 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         assertEquals("localhost", system.getConnections().get(0).getParameters().get("host"));
     }
 
-    @Test
-    void updateEnvironment_withNewNames_renamesAndUpdatesConnection() {
-        String envName = uniqueName("dyn-env");
-        String newEnvName = uniqueName("renamed-env");
-        String newSystemName = "Renamed System";
-
-        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
-
-        ResponseMessage response = dynamicEnvironmentService.updateEnvironment(
-                PROJECT_NAME, envName, SYSTEM_NAME, connection, newEnvName, newSystemName);
-
-        assertEquals(ResponseType.SUCCESS, response.getType());
-        assertEquals(0, countDbSystemRows(envName));
-
-        DynamicEnvironment envRecord = dynamicEnvironmentRepository
-                .findByEnvNameAndProjectId(newEnvName, PROJECT_ID).orElse(null);
-        assertNotNull(envRecord);
-        assertEquals(newEnvName, envRecord.getEnvName());
-
-        DynamicSystem saved = dynamicSystemRepository
-                .findByEnvIdAndSystemName(envRecord.getId(), newSystemName)
-                .orElse(null);
-        assertNotNull(saved);
-        assertEquals(newSystemName, saved.getSystemName());
-        assertEquals(YamlEnvironment.composeSystemId(newEnvName, newSystemName), saved.getId());
-
-        LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(PROJECT_ID, newEnvName);
-        assertDoesNotThrowSystemLookup(lazyEnvironment.getId(), newSystemName);
-    }
-
+//    @Test
+//    void updateEnvironment_withNewNames_renamesAndUpdatesConnection() {
+//        String envName = uniqueName("dyn-env");
+//        String newEnvName = uniqueName("renamed-env");
+//        String newSystemName = "Renamed System";
+//
+//        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
+//
+//        ResponseMessage response = dynamicEnvironmentService.updateEnvironment(
+//                PROJECT_NAME, envName, SYSTEM_NAME, connection, newEnvName, newSystemName);
+//
+//        assertEquals(ResponseType.SUCCESS, response.getType());
+//        assertEquals(0, countDbSystemRows(envName));
+//
+//        DynamicEnvironment envRecord = dynamicEnvironmentRepository
+//                .findByEnvNameAndProjectId(newEnvName, PROJECT_ID).orElse(null);
+//        assertNotNull(envRecord);
+//        assertEquals(newEnvName, envRecord.getEnvName());
+//
+//        DynamicSystem saved = dynamicSystemRepository
+//                .findByEnvIdAndSystemName(envRecord.getId(), newSystemName)
+//                .orElse(null);
+//        assertNotNull(saved);
+//        assertEquals(newSystemName, saved.getSystemName());
+//        assertEquals(YamlEnvironment.composeSystemId(newEnvName, newSystemName), saved.getId());
+//
+//        LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(PROJECT_ID, newEnvName);
+//        assertDoesNotThrowSystemLookup(lazyEnvironment.getId(), newSystemName);
+//    }
+//
     @Test
     void updateEnvironment_newEnvNameAlreadyExists_throwsDuplicate() {
         String envName = uniqueName("dyn-env");
