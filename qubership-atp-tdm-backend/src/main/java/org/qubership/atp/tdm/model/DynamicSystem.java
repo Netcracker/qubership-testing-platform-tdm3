@@ -16,45 +16,46 @@
 
 package org.qubership.atp.tdm.model;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "dynamic_environment")
+@Table(name = "dynamic_system")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DynamicEnvironment {
+public class DynamicSystem {
 
     @Id
     @Column(name = "id")
     private UUID id;
 
-    @Column(name = "project_id", nullable = false)
-    private UUID projectId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "env_id", nullable = false)
+    private DynamicEnvironment env;
 
-    @Column(name = "env_name", nullable = false)
-    private String envName;
+    @Column(name = "system_name", nullable = false)
+    private String systemName;
 
-    @OneToMany(mappedBy = "env", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    private List<DynamicSystem> systems = new ArrayList<>();
+    @Column(name = "connection_name", nullable = false)
+    private String connectionName;
 
-    public DynamicEnvironment(UUID id, UUID projectId, String envName) {
-        this.id = id;
-        this.projectId = projectId;
-        this.envName = envName;
-        this.systems = new ArrayList<>();
-    }
+    @Column(name = "connection_type", nullable = false)
+    private String connectionType;
+
+    /**
+     * JSON-serialized Map&lt;String, String&gt; of connection parameters.
+     */
+    @Column(name = "connection_parameters", columnDefinition = "TEXT")
+    private String connectionParameters;
 }

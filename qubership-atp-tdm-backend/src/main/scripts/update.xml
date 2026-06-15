@@ -158,6 +158,22 @@
             <column name="env_name" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
+        </createTable>
+        <addUniqueConstraint tableName="dynamic_environment"
+                             columnNames="project_id, env_name"
+                             constraintName="uq_dynamic_environment_project_env"/>
+    </changeSet>
+
+    <changeSet id="CREATE_TABLE_DYNAMIC_SYSTEM" author="atp-tdm-be">
+        <createTable tableName="dynamic_system">
+            <column name="id" type="uuid">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="env_id" type="uuid">
+                <constraints nullable="false"
+                             foreignKeyName="fk_dynamic_system_env"
+                             references="dynamic_environment(id)"/>
+            </column>
             <column name="system_name" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
@@ -171,6 +187,9 @@
                 <constraints nullable="true"/>
             </column>
         </createTable>
+        <addUniqueConstraint tableName="dynamic_system"
+                             columnNames="env_id, system_name"
+                             constraintName="uq_dynamic_system_env_system"/>
     </changeSet>
 
 

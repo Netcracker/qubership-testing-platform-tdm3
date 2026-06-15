@@ -17,7 +17,6 @@
 package org.qubership.atp.tdm.service.impl;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,6 +30,7 @@ import org.qubership.atp.tdm.env.configurator.model.LazyProject;
 import org.qubership.atp.tdm.env.configurator.model.LazySystem;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
 import org.qubership.atp.tdm.model.DynamicEnvironment;
+import org.qubership.atp.tdm.model.DynamicSystem;
 import org.qubership.atp.tdm.model.rest.ResponseMessage;
 import org.qubership.atp.tdm.model.rest.ResponseType;
 import org.qubership.atp.tdm.model.rest.requests.AddInfoToRowRequest;
@@ -296,39 +296,44 @@ public class AtpActionServiceImpl implements AtpActionService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void loadDynamicEnvironmentsFromDb() {
-        List<DynamicEnvironment> all = dynamicEnvironmentRepository.findAll();
+        List<DynamicEnvironment> all = dynamicEnvironmentRepository.findAllWithSystems();
         log.info("Loading {} dynamic environment(s) from H2 into cache.", all.size());
-        Map<String, UUID> restoredEnvironmentIds = new HashMap<>();
-        for (DynamicEnvironment record : all) {
-            Map<String, String> parameters;
-            try {
-                parameters = OBJECT_MAPPER.readValue(record.getConnectionParameters(),
-                        new TypeReference<Map<String, String>>() {});
-            } catch (Exception e) {
-                log.warn("Failed to deserialize parameters for dynamic env [{}], skipping.", record.getEnvName(), e);
+        for (DynamicEnvironment env : all) {
+            List<DynamicSystem> systems = env.getSystems();
+            if (systems.isEmpty()) {
+                log.warn("Dynamic environment [{}] has no systems, skipping.", env.getEnvName());
                 continue;
             }
-            try {
-                String environmentKey = getDynamicEnvironmentCacheKey(record.getProjectId(), record.getEnvName());
-                UUID envId = restoredEnvironmentIds.get(environmentKey);
-                if (envId == null) {
-                    LazyEnvironment lazyEnvironment = environmentsService.registerEnvironmentInCache(
-                            record.getProjectId(), record.getEnvName(), record.getSystemName(),
-                            record.getConnectionName(), record.getConnectionType(), parameters);
-                    restoredEnvironmentIds.put(environmentKey, lazyEnvironment.getId());
-                } else {
-                    environmentsService.addSystemToEnvironment(
-                            record.getProjectId(), envId, record.getSystemName(),
-                            record.getConnectionName(), record.getConnectionType(), parameters);
+            boolean envRegistered = false;
+            UUID registeredEnvId = null;
+            for (DynamicSystem sys : systems) {
+                Map<String, String> parameters;
+                try {
+                    parameters = OBJECT_MAPPER.readValue(sys.getConnectionParameters(),
+                            new TypeReference<Map<String, String>>() {});
+                } catch (Exception e) {
+                    log.warn("Failed to deserialize parameters for dynamic env [{}] system [{}], skipping.",
+                            env.getEnvName(), sys.getSystemName(), e);
+                    continue;
                 }
-            } catch (Exception e) {
-                log.warn("Failed to restore dynamic env [{}] into cache.", record.getEnvName(), e);
+                try {
+                    if (!envRegistered) {
+                        LazyEnvironment lazyEnvironment = environmentsService.registerEnvironmentInCache(
+                                env.getProjectId(), env.getEnvName(), sys.getSystemName(),
+                                sys.getConnectionName(), sys.getConnectionType(), parameters);
+                        registeredEnvId = lazyEnvironment.getId();
+                        envRegistered = true;
+                    } else {
+                        environmentsService.addSystemToEnvironment(
+                                env.getProjectId(), registeredEnvId, sys.getSystemName(),
+                                sys.getConnectionName(), sys.getConnectionType(), parameters);
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to restore dynamic env [{}] system [{}] into cache.",
+                            env.getEnvName(), sys.getSystemName(), e);
+                }
             }
         }
-    }
-
-    private String getDynamicEnvironmentCacheKey(@Nonnull UUID projectId, @Nonnull String envName) {
-        return projectId + ":" + envName;
     }
 
     private String formResultLink(@Nonnull UUID projectName, @Nullable UUID envName,

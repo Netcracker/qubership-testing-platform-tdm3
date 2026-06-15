@@ -38,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.qubership.atp.tdm.env.configurator.model.LazyEnvironment;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
 import org.qubership.atp.tdm.model.DynamicEnvironment;
+import org.qubership.atp.tdm.model.DynamicSystem;
 import org.qubership.atp.tdm.repo.AtpActionRepository;
 import org.qubership.atp.tdm.repo.DynamicEnvironmentRepository;
 
@@ -76,12 +77,14 @@ public class DynamicEnvironmentStartupLoaderTest {
         parameters.put("port", "5432");
         String parametersJson = OBJECT_MAPPER.writeValueAsString(parameters);
 
-        UUID recordId = UUID.nameUUIDFromBytes(dynEnvName.getBytes());
-        DynamicEnvironment record = new DynamicEnvironment(
-                recordId, dynProjectId, dynEnvName, dynSystemName,
-                dynConnectionName, dynConnectionType, parametersJson);
         UUID envId = UUID.nameUUIDFromBytes(dynEnvName.getBytes());
-        when(dynamicEnvironmentRepository.findAll()).thenReturn(Collections.singletonList(record));
+        DynamicEnvironment env = new DynamicEnvironment(envId, dynProjectId, dynEnvName);
+        DynamicSystem sys = new DynamicSystem(
+                UUID.nameUUIDFromBytes((dynEnvName + dynSystemName).getBytes()),
+                env, dynSystemName, dynConnectionName, dynConnectionType, parametersJson);
+        env.getSystems().add(sys);
+
+        when(dynamicEnvironmentRepository.findAllWithSystems()).thenReturn(Collections.singletonList(env));
         when(environmentsService.registerEnvironmentInCache(any(), any(), any(), any(), any(), any()))
                 .thenReturn(LazyEnvironment.builder()
                         .id(envId)
@@ -114,33 +117,39 @@ public class DynamicEnvironmentStartupLoaderTest {
         parameters.put("port", "5432");
         String parametersJson = OBJECT_MAPPER.writeValueAsString(parameters);
 
-        UUID recordId1 = UUID.nameUUIDFromBytes((dynEnvName + systemName1).getBytes());
-        UUID recordId2 = UUID.nameUUIDFromBytes((dynEnvName + systemName2).getBytes());
-        UUID recordId3 = UUID.nameUUIDFromBytes((dynEnvName2 + systemName3).getBytes());
-        UUID recordId4 = UUID.nameUUIDFromBytes((dynEnvName2 + systemName4).getBytes());
-        DynamicEnvironment record1 = new DynamicEnvironment(
-                recordId1, dynProjectId, dynEnvName, systemName1,
-                dynConnectionName, dynConnectionType, parametersJson);
-        DynamicEnvironment record2 = new DynamicEnvironment(
-                recordId2, dynProjectId, dynEnvName, systemName2,
-                dynConnectionName, dynConnectionType, parametersJson);
-        DynamicEnvironment record3 = new DynamicEnvironment(
-                recordId3, dynProjectId, dynEnvName2, systemName3,
-                dynConnectionName, dynConnectionType, parametersJson);
-        DynamicEnvironment record4 = new DynamicEnvironment(
-                recordId4, dynProjectId, dynEnvName2, systemName4,
-                dynConnectionName, dynConnectionType, parametersJson);
         UUID expectedEnvId = UUID.nameUUIDFromBytes(dynEnvName.getBytes());
+        UUID expectedEnvId2 = UUID.nameUUIDFromBytes(dynEnvName2.getBytes());
+
+        DynamicEnvironment env1 = new DynamicEnvironment(expectedEnvId, dynProjectId, dynEnvName);
+        DynamicSystem sys1 = new DynamicSystem(UUID.nameUUIDFromBytes((dynEnvName + systemName1).getBytes()),
+                env1, systemName1, dynConnectionName, dynConnectionType, parametersJson);
+        DynamicSystem sys2 = new DynamicSystem(UUID.nameUUIDFromBytes((dynEnvName + systemName2).getBytes()),
+                env1, systemName2, dynConnectionName, dynConnectionType, parametersJson);
+        env1.getSystems().add(sys1);
+        env1.getSystems().add(sys2);
+
+        DynamicEnvironment env2 = new DynamicEnvironment(expectedEnvId2, dynProjectId, dynEnvName2);
+        DynamicSystem sys3 = new DynamicSystem(UUID.nameUUIDFromBytes((dynEnvName2 + systemName3).getBytes()),
+                env2, systemName3, dynConnectionName, dynConnectionType, parametersJson);
+        DynamicSystem sys4 = new DynamicSystem(UUID.nameUUIDFromBytes((dynEnvName2 + systemName4).getBytes()),
+                env2, systemName4, dynConnectionName, dynConnectionType, parametersJson);
+        env2.getSystems().add(sys3);
+        env2.getSystems().add(sys4);
+
         List<DynamicEnvironment> list = new ArrayList<>();
-        list.add(record1);
-        list.add(record2);
-        list.add(record3);
-        list.add(record4);
-        when(dynamicEnvironmentRepository.findAll()).thenReturn(list);
+        list.add(env1);
+        list.add(env2);
+
+        when(dynamicEnvironmentRepository.findAllWithSystems()).thenReturn(list);
         when(environmentsService.registerEnvironmentInCache(any(), any(), any(), any(), any(), any()))
                 .thenReturn(LazyEnvironment.builder()
                         .id(expectedEnvId)
                         .name(dynEnvName)
+                        .projectId(dynProjectId)
+                        .build())
+                .thenReturn(LazyEnvironment.builder()
+                        .id(expectedEnvId2)
+                        .name(dynEnvName2)
                         .projectId(dynProjectId)
                         .build());
 
@@ -156,7 +165,7 @@ public class DynamicEnvironmentStartupLoaderTest {
                 eq(dynProjectId), eq(dynEnvName2), eq(systemName3),
                 eq(dynConnectionName), eq(dynConnectionType), anyMap());
         verify(environmentsService).addSystemToEnvironment(
-                eq(dynProjectId), eq(expectedEnvId), eq(systemName4),
+                eq(dynProjectId), eq(expectedEnvId2), eq(systemName4),
                 eq(dynConnectionName), eq(dynConnectionType), anyMap());
         verifyNoMoreInteractions(environmentsService);
     }
@@ -165,12 +174,15 @@ public class DynamicEnvironmentStartupLoaderTest {
     public void loadDynamicEnvironmentsFromDb_invalidParametersJson_skipsRecord() {
         UUID dynProjectId = UUID.randomUUID();
         String dynEnvName = "dynamic-startup-bad-params-" + dynProjectId;
-        UUID recordId = UUID.nameUUIDFromBytes(dynEnvName.getBytes());
+        UUID envId = UUID.nameUUIDFromBytes(dynEnvName.getBytes());
 
-        DynamicEnvironment record = new DynamicEnvironment(
-                recordId, dynProjectId, dynEnvName, "some-system",
-                "DB", "DB", "not-valid-json{{");
-        when(dynamicEnvironmentRepository.findAll()).thenReturn(Collections.singletonList(record));
+        DynamicEnvironment env = new DynamicEnvironment(envId, dynProjectId, dynEnvName);
+        DynamicSystem sys = new DynamicSystem(
+                UUID.nameUUIDFromBytes((dynEnvName + "some-system").getBytes()),
+                env, "some-system", "DB", "DB", "not-valid-json{{");
+        env.getSystems().add(sys);
+
+        when(dynamicEnvironmentRepository.findAllWithSystems()).thenReturn(Collections.singletonList(env));
 
         Assertions.assertDoesNotThrow(
                 () -> atpActionService.loadDynamicEnvironmentsFromDb(),

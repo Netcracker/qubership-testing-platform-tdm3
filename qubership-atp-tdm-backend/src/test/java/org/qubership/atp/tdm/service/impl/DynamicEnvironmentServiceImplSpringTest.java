@@ -41,10 +41,12 @@ import org.qubership.atp.tdm.env.configurator.service.CacheService;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
 import org.qubership.atp.tdm.exceptions.internal.EnvironmentNotFoundException;
 import org.qubership.atp.tdm.model.DynamicEnvironment;
+import org.qubership.atp.tdm.model.DynamicSystem;
 import org.qubership.atp.tdm.model.rest.ResponseMessage;
 import org.qubership.atp.tdm.model.rest.ResponseType;
 import org.qubership.atp.tdm.model.rest.requests.EnvironmentConnectionRequest;
 import org.qubership.atp.tdm.repo.DynamicEnvironmentRepository;
+import org.qubership.atp.tdm.repo.DynamicSystemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -64,6 +66,9 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
     private DynamicEnvironmentRepository dynamicEnvironmentRepository;
 
     @Autowired
+    private DynamicSystemRepository dynamicSystemRepository;
+
+    @Autowired
     private EnvironmentsService environmentsService;
 
     @Autowired
@@ -73,6 +78,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
 
     @BeforeEach
     void setUp() {
+        dynamicSystemRepository.deleteAll();
         dynamicEnvironmentRepository.deleteAll();
         cacheService.getEnvironments().forEach(env -> cacheService.remove(env.getId()));
         connection = buildConnection();
@@ -99,7 +105,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         assertThrows(IllegalArgumentException.class, () -> dynamicEnvironmentService.createEnvironment(
                 PROJECT_NAME, envName, SYSTEM_NAME, connection));
 
-        assertEquals(1, countDbRows(envName));
+        assertEquals(1, countDbSystemRows(envName));
     }
 
     @Test
@@ -112,7 +118,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
                 PROJECT_NAME, envName, secondSystem, connection);
 
         assertEquals(ResponseType.SUCCESS, response.getType());
-        assertEquals(2, countDbRows(envName));
+        assertEquals(2, countDbSystemRows(envName));
 
         LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(PROJECT_ID, envName);
         List<LazySystem> systems = environmentsService.getLazySystems(lazyEnvironment.getId());
@@ -129,7 +135,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
                 PROJECT_NAME, envName, SYSTEM_NAME, connection);
 
         assertEquals(ResponseType.SUCCESS, response.getType());
-        assertEquals(1, countDbRows(envName));
+        assertEquals(1, countDbSystemRows(envName));
 
         LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(PROJECT_ID, envName);
         assertEquals(envName, lazyEnvironment.getName());
@@ -146,7 +152,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         ResponseMessage response = dynamicEnvironmentService.deleteEnvironment(PROJECT_NAME, envName, null);
 
         assertEquals(ResponseType.SUCCESS, response.getType());
-        assertEquals(0, countDbRows(envName));
+        assertEquals(0, countDbSystemRows(envName));
         assertThrows(TdmEnvConvertLazyEnvironmentByNameException.class,
                 () -> environmentsService.getLazyEnvironmentByName(PROJECT_ID, envName));
         assertThrows(TdmEnvConvertLazyEnvironmentByEnvIdtException.class,
@@ -164,7 +170,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
                 PROJECT_NAME, envName, SYSTEM_NAME, connection);
 
         assertEquals(ResponseType.SUCCESS, response.getType());
-        assertEquals(1, countDbRows(envName));
+        assertEquals(1, countDbSystemRows(envName));
         LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(PROJECT_ID, envName);
         assertEquals(1, environmentsService.getLazySystems(lazyEnvironment.getId()).size());
     }
@@ -176,7 +182,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         assertThrows(EnvironmentNotFoundException.class,
                 () -> dynamicEnvironmentService.deleteEnvironment(PROJECT_NAME, envName, SYSTEM_NAME));
 
-        assertEquals(0, countDbRows(envName));
+        assertEquals(0, countDbSystemRows(envName));
         assertThrows(TdmEnvConvertLazyEnvironmentByNameException.class,
                 () -> environmentsService.getLazyEnvironmentByName(PROJECT_ID, envName));
     }
@@ -215,8 +221,11 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         System systemAfter = environmentsService.getFullSystemByName(lazyEnvironment.getId(), SYSTEM_NAME);
         assertEquals(systemBefore.getConnections().get(0).getParameters(),
                 systemAfter.getConnections().get(0).getParameters());
-        assertFalse(dynamicEnvironmentRepository.findByEnvNameAndSystemNameAndProjectId(
-                envName, unknownSystem, PROJECT_ID).isPresent());
+
+        DynamicEnvironment envRecord = dynamicEnvironmentRepository
+                .findByEnvNameAndProjectId(envName, PROJECT_ID).orElse(null);
+        assertNotNull(envRecord);
+        assertFalse(dynamicSystemRepository.existsByEnvIdAndSystemName(envRecord.getId(), unknownSystem));
     }
 
     @Test
@@ -230,8 +239,11 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
 
         assertEquals(ResponseType.SUCCESS, response.getType());
 
-        DynamicEnvironment saved = dynamicEnvironmentRepository
-                .findByEnvNameAndSystemNameAndProjectId(envName, SYSTEM_NAME, PROJECT_ID)
+        DynamicEnvironment envRecord = dynamicEnvironmentRepository
+                .findByEnvNameAndProjectId(envName, PROJECT_ID).orElse(null);
+        assertNotNull(envRecord);
+        DynamicSystem saved = dynamicSystemRepository
+                .findByEnvIdAndSystemName(envRecord.getId(), SYSTEM_NAME)
                 .orElse(null);
         assertNotNull(saved);
         assertTrue(saved.getConnectionParameters().contains("localhost"));
@@ -253,13 +265,17 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
                 PROJECT_NAME, envName, SYSTEM_NAME, connection, newEnvName, newSystemName);
 
         assertEquals(ResponseType.SUCCESS, response.getType());
-        assertEquals(0, countDbRows(envName));
+        assertEquals(0, countDbSystemRows(envName));
 
-        DynamicEnvironment saved = dynamicEnvironmentRepository
-                .findByEnvNameAndSystemNameAndProjectId(newEnvName, newSystemName, PROJECT_ID)
+        DynamicEnvironment envRecord = dynamicEnvironmentRepository
+                .findByEnvNameAndProjectId(newEnvName, PROJECT_ID).orElse(null);
+        assertNotNull(envRecord);
+        assertEquals(newEnvName, envRecord.getEnvName());
+
+        DynamicSystem saved = dynamicSystemRepository
+                .findByEnvIdAndSystemName(envRecord.getId(), newSystemName)
                 .orElse(null);
         assertNotNull(saved);
-        assertEquals(newEnvName, saved.getEnvName());
         assertEquals(newSystemName, saved.getSystemName());
         assertEquals(YamlEnvironment.composeSystemId(newEnvName, newSystemName), saved.getId());
 
@@ -307,7 +323,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         ResponseMessage response = dynamicEnvironmentService.deleteEnvironment(PROJECT_NAME, envName, null);
 
         assertEquals(ResponseType.SUCCESS, response.getType());
-        assertEquals(0, countDbRows(envName));
+        assertEquals(0, countDbSystemRows(envName));
         assertThrows(TdmEnvConvertLazyEnvironmentByNameException.class,
                 () -> environmentsService.getLazyEnvironmentByName(PROJECT_ID, envName));
         assertThrows(TdmEnvConvertLazyEnvironmentByEnvIdtException.class,
@@ -330,8 +346,10 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         return prefix + "-" + UUID.randomUUID();
     }
 
-    private long countDbRows(String envName) {
-        return dynamicEnvironmentRepository.findAllByEnvNameAndProjectId(envName, PROJECT_ID).size();
+    private long countDbSystemRows(String envName) {
+        return dynamicEnvironmentRepository.findByEnvNameAndProjectId(envName, PROJECT_ID)
+                .map(env -> (long) dynamicSystemRepository.findAllByEnvId(env.getId()).size())
+                .orElse(0L);
     }
 
     private void assertDoesNotThrowSystemLookup(UUID envId, String systemName) {

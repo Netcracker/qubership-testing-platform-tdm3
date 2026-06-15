@@ -37,7 +37,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.qubership.atp.tdm.AbstractEnvTest;
 import org.qubership.atp.tdm.env.configurator.model.envgen.YamlEnvironment;
-import org.qubership.atp.tdm.model.DynamicEnvironment;
+import org.qubership.atp.tdm.model.DynamicSystem;
 import org.qubership.atp.tdm.model.TestDataTableCatalog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -163,7 +163,7 @@ class AtpEnvControllerMvcTest extends AbstractEnvTest {
                 .andExpect(jsonPath("$.type").value("SUCCESS"));
 
         assertEquals(1, countH2Rows(ENV_NAME));
-        assertTrue(findH2Rows(ENV_NAME).stream().anyMatch(row -> SYSTEM_NAME_2.equals(row.getSystemName())));
+        assertTrue(findH2Rows(ENV_NAME).stream().anyMatch(sys -> SYSTEM_NAME_2.equals(sys.getSystemName())));
         verify(environmentsService).removeSystemFromCache(ENVIRONMENT_ID, SYSTEM_NAME);
         verify(environmentsService, never()).removeEnvironmentFromCache(any());
     }
@@ -209,9 +209,6 @@ class AtpEnvControllerMvcTest extends AbstractEnvTest {
 
         assertEquals(2, countH2Rows(NEW_ENV_NAME));
         assertEquals(0, countH2Rows(ENV_NAME));
-        for (DynamicEnvironment row : findH2Rows(NEW_ENV_NAME)) {
-            assertEquals(NEW_ENV_NAME, row.getEnvName());
-        }
 
         UUID newSystemId1 = YamlEnvironment.composeSystemId(NEW_ENV_NAME, SYSTEM_NAME);
         UUID newSystemId2 = YamlEnvironment.composeSystemId(NEW_ENV_NAME, SYSTEM_NAME_2);
@@ -277,8 +274,7 @@ class AtpEnvControllerMvcTest extends AbstractEnvTest {
                 .andExpect(status().isOk());
 
         assertEquals(1, countH2Rows(NEW_ENV_NAME));
-        DynamicEnvironment row = findH2Rows(NEW_ENV_NAME).get(0);
-        assertEquals(NEW_ENV_NAME, row.getEnvName());
+        DynamicSystem row = findH2Rows(NEW_ENV_NAME).get(0);
         assertEquals(NEW_SYSTEM_NAME, row.getSystemName());
 
         UUID newSystemId = YamlEnvironment.composeSystemId(NEW_ENV_NAME, NEW_SYSTEM_NAME);

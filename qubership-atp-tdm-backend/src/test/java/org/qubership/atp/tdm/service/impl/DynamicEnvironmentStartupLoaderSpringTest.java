@@ -35,7 +35,9 @@ import org.qubership.atp.tdm.env.configurator.model.System;
 import org.qubership.atp.tdm.env.configurator.service.CacheService;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
 import org.qubership.atp.tdm.model.DynamicEnvironment;
+import org.qubership.atp.tdm.model.DynamicSystem;
 import org.qubership.atp.tdm.repo.DynamicEnvironmentRepository;
+import org.qubership.atp.tdm.repo.DynamicSystemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,6 +57,9 @@ class DynamicEnvironmentStartupLoaderSpringTest extends AbstractTest {
     private DynamicEnvironmentRepository dynamicEnvironmentRepository;
 
     @Autowired
+    private DynamicSystemRepository dynamicSystemRepository;
+
+    @Autowired
     private EnvironmentsService environmentsService;
 
     @Autowired
@@ -62,6 +67,7 @@ class DynamicEnvironmentStartupLoaderSpringTest extends AbstractTest {
 
     @BeforeEach
     void setUp() {
+        dynamicSystemRepository.deleteAll();
         dynamicEnvironmentRepository.deleteAll();
         cacheService.getEnvironments().forEach(env -> cacheService.remove(env.getId()));
     }
@@ -79,10 +85,12 @@ class DynamicEnvironmentStartupLoaderSpringTest extends AbstractTest {
         parameters.put("port", "5432");
         String parametersJson = OBJECT_MAPPER.writeValueAsString(parameters);
 
-        UUID recordId = UUID.nameUUIDFromBytes((dynEnvName + dynSystemName).getBytes());
-        dynamicEnvironmentRepository.save(new DynamicEnvironment(
-                recordId, dynProjectId, dynEnvName, dynSystemName,
-                dynConnectionName, dynConnectionType, parametersJson));
+        UUID envId = UUID.nameUUIDFromBytes(dynEnvName.getBytes());
+        DynamicEnvironment env = dynamicEnvironmentRepository.save(
+                new DynamicEnvironment(envId, dynProjectId, dynEnvName));
+        dynamicSystemRepository.save(new DynamicSystem(
+                UUID.nameUUIDFromBytes((dynEnvName + dynSystemName).getBytes()),
+                env, dynSystemName, dynConnectionName, dynConnectionType, parametersJson));
 
         atpActionService.loadDynamicEnvironmentsFromDb();
 
@@ -113,22 +121,23 @@ class DynamicEnvironmentStartupLoaderSpringTest extends AbstractTest {
         parameters.put("port", "5432");
         String parametersJson = OBJECT_MAPPER.writeValueAsString(parameters);
 
-        dynamicEnvironmentRepository.save(new DynamicEnvironment(
+        DynamicEnvironment env1 = dynamicEnvironmentRepository.save(
+                new DynamicEnvironment(UUID.nameUUIDFromBytes(dynEnvName.getBytes()), dynProjectId, dynEnvName));
+        dynamicSystemRepository.save(new DynamicSystem(
                 UUID.nameUUIDFromBytes((dynEnvName + systemName1).getBytes()),
-                dynProjectId, dynEnvName, systemName1,
-                dynConnectionName, dynConnectionType, parametersJson));
-        dynamicEnvironmentRepository.save(new DynamicEnvironment(
+                env1, systemName1, dynConnectionName, dynConnectionType, parametersJson));
+        dynamicSystemRepository.save(new DynamicSystem(
                 UUID.nameUUIDFromBytes((dynEnvName + systemName2).getBytes()),
-                dynProjectId, dynEnvName, systemName2,
-                dynConnectionName, dynConnectionType, parametersJson));
-        dynamicEnvironmentRepository.save(new DynamicEnvironment(
+                env1, systemName2, dynConnectionName, dynConnectionType, parametersJson));
+
+        DynamicEnvironment env2 = dynamicEnvironmentRepository.save(
+                new DynamicEnvironment(UUID.nameUUIDFromBytes(dynEnvName2.getBytes()), dynProjectId, dynEnvName2));
+        dynamicSystemRepository.save(new DynamicSystem(
                 UUID.nameUUIDFromBytes((dynEnvName2 + systemName3).getBytes()),
-                dynProjectId, dynEnvName2, systemName3,
-                dynConnectionName, dynConnectionType, parametersJson));
-        dynamicEnvironmentRepository.save(new DynamicEnvironment(
+                env2, systemName3, dynConnectionName, dynConnectionType, parametersJson));
+        dynamicSystemRepository.save(new DynamicSystem(
                 UUID.nameUUIDFromBytes((dynEnvName2 + systemName4).getBytes()),
-                dynProjectId, dynEnvName2, systemName4,
-                dynConnectionName, dynConnectionType, parametersJson));
+                env2, systemName4, dynConnectionName, dynConnectionType, parametersJson));
 
         atpActionService.loadDynamicEnvironmentsFromDb();
 
@@ -140,11 +149,13 @@ class DynamicEnvironmentStartupLoaderSpringTest extends AbstractTest {
     void loadDynamicEnvironmentsFromDb_invalidParametersJson_skipsRecord() {
         UUID dynProjectId = UUID.randomUUID();
         String dynEnvName = "dynamic-startup-bad-params-" + dynProjectId;
-        UUID recordId = UUID.nameUUIDFromBytes((dynEnvName + "some-system").getBytes());
+        UUID envId = UUID.nameUUIDFromBytes(dynEnvName.getBytes());
 
-        dynamicEnvironmentRepository.save(new DynamicEnvironment(
-                recordId, dynProjectId, dynEnvName, "some-system",
-                "DB", "DB", "not-valid-json{{"));
+        DynamicEnvironment env = dynamicEnvironmentRepository.save(
+                new DynamicEnvironment(envId, dynProjectId, dynEnvName));
+        dynamicSystemRepository.save(new DynamicSystem(
+                UUID.nameUUIDFromBytes((dynEnvName + "some-system").getBytes()),
+                env, "some-system", "DB", "DB", "not-valid-json{{"));
 
         assertDoesNotThrow(
                 () -> atpActionService.loadDynamicEnvironmentsFromDb(),

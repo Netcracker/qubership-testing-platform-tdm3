@@ -50,11 +50,13 @@ import org.qubership.atp.tdm.env.configurator.model.LazySystem;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
 import org.qubership.atp.tdm.exceptions.internal.EnvironmentNotFoundException;
 import org.qubership.atp.tdm.model.DynamicEnvironment;
+import org.qubership.atp.tdm.model.DynamicSystem;
 import org.qubership.atp.tdm.model.rest.ResponseMessage;
 import org.qubership.atp.tdm.model.rest.ResponseType;
 import org.qubership.atp.tdm.model.rest.requests.EnvironmentConnectionRequest;
 import org.qubership.atp.tdm.repo.CatalogRepository;
 import org.qubership.atp.tdm.repo.DynamicEnvironmentRepository;
+import org.qubership.atp.tdm.repo.DynamicSystemRepository;
 
 @ExtendWith(MockitoExtension.class)
 class DynamicEnvironmentServiceImplTest {
@@ -70,6 +72,9 @@ class DynamicEnvironmentServiceImplTest {
     private DynamicEnvironmentRepository dynamicEnvironmentRepository;
 
     @Mock
+    private DynamicSystemRepository dynamicSystemRepository;
+
+    @Mock
     private CatalogRepository catalogRepository;
 
     @InjectMocks
@@ -79,6 +84,7 @@ class DynamicEnvironmentServiceImplTest {
     private LazyEnvironment lazyEnvironment;
     private LazySystem lazySystem;
     private EnvironmentConnectionRequest connection;
+    private DynamicEnvironment envRecord;
 
     @BeforeEach
     void setUp() {
@@ -98,6 +104,8 @@ class DynamicEnvironmentServiceImplTest {
         lazyEnvironment.setId(environmentId);
         lazyEnvironment.setName(ENV_NAME);
         lazyEnvironment.setProjectId(projectId);
+
+        envRecord = new DynamicEnvironment(environmentId, projectId, ENV_NAME);
 
         Map<String, String> parameters = new HashMap<>();
         parameters.put("host", "localhost");
@@ -135,7 +143,7 @@ class DynamicEnvironmentServiceImplTest {
 
         verify(environmentsService, never()).addSystemToEnvironment(
                 any(), any(), anyString(), anyString(), anyString(), anyMap());
-        verify(dynamicEnvironmentRepository, never()).save(any());
+        verify(dynamicSystemRepository, never()).save(any());
     }
 
     @Test
@@ -145,8 +153,9 @@ class DynamicEnvironmentServiceImplTest {
                 .thenReturn(lazyEnvironment);
         when(environmentsService.getLazySystemByName(
                 lazyProject.getId(), lazyEnvironment.getId(), SYSTEM_NAME))
-                .thenThrow(new TdmEnvConvertFullSystemByNameException(SYSTEM_NAME))
-                .thenReturn(lazySystem);
+                .thenThrow(new TdmEnvConvertFullSystemByNameException(SYSTEM_NAME));
+        when(dynamicEnvironmentRepository.findByEnvNameAndProjectId(ENV_NAME, lazyProject.getId()))
+                .thenReturn(Optional.of(envRecord));
 
         ResponseMessage response = dynamicEnvironmentService.createEnvironment(
                 PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection);
@@ -155,7 +164,7 @@ class DynamicEnvironmentServiceImplTest {
         verify(environmentsService).addSystemToEnvironment(
                 eq(lazyProject.getId()), eq(lazyEnvironment.getId()), eq(SYSTEM_NAME),
                 eq(connection.getName()), eq(connection.getType()), eq(connection.getParameters()));
-        verify(dynamicEnvironmentRepository).save(any(DynamicEnvironment.class));
+        verify(dynamicSystemRepository).save(any(DynamicSystem.class));
     }
 
     @Test
@@ -176,20 +185,17 @@ class DynamicEnvironmentServiceImplTest {
                 eq(lazyProject.getId()), eq(ENV_NAME), eq(SYSTEM_NAME),
                 eq(connection.getName()), eq(connection.getType()), eq(connection.getParameters()));
         verify(dynamicEnvironmentRepository).save(any(DynamicEnvironment.class));
+        verify(dynamicSystemRepository).save(any(DynamicSystem.class));
         verify(environmentsService, never()).addSystemToEnvironment(
                 any(), any(), anyString(), anyString(), anyString(), anyMap());
     }
 
     @Test
     void deleteEnvironment_envFound_removesFromCacheAndDeletesAllRows() {
-        DynamicEnvironment record = new DynamicEnvironment(
-                lazyEnvironment.getId(), lazyProject.getId(), ENV_NAME, SYSTEM_NAME,
-                "DB", "DB", "{}");
-
         when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
         when(environmentsService.getLazyEnvironmentByName(lazyProject.getId(), ENV_NAME)).thenReturn(lazyEnvironment);
-        when(dynamicEnvironmentRepository.findAllByEnvNameAndProjectId(ENV_NAME, lazyProject.getId()))
-                .thenReturn(Collections.singletonList(record));
+        when(dynamicEnvironmentRepository.findByEnvNameAndProjectId(ENV_NAME, lazyProject.getId()))
+                .thenReturn(Optional.of(envRecord));
 
         ResponseMessage response = dynamicEnvironmentService.deleteEnvironment(PROJECT_NAME, ENV_NAME, null);
 
@@ -200,14 +206,10 @@ class DynamicEnvironmentServiceImplTest {
 
     @Test
     void deleteEnvironment_thenRecreate_registersFreshEnvironment() {
-        DynamicEnvironment record = new DynamicEnvironment(
-                lazyEnvironment.getId(), lazyProject.getId(), ENV_NAME, SYSTEM_NAME,
-                "DB", "DB", "{}");
-
         when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
-        when(dynamicEnvironmentRepository.findAllByEnvNameAndProjectId(ENV_NAME, lazyProject.getId()))
-                .thenReturn(Collections.singletonList(record))
-                .thenReturn(Collections.emptyList());
+        when(dynamicEnvironmentRepository.findByEnvNameAndProjectId(ENV_NAME, lazyProject.getId()))
+                .thenReturn(Optional.of(envRecord))
+                .thenReturn(Optional.empty());
         when(environmentsService.getLazyEnvironmentByName(lazyProject.getId(), ENV_NAME))
                 .thenReturn(lazyEnvironment)
                 .thenThrow(new TdmEnvConvertLazyEnvironmentByNameException(ENV_NAME, lazyProject.getId().toString()));
@@ -227,13 +229,30 @@ class DynamicEnvironmentServiceImplTest {
                 eq(connection.getName()), eq(connection.getType()), eq(connection.getParameters()));
         verify(environmentsService, never()).addSystemToEnvironment(
                 any(), any(), anyString(), anyString(), anyString(), anyMap());
-        verify(dynamicEnvironmentRepository, times(1)).save(any(DynamicEnvironment.class));
+        verify(dynamicSystemRepository, times(1)).save(any(DynamicSystem.class));
         assertEquals(ResponseType.SUCCESS, response.getType());
     }
 
     @Test
     void deleteEnvironment_envNotFoundInDb_skipsCacheAndDbOps() {
         when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
+        when(dynamicEnvironmentRepository.findByEnvNameAndProjectId(ENV_NAME, lazyProject.getId()))
+                .thenReturn(Optional.empty());
+        when(environmentsService.getLazyEnvironmentByName(lazyProject.getId(), ENV_NAME))
+                .thenThrow(new TdmEnvConvertLazyEnvironmentByNameException(ENV_NAME, lazyProject.getId().toString()));
+
+        assertThrows(EnvironmentNotFoundException.class,
+                () -> dynamicEnvironmentService.deleteEnvironment(PROJECT_NAME, ENV_NAME, null));
+
+        verify(environmentsService, never()).removeEnvironmentFromCache(any());
+        verify(dynamicEnvironmentRepository, never()).deleteByEnvNameAndProjectId(anyString(), any());
+    }
+
+    @Test
+    void deleteEnvironment_envNotFoundInDb_withSystemName_throwsNotFound() {
+        when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
+        when(dynamicEnvironmentRepository.findByEnvNameAndProjectId(ENV_NAME, lazyProject.getId()))
+                .thenReturn(Optional.empty());
 
         assertThrows(EnvironmentNotFoundException.class,
                 () -> dynamicEnvironmentService.deleteEnvironment(PROJECT_NAME, ENV_NAME, SYSTEM_NAME));
@@ -265,15 +284,16 @@ class DynamicEnvironmentServiceImplTest {
 
     @Test
     void updateEnvironment_envAndSystemExist_updatesConnection() {
-        DynamicEnvironment record = new DynamicEnvironment(
-                lazySystem.getId(), lazyProject.getId(), ENV_NAME, SYSTEM_NAME,
-                "DB", "DB", "{}");
+        DynamicSystem sys = new DynamicSystem(
+                lazySystem.getId(), envRecord, SYSTEM_NAME, "DB", "DB", "{}");
 
         when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
         when(environmentsService.getLazyEnvironmentByName(lazyProject.getId(), ENV_NAME))
                 .thenReturn(lazyEnvironment);
-        when(dynamicEnvironmentRepository.findByEnvNameAndSystemNameAndProjectId(ENV_NAME, SYSTEM_NAME, lazyProject.getId()))
-                .thenReturn(Optional.of(record));
+        when(dynamicEnvironmentRepository.findByEnvNameAndProjectId(ENV_NAME, lazyProject.getId()))
+                .thenReturn(Optional.of(envRecord));
+        when(dynamicSystemRepository.findByEnvIdAndSystemName(envRecord.getId(), SYSTEM_NAME))
+                .thenReturn(Optional.of(sys));
 
         ResponseMessage response = dynamicEnvironmentService.updateEnvironment(
                 PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection, null, null);
@@ -283,8 +303,8 @@ class DynamicEnvironmentServiceImplTest {
                 eq(lazyEnvironment.getId()), eq(SYSTEM_NAME),
                 eq(connection.getName()), eq(connection.getType()), eq(connection.getParameters()));
 
-        ArgumentCaptor<DynamicEnvironment> captor = ArgumentCaptor.forClass(DynamicEnvironment.class);
-        verify(dynamicEnvironmentRepository).save(captor.capture());
+        ArgumentCaptor<DynamicSystem> captor = ArgumentCaptor.forClass(DynamicSystem.class);
+        verify(dynamicSystemRepository).save(captor.capture());
         assertTrue(captor.getValue().getConnectionParameters().contains("localhost"));
     }
 
@@ -292,9 +312,8 @@ class DynamicEnvironmentServiceImplTest {
     void updateEnvironment_withNewNames_renamesAndUpdatesConnection() {
         String newEnvName = "Renamed Environment";
         String newSystemName = "Renamed System";
-        DynamicEnvironment record = new DynamicEnvironment(
-                lazySystem.getId(), lazyProject.getId(), ENV_NAME, SYSTEM_NAME,
-                "DB", "DB", "{}");
+        DynamicSystem sys = new DynamicSystem(
+                lazySystem.getId(), envRecord, SYSTEM_NAME, "DB", "DB", "{}");
 
         when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
         when(environmentsService.getLazyEnvironmentByName(lazyProject.getId(), ENV_NAME))
@@ -305,8 +324,10 @@ class DynamicEnvironmentServiceImplTest {
         when(environmentsService.getLazySystemByName(
                 lazyProject.getId(), lazyEnvironment.getId(), newSystemName))
                 .thenThrow(new TdmEnvConvertFullSystemByNameException(newSystemName));
-        when(dynamicEnvironmentRepository.findAllByEnvNameAndProjectId(ENV_NAME, lazyProject.getId()))
-                .thenReturn(Collections.singletonList(record));
+        when(dynamicEnvironmentRepository.findByEnvNameAndProjectId(ENV_NAME, lazyProject.getId()))
+                .thenReturn(Optional.of(envRecord));
+        when(dynamicSystemRepository.findAllByEnvId(envRecord.getId()))
+                .thenReturn(Collections.singletonList(sys));
 
         ResponseMessage response = dynamicEnvironmentService.updateEnvironment(
                 PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection, newEnvName, newSystemName);
@@ -316,10 +337,9 @@ class DynamicEnvironmentServiceImplTest {
                 lazyEnvironment.getId(), SYSTEM_NAME, newSystemName);
         verify(environmentsService).renameEnvironmentInCache(lazyEnvironment.getId(), newEnvName);
 
-        ArgumentCaptor<DynamicEnvironment> captor = ArgumentCaptor.forClass(DynamicEnvironment.class);
-        verify(dynamicEnvironmentRepository).save(captor.capture());
-        DynamicEnvironment saved = captor.getValue();
-        assertEquals(newEnvName, saved.getEnvName());
+        ArgumentCaptor<DynamicSystem> captor = ArgumentCaptor.forClass(DynamicSystem.class);
+        verify(dynamicSystemRepository).save(captor.capture());
+        DynamicSystem saved = captor.getValue();
         assertEquals(newSystemName, saved.getSystemName());
         assertEquals(YamlEnvironment.composeSystemId(newEnvName, newSystemName), saved.getId());
     }
@@ -370,8 +390,8 @@ class DynamicEnvironmentServiceImplTest {
     @Test
     void deleteEnvironment_noSystemsInDb_envInCache_removesFromCache() {
         when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
-        when(dynamicEnvironmentRepository.findAllByEnvNameAndProjectId(ENV_NAME, lazyProject.getId()))
-                .thenReturn(Collections.emptyList());
+        when(dynamicEnvironmentRepository.findByEnvNameAndProjectId(ENV_NAME, lazyProject.getId()))
+                .thenReturn(Optional.empty());
         when(environmentsService.getLazyEnvironmentByName(lazyProject.getId(), ENV_NAME))
                 .thenReturn(lazyEnvironment);
 

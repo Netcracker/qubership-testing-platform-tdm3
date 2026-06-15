@@ -20,20 +20,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.qubership.atp.tdm.model.DynamicEnvironment;
+import org.qubership.atp.tdm.model.DynamicSystem;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface DynamicEnvironmentRepository extends JpaRepository<DynamicEnvironment, UUID> {
+public interface DynamicSystemRepository extends JpaRepository<DynamicSystem, UUID> {
 
-    boolean existsByEnvNameAndProjectId(String envName, UUID projectId);
+    List<DynamicSystem> findAllByEnvId(UUID envId);
 
-    Optional<DynamicEnvironment> findByEnvNameAndProjectId(String envName, UUID projectId);
+    Optional<DynamicSystem> findByEnvIdAndSystemName(UUID envId, String systemName);
 
-    void deleteByEnvNameAndProjectId(String envName, UUID projectId);
+    boolean existsByEnvIdAndSystemName(UUID envId, String systemName);
 
-    @Query("SELECT DISTINCT e FROM DynamicEnvironment e LEFT JOIN FETCH e.systems")
-    List<DynamicEnvironment> findAllWithSystems();
+    void deleteByEnvIdAndSystemName(UUID envId, String systemName);
 }

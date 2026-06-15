@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.reset;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,10 +37,11 @@ import org.qubership.atp.tdm.env.configurator.model.LazyProject;
 import org.qubership.atp.tdm.env.configurator.model.LazySystem;
 import org.qubership.atp.tdm.env.configurator.model.envgen.YamlEnvironment;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
-import org.qubership.atp.tdm.model.DynamicEnvironment;
+import org.qubership.atp.tdm.model.DynamicSystem;
 import org.qubership.atp.tdm.model.TestDataTableCatalog;
 import org.qubership.atp.tdm.repo.CatalogRepository;
 import org.qubership.atp.tdm.repo.DynamicEnvironmentRepository;
+import org.qubership.atp.tdm.repo.DynamicSystemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -55,13 +57,15 @@ public abstract class AbstractEnvTest extends AbstractTest {
     protected static final String NEW_SYSTEM_NAME = "renamedSystem";
 
     protected static final String CONNECTION_JSON = "{\"name\":\"DB\",\"type\":\"DB\",\"parameters\":{\"host\":\"localhost\",\"port\":\"5432\"}}";
-       
 
     protected static final UUID PROJECT_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
     protected static final UUID ENVIRONMENT_ID = UUID.fromString("22222222-2222-2222-2222-222222222222");
 
     @Autowired
     protected DynamicEnvironmentRepository dynamicEnvironmentRepository;
+
+    @Autowired
+    protected DynamicSystemRepository dynamicSystemRepository;
 
     @Autowired
     protected CatalogRepository catalogRepository;
@@ -75,6 +79,7 @@ public abstract class AbstractEnvTest extends AbstractTest {
 
     @BeforeEach
     void cleanDynamicEnvironmentTable() {
+        dynamicSystemRepository.deleteAll();
         dynamicEnvironmentRepository.deleteAll();
         currentEnvName = null;
         currentSystems.clear();
@@ -154,13 +159,11 @@ public abstract class AbstractEnvTest extends AbstractTest {
     protected String createRequestBody(String envName, String systemName) {
         return String.format("{\"projectName\":\"%s\",\"envName\":\"%s\",\"systemName\":\"%s\",\"connection\":%s}",
                 PROJECT_NAME, envName, systemName, CONNECTION_JSON);
-           
     }
 
     protected String deleteRequestBody(String envName, String systemDeleteName) {
         if (systemDeleteName == null) {
             return String.format("{\"projectName\":\"%s\",\"envName\":\"%s\"}", PROJECT_NAME, envName);
-               
         }
         return String.format("{\"projectName\":\"%s\",\"envName\":\"%s\",\"systemDeleteName\":\"%s\"}",
                 PROJECT_NAME, envName, systemDeleteName);
@@ -182,15 +185,19 @@ public abstract class AbstractEnvTest extends AbstractTest {
     }
 
     protected long countH2Rows(String envName) {
-        return dynamicEnvironmentRepository.findAllByEnvNameAndProjectId(envName, PROJECT_ID).size();
+        return dynamicEnvironmentRepository.findByEnvNameAndProjectId(envName, PROJECT_ID)
+                .map(env -> (long) dynamicSystemRepository.findAllByEnvId(env.getId()).size())
+                .orElse(0L);
     }
 
     protected long countAllH2Rows() {
-        return dynamicEnvironmentRepository.count();
+        return dynamicSystemRepository.count();
     }
 
-    protected List<DynamicEnvironment> findH2Rows(String envName) {
-        return dynamicEnvironmentRepository.findAllByEnvNameAndProjectId(envName, PROJECT_ID);
+    protected List<DynamicSystem> findH2Rows(String envName) {
+        return dynamicEnvironmentRepository.findByEnvNameAndProjectId(envName, PROJECT_ID)
+                .map(env -> dynamicSystemRepository.findAllByEnvId(env.getId()))
+                .orElse(Collections.emptyList());
     }
 
     protected TestDataTableCatalog createCatalogEntry(UUID systemId, UUID environmentId, String tableName) {
