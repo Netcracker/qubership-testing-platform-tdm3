@@ -137,7 +137,7 @@ class SopsDecryptorTest {
         String content = "ARGOCD_GITLAB_PASSWORD: plain-password\n" +
                 "ARGOCD_GITLAB_USER: plain-user\n" +
                 "public-gateway:\n" +
-                "  login: user@example.com\n" +
+                "  login: example@example.com\n" +
                 "  password: plainPassword123\n";
         Path testFile = createTestFile("test-plain.yaml", content);
 
@@ -179,7 +179,7 @@ class SopsDecryptorTest {
     @Test
     void testIsEncrypted_WithNullPath_ShouldReturnFalse() {
         // When
-        boolean result = decryptor.isEncrypted((Path) null);
+        boolean result = decryptor.isEncrypted(null);
 
         // Then
         assertFalse(result);

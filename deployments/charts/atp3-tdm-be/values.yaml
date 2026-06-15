@@ -65,7 +65,7 @@ atp3tdm:
   environmentsCacheDurations: "15"
   environmentsSpringCacheType: "GENERIC"
   eurekaClientEnabled: "false"
-  fromEmailAddress: "tdm-tool-service@example.com"
+  fromEmailAddress: "example@example.com"
   identityProviderUrl: ""
   jmxEnable: "true"
   jmxPort: "3000"
