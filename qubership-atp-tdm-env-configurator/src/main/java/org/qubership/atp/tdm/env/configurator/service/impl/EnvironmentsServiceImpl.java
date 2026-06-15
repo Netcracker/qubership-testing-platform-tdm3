@@ -38,6 +38,7 @@ import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertL
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazyEnvironmentsException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazyProjectsException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazySystemBySysIdException;
+import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazySystemsByEnvIdByNameException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazySystemsByEnvIdException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazySystemsByProjectIdException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvResetCachesException;
@@ -610,14 +611,14 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
 
         YamlEnvironment yamlEnvironment = cacheService.get(envId);
         if (yamlEnvironment == null) {
-            log.warn("Cannot update connection: environment [{}] not found in cache.", envId);
-            return;
+            log.error("Cannot update connection: environment [{}] not found in cache.", envId);
+            throw new TdmEnvConvertLazyEnvironmentByEnvIdtException(envId.toString());
         }
 
         YamlSystem yamlSystem = yamlEnvironment.getSystemByName(systemName);
         if (yamlSystem == null) {
-            log.warn("Cannot update connection: system [{}] not found in environment [{}].", systemName, envId);
-            return;
+            log.error("Cannot update connection: system [{}] not found in environment [{}].", systemName, envId);
+            throw new TdmEnvConvertLazySystemsByEnvIdByNameException(envId.toString(), systemName);
         }
 
         YamlConnection updatedConnection = new YamlConnection();
