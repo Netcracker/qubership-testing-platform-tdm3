@@ -163,16 +163,6 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
             }
         }
 
-        environmentsService.updateConnectionInCache(envId, systemName,
-                connection.getName(), connection.getType(), connection.getParameters());
-
-        if (StringUtils.isNotBlank(newSystemName)) {
-            environmentsService.renameSystemInCache(envId, systemName, newSystemName);
-        }
-        if (StringUtils.isNotBlank(newEnvName)) {
-            environmentsService.renameEnvironmentInCache(envId, newEnvName);
-        }
-
         String finalEnvName = StringUtils.isNotBlank(newEnvName) ? newEnvName : envName;
         String finalSystemName = StringUtils.isNotBlank(newSystemName) ? newSystemName : systemName;
 
@@ -249,6 +239,16 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
                     log.info("Updated dynamic environment record for [{}].", finalEnvName);
                 });
             }
+        }
+
+        environmentsService.updateConnectionInCache(envId, systemName,
+                connection.getName(), connection.getType(), connection.getParameters());
+
+        if (StringUtils.isNotBlank(newSystemName)) {
+            environmentsService.renameSystemInCache(envId, systemName, newSystemName);
+        }
+        if (StringUtils.isNotBlank(newEnvName)) {
+            environmentsService.renameEnvironmentInCache(envId, newEnvName);
         }
 
         return new ResponseMessage(ResponseType.SUCCESS,
