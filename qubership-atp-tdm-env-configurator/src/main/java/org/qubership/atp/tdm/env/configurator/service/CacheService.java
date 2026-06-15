@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import org.qubership.atp.tdm.env.configurator.model.envgen.YamlEnvironment;
 import org.springframework.stereotype.Service;

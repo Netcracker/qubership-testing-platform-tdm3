@@ -17,6 +17,7 @@
 package org.qubership.atp.tdm.service.impl;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -297,6 +298,7 @@ public class AtpActionServiceImpl implements AtpActionService {
     public void loadDynamicEnvironmentsFromDb() {
         List<DynamicEnvironment> all = dynamicEnvironmentRepository.findAll();
         log.info("Loading {} dynamic environment(s) from H2 into cache.", all.size());
+        Map<String, UUID> restoredEnvironmentIds = new HashMap<>();
         for (DynamicEnvironment record : all) {
             Map<String, String> parameters;
             try {
@@ -307,13 +309,26 @@ public class AtpActionServiceImpl implements AtpActionService {
                 continue;
             }
             try {
-                environmentsService.registerEnvironmentInCache(
-                        record.getProjectId(), record.getEnvName(), record.getSystemName(),
-                        record.getConnectionName(), record.getConnectionType(), parameters);
+                String environmentKey = getDynamicEnvironmentCacheKey(record.getProjectId(), record.getEnvName());
+                UUID envId = restoredEnvironmentIds.get(environmentKey);
+                if (envId == null) {
+                    LazyEnvironment lazyEnvironment = environmentsService.registerEnvironmentInCache(
+                            record.getProjectId(), record.getEnvName(), record.getSystemName(),
+                            record.getConnectionName(), record.getConnectionType(), parameters);
+                    restoredEnvironmentIds.put(environmentKey, lazyEnvironment.getId());
+                } else {
+                    environmentsService.addSystemToEnvironment(
+                            record.getProjectId(), envId, record.getSystemName(),
+                            record.getConnectionName(), record.getConnectionType(), parameters);
+                }
             } catch (Exception e) {
                 log.warn("Failed to restore dynamic env [{}] into cache.", record.getEnvName(), e);
             }
         }
+    }
+
+    private String getDynamicEnvironmentCacheKey(@Nonnull UUID projectId, @Nonnull String envName) {
+        return projectId + ":" + envName;
     }
 
     private String formResultLink(@Nonnull UUID projectName, @Nullable UUID envName,
