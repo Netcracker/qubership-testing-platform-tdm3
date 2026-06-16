@@ -842,7 +842,7 @@ public class StatisticsServiceTest extends AbstractTestDataTest {
         usersMonitoring.setProjectId(projectId);
         usersMonitoring.setEnabled(true);
         usersMonitoring.setCronExpression(cron);
-        usersMonitoring.setRecipients("example@example.com,example1@example.com");
+        usersMonitoring.setRecipients("example@example.com,example@example.com");
         usersMonitoring.setDaysCount(2);
         usersMonitoring.setHtmlReport(true);
         usersMonitoring.setCsvReport(true);
