@@ -17,16 +17,13 @@
 package org.qubership.atp.tdm;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.reset;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +32,6 @@ import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertL
 import org.qubership.atp.tdm.env.configurator.model.LazyEnvironment;
 import org.qubership.atp.tdm.env.configurator.model.LazyProject;
 import org.qubership.atp.tdm.env.configurator.model.LazySystem;
-import org.qubership.atp.tdm.env.configurator.model.envgen.YamlEnvironment;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
 import org.qubership.atp.tdm.model.DynamicSystem;
 import org.qubership.atp.tdm.model.TestDataTableCatalog;
@@ -74,15 +70,11 @@ public abstract class AbstractEnvTest extends AbstractTest {
     protected EnvironmentsService environmentsService;
 
     protected final LazyProject lazyProject = new LazyProject();
-    protected String currentEnvName;
-    protected final Set<String> currentSystems = new HashSet<>();
 
     @BeforeEach
     void cleanDynamicEnvironmentTable() {
         dynamicSystemRepository.deleteAll();
         dynamicEnvironmentRepository.deleteAll();
-        currentEnvName = null;
-        currentSystems.clear();
     }
 
     @BeforeEach
@@ -96,64 +88,18 @@ public abstract class AbstractEnvTest extends AbstractTest {
 
         doAnswer(invocation -> {
             String envName = invocation.getArgument(1);
-            if (envName.equals(currentEnvName)) {
-                return buildLazyEnvironment(envName);
-            }
-            throw new TdmEnvConvertLazyEnvironmentByNameException(envName, PROJECT_ID.toString());
+            return dynamicEnvironmentRepository.findByEnvNameAndProjectId(envName, PROJECT_ID)
+                    .map(env -> buildLazyEnvironment(env.getId(), envName))
+                    .orElseThrow(() -> new TdmEnvConvertLazyEnvironmentByNameException(envName, PROJECT_ID.toString()));
         }).when(environmentsService).getLazyEnvironmentByName(eq(PROJECT_ID), anyString());
 
         doAnswer(invocation -> {
+            UUID envId = invocation.getArgument(1);
             String systemName = invocation.getArgument(2);
-            if (currentEnvName != null && currentSystems.contains(systemName)) {
-                return buildLazySystem(currentEnvName, systemName);
-            }
-            throw new TdmEnvConvertFullSystemByNameException(systemName);
-        }).when(environmentsService).getLazySystemByName(eq(PROJECT_ID), eq(ENVIRONMENT_ID), anyString());
-
-        doAnswer(invocation -> {
-            String envName = invocation.getArgument(1);
-            String systemName = invocation.getArgument(2);
-            currentEnvName = envName;
-            currentSystems.add(systemName);
-            return buildLazyEnvironment(envName);
-        }).when(environmentsService).registerEnvironmentInCache(
-                eq(PROJECT_ID), anyString(), anyString(), anyString(), anyString(), anyMap());
-
-        doAnswer(invocation -> {
-            String systemName = invocation.getArgument(2);
-            currentSystems.add(systemName);
-            return null;
-        }).when(environmentsService).addSystemToEnvironment(
-                eq(PROJECT_ID), eq(ENVIRONMENT_ID), anyString(), anyString(), anyString(), anyMap());
-
-        doAnswer(invocation -> {
-            currentEnvName = null;
-            currentSystems.clear();
-            return null;
-        }).when(environmentsService).removeEnvironmentFromCache(any());
-
-        doAnswer(invocation -> {
-            String systemName = invocation.getArgument(1);
-            currentSystems.remove(systemName);
-            return null;
-        }).when(environmentsService).removeSystemFromCache(any(), anyString());
-
-        doAnswer(invocation -> {
-            String newEnvName = invocation.getArgument(1);
-            currentEnvName = newEnvName;
-            return null;
-        }).when(environmentsService).renameEnvironmentInCache(any(), anyString());
-
-        doAnswer(invocation -> {
-            String oldSystemName = invocation.getArgument(1);
-            String newSystemName = invocation.getArgument(2);
-            currentSystems.remove(oldSystemName);
-            currentSystems.add(newSystemName);
-            return null;
-        }).when(environmentsService).renameSystemInCache(any(), anyString(), anyString());
-
-        doAnswer(invocation -> null).when(environmentsService).updateConnectionInCache(
-                any(), anyString(), anyString(), anyString(), anyMap());
+            return dynamicSystemRepository.findByEnvIdAndSystemName(envId, systemName)
+                    .map(sys -> buildLazySystem(sys.getId(), systemName))
+                    .orElseThrow(() -> new TdmEnvConvertFullSystemByNameException(systemName));
+        }).when(environmentsService).getLazySystemByName(eq(PROJECT_ID), any(UUID.class), anyString());
     }
 
     protected String createRequestBody(String envName, String systemName) {
@@ -210,17 +156,17 @@ public abstract class AbstractEnvTest extends AbstractTest {
         return catalogRepository.save(catalog);
     }
 
-    private LazyEnvironment buildLazyEnvironment(String envName) {
+    private LazyEnvironment buildLazyEnvironment(UUID envId, String envName) {
         LazyEnvironment lazyEnvironment = new LazyEnvironment();
-        lazyEnvironment.setId(ENVIRONMENT_ID);
+        lazyEnvironment.setId(envId);
         lazyEnvironment.setName(envName);
         lazyEnvironment.setProjectId(PROJECT_ID);
         return lazyEnvironment;
     }
 
-    private LazySystem buildLazySystem(String envName, String systemName) {
+    private LazySystem buildLazySystem(UUID systemId, String systemName) {
         LazySystem lazySystem = new LazySystem();
-        lazySystem.setId(YamlEnvironment.composeSystemId(envName, systemName));
+        lazySystem.setId(systemId);
         lazySystem.setName(systemName);
         return lazySystem;
     }

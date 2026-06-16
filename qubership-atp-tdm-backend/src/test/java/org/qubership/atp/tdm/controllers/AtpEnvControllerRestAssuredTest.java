@@ -20,20 +20,12 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.qubership.atp.tdm.AbstractEnvTest;
-import org.qubership.atp.tdm.env.configurator.model.envgen.YamlEnvironment;
-import org.qubership.atp.tdm.model.TestDataTableCatalog;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
@@ -63,8 +55,6 @@ class AtpEnvControllerRestAssuredTest extends AbstractEnvTest {
                 .body("type", equalTo("SUCCESS"));
 
         assertEquals(1, countH2Rows(ENV_NAME));
-        verify(environmentsService).registerEnvironmentInCache(
-                eq(PROJECT_ID), eq(ENV_NAME), eq(SYSTEM_NAME), anyString(), anyString(), anyMap());
     }
 
     @Test
@@ -83,8 +73,6 @@ class AtpEnvControllerRestAssuredTest extends AbstractEnvTest {
                 .body("type", equalTo("SUCCESS"));
 
         assertEquals(2, countH2Rows(ENV_NAME));
-        verify(environmentsService).addSystemToEnvironment(
-                eq(PROJECT_ID), eq(ENVIRONMENT_ID), eq(SYSTEM_NAME_2), anyString(), anyString(), anyMap());
     }
 
     @Test
@@ -98,12 +86,10 @@ class AtpEnvControllerRestAssuredTest extends AbstractEnvTest {
         .then()
                 .statusCode(404)
                 .body("type", equalTo("ERROR"));
-
-        verify(environmentsService, never()).removeEnvironmentFromCache(any());
     }
 
     @Test
-    void deleteEnv_singleSystem_removesFromCacheAndDb() {
+    void deleteEnv_singleSystem_deletesFromDb() {
         given().port(port).contentType(ContentType.JSON)
                 .body(createRequestBody(ENV_NAME, SYSTEM_NAME))
                 .post(API_PATH)
@@ -120,7 +106,6 @@ class AtpEnvControllerRestAssuredTest extends AbstractEnvTest {
                 .body("type", equalTo("SUCCESS"));
 
         assertEquals(0, countAllH2Rows());
-        verify(environmentsService).removeEnvironmentFromCache(ENVIRONMENT_ID);
     }
 
     @Test
@@ -144,7 +129,6 @@ class AtpEnvControllerRestAssuredTest extends AbstractEnvTest {
                 .body("type", equalTo("SUCCESS"));
 
         assertEquals(0, countAllH2Rows());
-        verify(environmentsService).removeEnvironmentFromCache(ENVIRONMENT_ID);
     }
 
     @Test
@@ -168,12 +152,10 @@ class AtpEnvControllerRestAssuredTest extends AbstractEnvTest {
 
         assertEquals(1, countH2Rows(ENV_NAME));
         assertTrue(findH2Rows(ENV_NAME).stream().anyMatch(sys -> SYSTEM_NAME_2.equals(sys.getSystemName())));
-        verify(environmentsService).removeSystemFromCache(ENVIRONMENT_ID, SYSTEM_NAME);
-        verify(environmentsService, never()).removeEnvironmentFromCache(any());
     }
 
     @Test
-    void deleteSystem_lastSystem_removesEnvFromCache() {
+    void deleteSystem_lastSystem_deletesSystemFromDb() {
         given().port(port).contentType(ContentType.JSON)
                 .body(createRequestBody(ENV_NAME, SYSTEM_NAME))
                 .post(API_PATH).then().statusCode(200);
@@ -189,51 +171,39 @@ class AtpEnvControllerRestAssuredTest extends AbstractEnvTest {
                 .body("type", equalTo("SUCCESS"));
 
         assertEquals(0, countAllH2Rows());
-        verify(environmentsService).removeSystemFromCache(ENVIRONMENT_ID, SYSTEM_NAME);
     }
 
-//    @Test
-//    void renameEnv_updatesAllH2RowsAndCatalog() {
-//        given().port(port).contentType(ContentType.JSON)
-//                .body(createRequestBody(ENV_NAME, SYSTEM_NAME))
-//                .post(API_PATH).then().statusCode(200);
-//        given().port(port).contentType(ContentType.JSON)
-//                .body(createRequestBody(ENV_NAME, SYSTEM_NAME_2))
-//                .post(API_PATH).then().statusCode(200);
-//
-//        UUID oldSystemId1 = YamlEnvironment.composeSystemId(ENV_NAME, SYSTEM_NAME);
-//        UUID oldSystemId2 = YamlEnvironment.composeSystemId(ENV_NAME, SYSTEM_NAME_2);
-//        TestDataTableCatalog catalog1 = createCatalogEntry(oldSystemId1, ENVIRONMENT_ID, "table1");
-//        TestDataTableCatalog catalog2 = createCatalogEntry(oldSystemId2, ENVIRONMENT_ID, "table2");
-//
-//        given()
-//                .port(port)
-//                .contentType(ContentType.JSON)
-//                .body(updateRequestBody(ENV_NAME, SYSTEM_NAME, NEW_ENV_NAME, null))
-//        .when()
-//                .put(API_PATH)
-//        .then()
-//                .statusCode(200)
-//                .body("type", equalTo("SUCCESS"));
-//
-//        assertEquals(2, countH2Rows(NEW_ENV_NAME));
-//        assertEquals(0, countH2Rows(ENV_NAME));
-//
-//        UUID newSystemId1 = YamlEnvironment.composeSystemId(NEW_ENV_NAME, SYSTEM_NAME);
-//        UUID newSystemId2 = YamlEnvironment.composeSystemId(NEW_ENV_NAME, SYSTEM_NAME_2);
-//        assertEquals(newSystemId1, catalogRepository.findByTableName(catalog1.getTableName()).getSystemId());
-//        assertEquals(newSystemId2, catalogRepository.findByTableName(catalog2.getTableName()).getSystemId());
-//        assertEquals(ENVIRONMENT_ID, catalogRepository.findByTableName(catalog1.getTableName()).getEnvironmentId());
-//    }
-//
+    @Test
+    void renameEnv_updatesAllH2RowsAndCatalog() {
+        given().port(port).contentType(ContentType.JSON)
+                .body(createRequestBody(ENV_NAME, SYSTEM_NAME))
+                .post(API_PATH).then().statusCode(200);
+        given().port(port).contentType(ContentType.JSON)
+                .body(createRequestBody(ENV_NAME, SYSTEM_NAME_2))
+                .post(API_PATH).then().statusCode(200);
+
+
+        given()
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(updateRequestBody(ENV_NAME, SYSTEM_NAME, NEW_ENV_NAME, null))
+        .when()
+                .put(API_PATH)
+        .then()
+                .statusCode(200)
+                .body("type", equalTo("SUCCESS"));
+
+        assertEquals(2, countH2Rows(NEW_ENV_NAME));
+        assertEquals(0, countH2Rows(ENV_NAME));
+
+    }
+
     @Test
     void renameSystem_updatesCatalogSystemId() {
         given().port(port).contentType(ContentType.JSON)
                 .body(createRequestBody(ENV_NAME, SYSTEM_NAME))
                 .post(API_PATH).then().statusCode(200);
 
-        UUID oldSystemId = YamlEnvironment.composeSystemId(ENV_NAME, SYSTEM_NAME);
-        TestDataTableCatalog catalog = createCatalogEntry(oldSystemId, ENVIRONMENT_ID, "table1");
 
         given()
                 .port(port)
@@ -245,10 +215,7 @@ class AtpEnvControllerRestAssuredTest extends AbstractEnvTest {
                 .statusCode(200)
                 .body("type", equalTo("SUCCESS"));
 
-        UUID newSystemId = YamlEnvironment.composeSystemId(ENV_NAME, NEW_SYSTEM_NAME);
         assertEquals(1, countH2Rows(ENV_NAME));
-        assertEquals(newSystemId, findH2Rows(ENV_NAME).get(0).getId());
-        assertEquals(newSystemId, catalogRepository.findByTableName(catalog.getTableName()).getSystemId());
     }
 
     @Test

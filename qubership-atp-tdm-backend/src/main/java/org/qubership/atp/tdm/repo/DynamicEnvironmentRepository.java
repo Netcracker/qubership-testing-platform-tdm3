@@ -22,7 +22,6 @@ import java.util.UUID;
 
 import org.qubership.atp.tdm.model.DynamicEnvironment;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -34,6 +33,5 @@ public interface DynamicEnvironmentRepository extends JpaRepository<DynamicEnvir
 
     void deleteByEnvNameAndProjectId(String envName, UUID projectId);
 
-    @Query("SELECT DISTINCT e FROM DynamicEnvironment e LEFT JOIN FETCH e.systems")
-    List<DynamicEnvironment> findAllWithSystems();
+    List<DynamicEnvironment> findAllByProjectId(UUID projectId);
 }

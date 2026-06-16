@@ -29,8 +29,6 @@ import org.qubership.atp.tdm.env.configurator.model.LazyEnvironment;
 import org.qubership.atp.tdm.env.configurator.model.LazyProject;
 import org.qubership.atp.tdm.env.configurator.model.LazySystem;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
-import org.qubership.atp.tdm.model.DynamicEnvironment;
-import org.qubership.atp.tdm.model.DynamicSystem;
 import org.qubership.atp.tdm.model.rest.ResponseMessage;
 import org.qubership.atp.tdm.model.rest.ResponseType;
 import org.qubership.atp.tdm.model.rest.requests.AddInfoToRowRequest;
@@ -40,16 +38,11 @@ import org.qubership.atp.tdm.model.rest.requests.OccupyRowRequest;
 import org.qubership.atp.tdm.model.rest.requests.ReleaseRowRequest;
 import org.qubership.atp.tdm.model.rest.requests.UpdateRowRequest;
 import org.qubership.atp.tdm.repo.AtpActionRepository;
-import org.qubership.atp.tdm.repo.DynamicEnvironmentRepository;
 import org.qubership.atp.tdm.service.AtpActionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
@@ -65,11 +58,8 @@ public class AtpActionServiceImpl implements AtpActionService {
     private static final Pattern TEMP_ENV_TIMESTAMP_PATTERN = Pattern.compile(" [0-9]{1,4}-[0-9]{1,2}-[0-9]{1,2}"
             + "T[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}.*");
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
     private final EnvironmentsService environmentsService;
     private final AtpActionRepository repository;
-    private final DynamicEnvironmentRepository dynamicEnvironmentRepository;
 
     private String tdmUrl = "";
 
@@ -81,11 +71,9 @@ public class AtpActionServiceImpl implements AtpActionService {
      */
     @Autowired
     public AtpActionServiceImpl(@Nonnull EnvironmentsService environmentsService,
-                                @Nonnull AtpActionRepository repository,
-                                @Nonnull DynamicEnvironmentRepository dynamicEnvironmentRepository) {
+                                @Nonnull AtpActionRepository repository) {
         this.environmentsService = environmentsService;
         this.repository = repository;
-        this.dynamicEnvironmentRepository = dynamicEnvironmentRepository;
     }
 
     @Override
@@ -290,51 +278,6 @@ public class AtpActionServiceImpl implements AtpActionService {
         return new EnvironmentContext(projectId, envId, systemId);
     }
 
-
-    /**
-     * On startup, reload all previously persisted dynamic environments back into the in-memory cache.
-     */
-    @EventListener(ApplicationReadyEvent.class)
-    public void loadDynamicEnvironmentsFromDb() {
-        List<DynamicEnvironment> all = dynamicEnvironmentRepository.findAllWithSystems();
-        log.info("Loading {} dynamic environment(s) from H2 into cache.", all.size());
-        for (DynamicEnvironment env : all) {
-            List<DynamicSystem> systems = env.getSystems();
-            if (systems.isEmpty()) {
-                log.warn("Dynamic environment [{}] has no systems, skipping.", env.getEnvName());
-                continue;
-            }
-            boolean envRegistered = false;
-            UUID registeredEnvId = null;
-            for (DynamicSystem sys : systems) {
-                Map<String, String> parameters;
-                try {
-                    parameters = OBJECT_MAPPER.readValue(sys.getConnectionParameters(),
-                            new TypeReference<Map<String, String>>() {});
-                } catch (Exception e) {
-                    log.warn("Failed to deserialize parameters for dynamic env [{}] system [{}], skipping.",
-                            env.getEnvName(), sys.getSystemName(), e);
-                    continue;
-                }
-                try {
-                    if (!envRegistered) {
-                        LazyEnvironment lazyEnvironment = environmentsService.registerEnvironmentInCache(
-                                env.getProjectId(), env.getEnvName(), sys.getSystemName(),
-                                sys.getConnectionName(), sys.getConnectionType(), parameters);
-                        registeredEnvId = lazyEnvironment.getId();
-                        envRegistered = true;
-                    } else {
-                        environmentsService.addSystemToEnvironment(
-                                env.getProjectId(), registeredEnvId, sys.getSystemName(),
-                                sys.getConnectionName(), sys.getConnectionType(), parameters);
-                    }
-                } catch (Exception e) {
-                    log.warn("Failed to restore dynamic env [{}] system [{}] into cache.",
-                            env.getEnvName(), sys.getSystemName(), e);
-                }
-            }
-        }
-    }
 
     private String formResultLink(@Nonnull UUID projectName, @Nullable UUID envName,
                                   @Nullable UUID systemName) {

@@ -17,7 +17,6 @@
 package org.qubership.atp.tdm.env.configurator.service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.qubership.atp.tdm.env.configurator.model.Connection;
@@ -66,27 +65,4 @@ public interface EnvironmentsService {
     System getFullSystemByName(@Nonnull UUID environmentId, @Nonnull String systemName);
 
     boolean resetCaches();
-
-    LazyEnvironment registerEnvironmentInCache(@Nonnull UUID projectId, @Nonnull String envName,
-                                               @Nonnull String systemName, @Nonnull String connectionName,
-                                               @Nonnull String connectionType,
-                                               @Nonnull Map<String, String> parameters);
-
-    void addSystemToEnvironment(@Nonnull UUID projectId, @Nonnull UUID envId,
-                                @Nonnull String systemName, @Nonnull String connectionName,
-                                @Nonnull String connectionType,
-                                @Nonnull Map<String, String> parameters);
-
-    void updateConnectionInCache(@Nonnull UUID envId, @Nonnull String systemName,
-                                 String connectionName, String connectionType,
-                                 @Nonnull Map<String, String> parameters);
-
-    void removeEnvironmentFromCache(@Nonnull UUID envId);
-
-    void removeSystemFromCache(@Nonnull UUID envId, @Nonnull String systemName);
-
-    void renameEnvironmentInCache(@Nonnull UUID envId, @Nonnull String newEnvName);
-
-    void renameSystemInCache(@Nonnull UUID envId, @Nonnull String currentSystemName,
-                             @Nonnull String newSystemName);
 }

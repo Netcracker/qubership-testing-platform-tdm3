@@ -18,25 +18,30 @@ package org.qubership.atp.tdm.model;
 
 import java.util.UUID;
 
+import org.hibernate.annotations.UuidGenerator;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "dynamic_system")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class DynamicSystem {
 
     @Id
+    @GeneratedValue
+    @UuidGenerator
     @Column(name = "id")
     private UUID id;
 
@@ -58,4 +63,16 @@ public class DynamicSystem {
      */
     @Column(name = "connection_parameters", columnDefinition = "TEXT")
     private String connectionParameters;
+
+    public DynamicSystem(DynamicEnvironment env,
+                         String systemName,
+                         String connectionName,
+                         String connectionType,
+                         String connectionParameters) {
+        this.env = env;
+        this.systemName = systemName;
+        this.connectionName = connectionName;
+        this.connectionType = connectionType;
+        this.connectionParameters = connectionParameters;
+    }
 }

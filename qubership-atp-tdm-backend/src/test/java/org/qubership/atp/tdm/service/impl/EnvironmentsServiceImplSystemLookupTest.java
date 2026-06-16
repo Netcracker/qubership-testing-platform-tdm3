@@ -14,97 +14,79 @@
  *  limitations under the License.
  */
 
-package org.qubership.atp.tdm.env.configurator.service.impl;
+package org.qubership.atp.tdm.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.qubership.atp.tdm.AbstractTest;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertFullSystemByNameException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvDbConnectionException;
 import org.qubership.atp.tdm.env.configurator.model.LazySystem;
 import org.qubership.atp.tdm.env.configurator.model.System;
-import org.qubership.atp.tdm.env.configurator.model.envgen.ConnectionType;
-import org.qubership.atp.tdm.env.configurator.model.envgen.YamlConnection;
-import org.qubership.atp.tdm.env.configurator.model.envgen.YamlEnvironment;
-import org.qubership.atp.tdm.env.configurator.model.envgen.YamlSystem;
-import org.qubership.atp.tdm.env.configurator.service.CacheService;
-import org.springframework.cache.CacheManager;
+import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
+import org.qubership.atp.tdm.model.DynamicEnvironment;
+import org.qubership.atp.tdm.model.DynamicSystem;
+import org.qubership.atp.tdm.repo.DynamicEnvironmentRepository;
+import org.qubership.atp.tdm.repo.DynamicSystemRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@ExtendWith(MockitoExtension.class)
-class EnvironmentsServiceImplSystemLookupTest {
+/**
+ * Verifies system lookup via the JPA-backed {@link EnvironmentsServiceImpl}.
+ * Replaces the old mock-CacheService variant.
+ */
+class EnvironmentsServiceImplSystemLookupTest extends AbstractTest {
 
     private static final String ENV_NAME = "env1";
     private static final String SYSTEM_NAME_LOWER = "db";
 
-    @Mock
-    private CacheService cacheService;
+    @Autowired
+    private EnvironmentsService environmentsService;
 
-    @Mock
-    private CacheManager cacheManager;
+    @Autowired
+    private DynamicEnvironmentRepository dynamicEnvironmentRepository;
 
-    @InjectMocks
-    private EnvironmentsServiceImpl environmentsService;
+    @Autowired
+    private DynamicSystemRepository dynamicSystemRepository;
 
     private UUID projectId;
     private UUID environmentId;
-    private YamlEnvironment yamlEnvironment;
-    private YamlSystem yamlSystem;
-    private YamlConnection dbConnection;
 
     @BeforeEach
     void setUp() {
+        dynamicSystemRepository.deleteAll();
+        dynamicEnvironmentRepository.deleteAll();
         projectId = UUID.randomUUID();
 
-        dbConnection = new YamlConnection();
-        dbConnection.setName("DB");
-        dbConnection.setType(ConnectionType.DB);
-        dbConnection.setParameters(new HashMap<>());
-
-        yamlSystem = new YamlSystem();
-        yamlSystem.setName(SYSTEM_NAME_LOWER);
-        yamlSystem.setConnections(Collections.singletonList(dbConnection));
-
-        yamlEnvironment = new YamlEnvironment(ENV_NAME);
-        yamlEnvironment.setYamlSystems(Collections.singletonList(yamlSystem));
-
-        environmentId = yamlEnvironment.getId();
+        DynamicEnvironment env = dynamicEnvironmentRepository.save(
+                new DynamicEnvironment(projectId, ENV_NAME));
+        environmentId = env.getId();
+        dynamicSystemRepository.save(
+                new DynamicSystem(env, SYSTEM_NAME_LOWER, "DB", "DB", "{\"host\":\"localhost\"}"));
     }
 
     // ── getLazySystemByName ───────────────────────────────────────────────────
 
     @Test
     void getLazySystemByName_exactMatch_returnsLazySystem() {
-        when(cacheService.get(environmentId)).thenReturn(yamlEnvironment);
+        LazySystem result = environmentsService.getLazySystemByName(projectId, environmentId, SYSTEM_NAME_LOWER);
 
-        LazySystem result = environmentsService.getLazySystemByName(projectId, environmentId, "db");
-
-        assertEquals(yamlSystem.getName(), result.getName());
-        assertEquals(yamlSystem.getId(), result.getId());
+        assertEquals(SYSTEM_NAME_LOWER, result.getName());
     }
 
     @Test
     void getLazySystemByName_upperCaseSystemName_throws() {
-        when(cacheService.get(environmentId)).thenReturn(yamlEnvironment);
-
         assertThrows(TdmEnvConvertFullSystemByNameException.class,
                 () -> environmentsService.getLazySystemByName(projectId, environmentId, "DB"));
     }
 
     @Test
     void getLazySystemByName_unknownSystemName_throwsException() {
-        when(cacheService.get(environmentId)).thenReturn(yamlEnvironment);
-
         assertThrows(TdmEnvConvertFullSystemByNameException.class,
                 () -> environmentsService.getLazySystemByName(projectId, environmentId, "unknown"));
     }
@@ -113,9 +95,7 @@ class EnvironmentsServiceImplSystemLookupTest {
 
     @Test
     void getFullSystemByName_exactMatch_returnsSystem() {
-        when(cacheService.get(environmentId)).thenReturn(yamlEnvironment);
-
-        System result = environmentsService.getFullSystemByName(environmentId, "db");
+        System result = environmentsService.getFullSystemByName(environmentId, SYSTEM_NAME_LOWER);
 
         assertEquals(SYSTEM_NAME_LOWER, result.getName());
         assertEquals(environmentId, result.getEnvironmentId());
@@ -123,36 +103,24 @@ class EnvironmentsServiceImplSystemLookupTest {
 
     @Test
     void getFullSystemByName_upperCaseSystemName_throwError() {
-        when(cacheService.get(environmentId)).thenReturn(yamlEnvironment);
-
         assertThrows(TdmEnvConvertFullSystemByNameException.class,
                 () -> environmentsService.getFullSystemByName(environmentId, "DB"));
     }
 
     @Test
     void getFullSystemByName_unknownSystemName_throwsException() {
-        when(cacheService.get(environmentId)).thenReturn(yamlEnvironment);
-
         assertThrows(TdmEnvConvertFullSystemByNameException.class,
                 () -> environmentsService.getFullSystemByName(environmentId, "unknown"));
     }
 
     @Test
     void getFullSystemByName_systemWithoutDbConnection_throwsDbConnectionException() {
-        YamlConnection httpConnection = new YamlConnection();
-        httpConnection.setName("HTTP");
-        httpConnection.setType(ConnectionType.HTTP);
-        httpConnection.setParameters(new HashMap<>());
-
-        YamlSystem systemNoDb = new YamlSystem();
-        systemNoDb.setName("httpSystem");
-        systemNoDb.setConnections(Collections.singletonList(httpConnection));
-
-        yamlEnvironment.setYamlSystems(Collections.singletonList(systemNoDb));
-
-        when(cacheService.get(environmentId)).thenReturn(yamlEnvironment);
+        DynamicEnvironment httpEnv = dynamicEnvironmentRepository.save(
+                new DynamicEnvironment(projectId, "httpEnv"));
+        dynamicSystemRepository.save(
+                new DynamicSystem(httpEnv, "httpSystem", "HTTP", "HTTP", "{}"));
 
         assertThrows(TdmEnvDbConnectionException.class,
-                () -> environmentsService.getFullSystemByName(environmentId, "httpSystem"));
+                () -> environmentsService.getFullSystemByName(httpEnv.getId(), "httpSystem"));
     }
 }

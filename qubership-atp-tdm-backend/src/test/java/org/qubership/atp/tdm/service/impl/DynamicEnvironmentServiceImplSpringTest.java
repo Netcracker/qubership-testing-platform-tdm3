@@ -31,13 +31,10 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.qubership.atp.tdm.AbstractTest;
-import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazyEnvironmentByEnvIdtException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazyEnvironmentByNameException;
 import org.qubership.atp.tdm.env.configurator.model.LazyEnvironment;
 import org.qubership.atp.tdm.env.configurator.model.LazySystem;
 import org.qubership.atp.tdm.env.configurator.model.System;
-import org.qubership.atp.tdm.env.configurator.model.envgen.YamlEnvironment;
-import org.qubership.atp.tdm.env.configurator.service.CacheService;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
 import org.qubership.atp.tdm.exceptions.internal.EnvironmentNotFoundException;
 import org.qubership.atp.tdm.model.DynamicEnvironment;
@@ -71,16 +68,12 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
     @Autowired
     private EnvironmentsService environmentsService;
 
-    @Autowired
-    private CacheService cacheService;
-
     private EnvironmentConnectionRequest connection;
 
     @BeforeEach
     void setUp() {
         dynamicSystemRepository.deleteAll();
         dynamicEnvironmentRepository.deleteAll();
-        cacheService.getEnvironments().forEach(env -> cacheService.remove(env.getId()));
         connection = buildConnection();
     }
 
@@ -143,11 +136,10 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
     }
 
     @Test
-    void deleteEnvironment_envFound_removesFromCacheAndDeletesAllRows() {
+    void deleteEnvironment_envFound_deletesAllRows() {
         String envName = uniqueName("dyn-env");
 
         dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
-        LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(PROJECT_ID, envName);
 
         ResponseMessage response = dynamicEnvironmentService.deleteEnvironment(PROJECT_NAME, envName, null);
 
@@ -155,8 +147,6 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         assertEquals(0, countDbSystemRows(envName));
         assertThrows(TdmEnvConvertLazyEnvironmentByNameException.class,
                 () -> environmentsService.getLazyEnvironmentByName(PROJECT_ID, envName));
-        assertThrows(TdmEnvConvertLazyEnvironmentByEnvIdtException.class,
-                () -> environmentsService.getLazyEnvironment(lazyEnvironment.getId()));
     }
 
     @Test
@@ -176,7 +166,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
     }
 
     @Test
-    void deleteEnvironment_envNotFoundInDb_skipsCacheAndDbOps() {
+    void deleteEnvironment_envNotFoundInDb_throwsNotFound() {
         String envName = uniqueName("dyn-env");
 
         assertThrows(EnvironmentNotFoundException.class,
@@ -200,33 +190,11 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
     void updateEnvironment_envNotFound_throwsException() {
         String envName = uniqueName("dyn-env");
 
-        assertThrows(TdmEnvConvertLazyEnvironmentByNameException.class, () ->
+        assertThrows(EnvironmentNotFoundException.class, () ->
                 dynamicEnvironmentService.updateEnvironment(
                         PROJECT_NAME, envName, SYSTEM_NAME, connection, null, null));
     }
 
-//    @Test
-//    void updateEnvironment_systemNotFound_doesNotUpdateCacheOrDb() {
-//        String envName = uniqueName("dyn-env");
-//        String unknownSystem = "Unknown System";
-//
-//        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
-//        LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(PROJECT_ID, envName);
-//        System systemBefore = environmentsService.getFullSystemByName(lazyEnvironment.getId(), SYSTEM_NAME);
-//
-//        ResponseMessage response = dynamicEnvironmentService.updateEnvironment(
-//                PROJECT_NAME, envName, unknownSystem, connection, null, null);
-//
-//        assertEquals(ResponseType.SUCCESS, response.getType());
-//        System systemAfter = environmentsService.getFullSystemByName(lazyEnvironment.getId(), SYSTEM_NAME);
-//        assertEquals(systemBefore.getConnections().get(0).getParameters(),
-//                systemAfter.getConnections().get(0).getParameters());
-//
-//        DynamicEnvironment envRecord = dynamicEnvironmentRepository
-//                .findByEnvNameAndProjectId(envName, PROJECT_ID).orElse(null);
-//        assertNotNull(envRecord);
-//        assertFalse(dynamicSystemRepository.existsByEnvIdAndSystemName(envRecord.getId(), unknownSystem));
-//    }
 
     @Test
     void updateEnvironment_envAndSystemExist_updatesConnection() {
@@ -253,36 +221,35 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         assertEquals("localhost", system.getConnections().get(0).getParameters().get("host"));
     }
 
-//    @Test
-//    void updateEnvironment_withNewNames_renamesAndUpdatesConnection() {
-//        String envName = uniqueName("dyn-env");
-//        String newEnvName = uniqueName("renamed-env");
-//        String newSystemName = "Renamed System";
-//
-//        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
-//
-//        ResponseMessage response = dynamicEnvironmentService.updateEnvironment(
-//                PROJECT_NAME, envName, SYSTEM_NAME, connection, newEnvName, newSystemName);
-//
-//        assertEquals(ResponseType.SUCCESS, response.getType());
-//        assertEquals(0, countDbSystemRows(envName));
-//
-//        DynamicEnvironment envRecord = dynamicEnvironmentRepository
-//                .findByEnvNameAndProjectId(newEnvName, PROJECT_ID).orElse(null);
-//        assertNotNull(envRecord);
-//        assertEquals(newEnvName, envRecord.getEnvName());
-//
-//        DynamicSystem saved = dynamicSystemRepository
-//                .findByEnvIdAndSystemName(envRecord.getId(), newSystemName)
-//                .orElse(null);
-//        assertNotNull(saved);
-//        assertEquals(newSystemName, saved.getSystemName());
-//        assertEquals(YamlEnvironment.composeSystemId(newEnvName, newSystemName), saved.getId());
-//
-//        LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(PROJECT_ID, newEnvName);
-//        assertDoesNotThrowSystemLookup(lazyEnvironment.getId(), newSystemName);
-//    }
-//
+    @Test
+    void updateEnvironment_withNewNames_renamesAndUpdatesConnection() {
+        String envName = uniqueName("dyn-env");
+        String newEnvName = uniqueName("renamed-env");
+        String newSystemName = "Renamed System";
+
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
+
+        ResponseMessage response = dynamicEnvironmentService.updateEnvironment(
+                PROJECT_NAME, envName, SYSTEM_NAME, connection, newEnvName, newSystemName);
+
+        assertEquals(ResponseType.SUCCESS, response.getType());
+        assertEquals(0, countDbSystemRows(envName));
+
+        DynamicEnvironment envRecord = dynamicEnvironmentRepository
+                .findByEnvNameAndProjectId(newEnvName, PROJECT_ID).orElse(null);
+        assertNotNull(envRecord);
+        assertEquals(newEnvName, envRecord.getEnvName());
+
+        DynamicSystem saved = dynamicSystemRepository
+                .findByEnvIdAndSystemName(envRecord.getId(), newSystemName)
+                .orElse(null);
+        assertNotNull(saved);
+        assertEquals(newSystemName, saved.getSystemName());
+
+        LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(PROJECT_ID, newEnvName);
+        assertDoesNotThrowSystemLookup(lazyEnvironment.getId(), newSystemName);
+    }
+
     @Test
     void updateEnvironment_newEnvNameAlreadyExists_throwsDuplicate() {
         String envName = uniqueName("dyn-env");
@@ -310,24 +277,6 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
                 dynamicEnvironmentService.updateEnvironment(
                         PROJECT_NAME, envName, SYSTEM_NAME, connection, null, existingSystemName));
         assertTrue(ex.getMessage().contains(existingSystemName));
-    }
-
-    @Test
-    void deleteEnvironment_noSystemsInDb_envInCache_removesFromCache() {
-        String envName = uniqueName("dyn-env");
-
-        LazyEnvironment lazyEnvironment = environmentsService.registerEnvironmentInCache(
-                PROJECT_ID, envName, SYSTEM_NAME,
-                connection.getName(), connection.getType(), connection.getParameters());
-
-        ResponseMessage response = dynamicEnvironmentService.deleteEnvironment(PROJECT_NAME, envName, null);
-
-        assertEquals(ResponseType.SUCCESS, response.getType());
-        assertEquals(0, countDbSystemRows(envName));
-        assertThrows(TdmEnvConvertLazyEnvironmentByNameException.class,
-                () -> environmentsService.getLazyEnvironmentByName(PROJECT_ID, envName));
-        assertThrows(TdmEnvConvertLazyEnvironmentByEnvIdtException.class,
-                () -> environmentsService.getLazyEnvironment(lazyEnvironment.getId()));
     }
 
     private EnvironmentConnectionRequest buildConnection() {

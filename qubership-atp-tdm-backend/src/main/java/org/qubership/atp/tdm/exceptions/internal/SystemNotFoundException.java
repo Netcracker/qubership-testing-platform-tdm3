@@ -14,18 +14,17 @@
  *  limitations under the License.
  */
 
-package org.qubership.atp.tdm.env.configurator.exceptions.internal;
+package org.qubership.atp.tdm.exceptions.internal;
 
-import org.qubership.atp.tdm.env.configurator.exceptions.TdmEnvInternalException;
+import org.qubership.atp.tdm.exceptions.TdmInternalException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR, reason = "TDM-5016")
-public class TdmEnvResetCachesException extends TdmEnvInternalException {
+@ResponseStatus(value = HttpStatus.NOT_FOUND)
+public class SystemNotFoundException extends TdmInternalException {
 
-    public static final String DEFAULT_MESSAGE = "An error occurred while resetting caches.";
-
-    public TdmEnvResetCachesException() {
-        super(DEFAULT_MESSAGE);
+    public SystemNotFoundException(String systemName, String envName, String projectName) {
+        super(String.format("System [%s] not found in project [%s], environment [%s].",
+                systemName, envName, projectName));
     }
 }

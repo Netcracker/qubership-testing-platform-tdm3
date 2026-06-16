@@ -18,7 +18,6 @@ package org.qubership.atp.tdm.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.HashMap;
 import java.util.List;
@@ -28,11 +27,9 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.qubership.atp.tdm.AbstractTest;
-import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazyEnvironmentByNameException;
 import org.qubership.atp.tdm.env.configurator.model.LazyEnvironment;
 import org.qubership.atp.tdm.env.configurator.model.LazySystem;
 import org.qubership.atp.tdm.env.configurator.model.System;
-import org.qubership.atp.tdm.env.configurator.service.CacheService;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
 import org.qubership.atp.tdm.model.DynamicEnvironment;
 import org.qubership.atp.tdm.model.DynamicSystem;
@@ -43,15 +40,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Spring-context variant of {@link DynamicEnvironmentStartupLoaderTest}.
- * Uses real H2 persistence and {@link EnvironmentsService} instead of mocks.
+ * Verifies that {@link EnvironmentsService} reads directly from H2 without an in-memory cache.
+ * Records written to the JPA repositories are immediately visible through the service.
  */
 class DynamicEnvironmentStartupLoaderSpringTest extends AbstractTest {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-    @Autowired
-    private AtpActionServiceImpl atpActionService;
 
     @Autowired
     private DynamicEnvironmentRepository dynamicEnvironmentRepository;
@@ -62,18 +56,14 @@ class DynamicEnvironmentStartupLoaderSpringTest extends AbstractTest {
     @Autowired
     private EnvironmentsService environmentsService;
 
-    @Autowired
-    private CacheService cacheService;
-
     @BeforeEach
     void setUp() {
         dynamicSystemRepository.deleteAll();
         dynamicEnvironmentRepository.deleteAll();
-        cacheService.getEnvironments().forEach(env -> cacheService.remove(env.getId()));
     }
 
     @Test
-    void loadDynamicEnvironmentsFromDb_persistedRecord_isRestoredToCache() throws Exception {
+    void persistedRecord_isImmediatelyVisibleViaService() throws Exception {
         UUID dynProjectId = UUID.randomUUID();
         String dynEnvName = "dynamic-startup-test-env-" + dynProjectId;
         String dynSystemName = "dynamic-system";
@@ -87,12 +77,10 @@ class DynamicEnvironmentStartupLoaderSpringTest extends AbstractTest {
 
         UUID envId = UUID.nameUUIDFromBytes(dynEnvName.getBytes());
         DynamicEnvironment env = dynamicEnvironmentRepository.save(
-                new DynamicEnvironment(envId, dynProjectId, dynEnvName));
-        dynamicSystemRepository.save(new DynamicSystem(
-                UUID.nameUUIDFromBytes((dynEnvName + dynSystemName).getBytes()),
-                env, dynSystemName, dynConnectionName, dynConnectionType, parametersJson));
-
-        atpActionService.loadDynamicEnvironmentsFromDb();
+                new DynamicEnvironment(dynProjectId, dynEnvName));
+        dynamicSystemRepository.save(
+                new DynamicSystem(env, dynSystemName, dynConnectionName, dynConnectionType, parametersJson)
+        );
 
         LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(dynProjectId, dynEnvName);
         assertEquals(dynEnvName, lazyEnvironment.getName());
@@ -105,7 +93,7 @@ class DynamicEnvironmentStartupLoaderSpringTest extends AbstractTest {
     }
 
     @Test
-    void loadDynamicEnvironmentsFromDb_persistedRecordSeveralSystems_isRestoredToCache() throws Exception {
+    void persistedRecordSeveralSystems_allVisibleViaService() throws Exception {
         UUID dynProjectId = UUID.randomUUID();
         String dynEnvName = "dynamic-startup-test-env-" + dynProjectId;
         String dynEnvName2 = "dynamic-startup-test-env2-" + dynProjectId;
@@ -122,46 +110,40 @@ class DynamicEnvironmentStartupLoaderSpringTest extends AbstractTest {
         String parametersJson = OBJECT_MAPPER.writeValueAsString(parameters);
 
         DynamicEnvironment env1 = dynamicEnvironmentRepository.save(
-                new DynamicEnvironment(UUID.nameUUIDFromBytes(dynEnvName.getBytes()), dynProjectId, dynEnvName));
+                new DynamicEnvironment(dynProjectId, dynEnvName));
         dynamicSystemRepository.save(new DynamicSystem(
-                UUID.nameUUIDFromBytes((dynEnvName + systemName1).getBytes()),
+
                 env1, systemName1, dynConnectionName, dynConnectionType, parametersJson));
         dynamicSystemRepository.save(new DynamicSystem(
-                UUID.nameUUIDFromBytes((dynEnvName + systemName2).getBytes()),
                 env1, systemName2, dynConnectionName, dynConnectionType, parametersJson));
 
         DynamicEnvironment env2 = dynamicEnvironmentRepository.save(
-                new DynamicEnvironment(UUID.nameUUIDFromBytes(dynEnvName2.getBytes()), dynProjectId, dynEnvName2));
+                new DynamicEnvironment(dynProjectId, dynEnvName2));
         dynamicSystemRepository.save(new DynamicSystem(
-                UUID.nameUUIDFromBytes((dynEnvName2 + systemName3).getBytes()),
                 env2, systemName3, dynConnectionName, dynConnectionType, parametersJson));
         dynamicSystemRepository.save(new DynamicSystem(
-                UUID.nameUUIDFromBytes((dynEnvName2 + systemName4).getBytes()),
                 env2, systemName4, dynConnectionName, dynConnectionType, parametersJson));
-
-        atpActionService.loadDynamicEnvironmentsFromDb();
 
         assertEnvironmentHasSystems(dynProjectId, dynEnvName, systemName1, systemName2);
         assertEnvironmentHasSystems(dynProjectId, dynEnvName2, systemName3, systemName4);
     }
 
     @Test
-    void loadDynamicEnvironmentsFromDb_invalidParametersJson_skipsRecord() {
+    void envWithInvalidParametersJson_stillVisibleButParametersEmpty() {
         UUID dynProjectId = UUID.randomUUID();
         String dynEnvName = "dynamic-startup-bad-params-" + dynProjectId;
         UUID envId = UUID.nameUUIDFromBytes(dynEnvName.getBytes());
 
         DynamicEnvironment env = dynamicEnvironmentRepository.save(
-                new DynamicEnvironment(envId, dynProjectId, dynEnvName));
+                new DynamicEnvironment(dynProjectId, dynEnvName));
         dynamicSystemRepository.save(new DynamicSystem(
-                UUID.nameUUIDFromBytes((dynEnvName + "some-system").getBytes()),
                 env, "some-system", "DB", "DB", "not-valid-json{{"));
 
-        assertDoesNotThrow(
-                () -> atpActionService.loadDynamicEnvironmentsFromDb(),
-                "loadDynamicEnvironmentsFromDb should not throw when parameters JSON is malformed");
-        assertThrows(TdmEnvConvertLazyEnvironmentByNameException.class,
-                () -> environmentsService.getLazyEnvironmentByName(dynProjectId, dynEnvName));
+        LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(dynProjectId, dynEnvName);
+        assertEquals(dynEnvName, lazyEnvironment.getName());
+
+        List<LazySystem> systems = environmentsService.getLazySystems(lazyEnvironment.getId());
+        assertEquals(1, systems.size());
     }
 
     private void assertEnvironmentHasSystems(UUID projectId, String envName, String... systemNames) {

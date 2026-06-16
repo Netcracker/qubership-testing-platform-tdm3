@@ -20,25 +20,31 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.UuidGenerator;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "dynamic_environment")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
+
 public class DynamicEnvironment {
 
     @Id
+    @GeneratedValue
+    @UuidGenerator
     @Column(name = "id")
     private UUID id;
 
@@ -51,8 +57,7 @@ public class DynamicEnvironment {
     @OneToMany(mappedBy = "env", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<DynamicSystem> systems = new ArrayList<>();
 
-    public DynamicEnvironment(UUID id, UUID projectId, String envName) {
-        this.id = id;
+    public DynamicEnvironment(UUID projectId, String envName) {
         this.projectId = projectId;
         this.envName = envName;
         this.systems = new ArrayList<>();
