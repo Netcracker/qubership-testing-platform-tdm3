@@ -47,14 +47,12 @@ import org.qubership.atp.tdm.env.configurator.model.LazySystem;
 import org.qubership.atp.tdm.env.configurator.model.Project;
 import org.qubership.atp.tdm.env.configurator.model.System;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
-import org.qubership.atp.tdm.env.configurator.utils.CacheNames;
 import org.qubership.atp.tdm.model.DynamicEnvironment;
 import org.qubership.atp.tdm.model.DynamicSystem;
 import org.qubership.atp.tdm.repo.DynamicEnvironmentRepository;
 import org.qubership.atp.tdm.repo.DynamicSystemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -87,7 +85,6 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
      * Get full project by ID.
      */
     @Override
-    @Cacheable(value = CacheNames.TDM_FULL_PROJECT_CACHE)
     public Project getFullProject(@Nonnull UUID projectId) {
         log.info("Loading project by id: [{}]", projectId);
         Project project;
@@ -120,7 +117,6 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
      * Get lazy project by ID.
      */
     @Override
-    @Cacheable(value = CacheNames.TDM_LAZY_PROJECT_CACHE)
     public LazyProject getLazyProjectById(@Nonnull UUID projectId) {
         log.info("Loading lazy project by Id.");
         LazyProject lazyProject = new LazyProject(projectId, projects.get(projectId));
@@ -132,7 +128,6 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
      * Get lazy project by name.
      */
     @Override
-    @Cacheable(value = CacheNames.TDM_LAZY_PROJECT_BY_NAME_CACHE)
     public LazyProject getLazyProjectByName(@Nonnull String projectName) {
         log.info("Loading lazy project by name: {}.", projectName);
         for (Map.Entry<UUID, String> entry : projects.entrySet()) {
@@ -145,7 +140,6 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
     }
 
     @Override
-    @Cacheable(value = CacheNames.TDM_LAZY_PROJECTS_CACHE)
     public List<LazyProject> getLazyProjects() {
         log.info("Loading lazy projects.");
         List<LazyProject> lazyProjects;
@@ -167,7 +161,6 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
      * Get lazy environment by ID.
      */
     @Override
-    @Cacheable(value = CacheNames.TDM_LAZY_ENVIRONMENT_BY_ID_CACHE)
     public LazyEnvironment getLazyEnvironment(@Nonnull UUID environmentId) {
         log.info("Loading lazy environment by environment id: [{}]", environmentId);
         DynamicEnvironment env = dynamicEnvironmentRepository.findById(environmentId)
@@ -179,7 +172,6 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
      * Get env name by environment ID.
      */
     @Override
-    @Cacheable(value = CacheNames.TDM_ENV_NAME_BY_ENVIRONMENT_ID_CACHE)
     public String getEnvNameById(@Nonnull UUID environmentId) {
         log.info("Loading environment name by environment id: [{}]", environmentId);
         return dynamicEnvironmentRepository.findById(environmentId)
@@ -225,7 +217,6 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
      * Get lazy environment by project and environment name.
      */
     @Override
-    @Cacheable(value = CacheNames.TDM_LAZY_ENVIRONMENT_BY_NAME_CACHE)
     public LazyEnvironment getLazyEnvironmentByName(@Nonnull UUID projectId, @Nonnull String environmentName) {
         log.info("Loading lazy environment by project [{}] and name [{}].", projectId, environmentName);
         return dynamicEnvironmentRepository.findByEnvNameAndProjectId(environmentName, projectId)
@@ -239,7 +230,6 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
      * Get connections by system ID.
      */
     @Override
-    @Cacheable(value = CacheNames.TDM_CONNECTIONS_BY_SYSTEM_ID_CACHE)
     public List<Connection> getConnectionsSystemById(UUID environmentId, UUID systemId) {
         log.info("Loading connections by system ID: {}", systemId);
         try {
@@ -266,7 +256,6 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
      * Get lazy system by ID.
      */
     @Override
-    @Cacheable(value = CacheNames.TDM_LAZY_SYSTEM_CACHE)
     public LazySystem getLazySystemById(@Nonnull UUID environmentId, @Nonnull UUID systemId) {
         log.info("Loading lazy system by system ID: {}", systemId);
         DynamicSystem sys = dynamicSystemRepository.findById(systemId)
@@ -278,7 +267,6 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
      * Get lazy system by project ID, environment ID, name.
      */
     @Override
-    @Cacheable(value = CacheNames.TDM_LAZY_SYSTEM_BY_NAME_CACHE)
     public LazySystem getLazySystemByName(@Nonnull UUID projectId, @Nonnull UUID environmentId,
                                           @Nonnull String systemName) {
         log.info("Loading lazy system for env [{}] by name [{}].", environmentId, systemName);
@@ -293,7 +281,6 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
      * @return list of LazySystem's
      */
     @Override
-    @Cacheable(value = CacheNames.TDM_LAZY_SYSTEMS_CACHE)
     public List<LazySystem> getLazySystems(@Nonnull UUID environmentId) {
         log.info("Loading lazy systems by env ID: [{}].", environmentId);
         try {
@@ -307,7 +294,6 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
     }
 
     @Override
-    @Cacheable(value = CacheNames.TDM_ALL_SHORT_LAZY_SYSTEMS_BY_PROJECT_CACHE)
     public List<LazySystem> getLazySystemsByProjectWithEnvIds(@Nonnull UUID projectId) {
         log.info("Loading lazy systems by OO project ID: [{}]", projectId);
         try {
@@ -342,7 +328,6 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
      * @return list of LazySystem's
      */
     @Override
-    @Cacheable(value = CacheNames.TDM_LAZY_SYSTEMS_BY_PROJECT_CACHE)
     public List<LazySystem> getLazySystemsByProjectIdWithConnections(@Nonnull UUID projectId) {
         log.info("Loading lazy systems by project ID: [{}]", projectId);
         try {
