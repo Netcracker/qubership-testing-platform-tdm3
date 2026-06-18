@@ -88,4 +88,12 @@ public interface CatalogRepository extends JpaRepository<TestDataTableCatalog, S
     @Modifying(flushAutomatically = true)
     @Query(value = "update TestDataTableCatalog c set c.lastUsage = :date where c.tableName = :tableName")
     void updateLastUsageByTableName(@Param("date") Date date, @Param("tableName") String tableName);
+
+    @Transactional
+    @Modifying(flushAutomatically = true)
+    @Query(value = "update TestDataTableCatalog c set c.systemId = :newSystemId, c.environmentId = :newEnvId "
+            + "where c.systemId = :oldSystemId")
+    void updateSystemAndEnvironmentId(@Param("oldSystemId") UUID oldSystemId,
+                                      @Param("newSystemId") UUID newSystemId,
+                                      @Param("newEnvId") UUID newEnvId);
 }

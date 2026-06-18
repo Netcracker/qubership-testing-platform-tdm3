@@ -50,7 +50,6 @@ import org.qubership.atp.tdm.env.configurator.model.Project;
 import org.qubership.atp.tdm.env.configurator.model.Server;
 import org.qubership.atp.tdm.env.configurator.model.System;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
-import org.qubership.atp.tdm.env.configurator.service.GitService;
 import org.qubership.atp.tdm.exceptions.internal.TdmEnvironmentSystemException;
 import org.qubership.atp.tdm.exceptions.internal.TdmRetrieveTestDataException;
 import org.qubership.atp.tdm.exceptions.internal.TdmSearchDataByCriteriaException;
@@ -126,7 +125,6 @@ public class TestDataServiceImpl implements TestDataService {
     private final LockManager lockManager;
     private final TdmMdcHelper tdmMdcHelper;
     private final SchedulerService schedulerService;
-    private final GitService gitService;
 
     /**
      * Constructor for TestDataService.
@@ -148,8 +146,7 @@ public class TestDataServiceImpl implements TestDataService {
                                @Value("${external.query.default.timeout:1800}") Integer defaultQueryTimeout,
                                @Value("${table.expiration.cron}") String removingCron,
                                @Value("${clean.removed.tables.history.cron}") String historyCleanerCron,
-                               TdmMdcHelper helper,
-                               GitService gitService) {
+                               TdmMdcHelper helper) {
         this.catalogRepository = catalogRepository;
         this.testDataTableRepository = testDataTableRepository;
         this.environmentsService = environmentsService;
@@ -166,7 +163,6 @@ public class TestDataServiceImpl implements TestDataService {
         this.schedulerService = schedulerService;
         this.removingCron = removingCron;
         this.historyCleanerCron = historyCleanerCron;
-        this.gitService = gitService;
     }
 
     @Override
@@ -309,7 +305,7 @@ public class TestDataServiceImpl implements TestDataService {
         System system;
 
         try {
-            envName = gitService.getEnvNameById(environmentId);
+            envName = environmentsService.getEnvNameById(environmentId);
         } catch (Exception e) {
             String message = String.format("Environment: [%s] was not found.", environmentId);
             log.error(message);
@@ -319,7 +315,7 @@ public class TestDataServiceImpl implements TestDataService {
         }
 
         try {
-            system = gitService.getFullSystemByName(environmentId, systemName);
+            system = environmentsService.getFullSystemByName(environmentId, systemName);
         } catch (Exception e) {
             String message = String.format("System with name[%s] for environment[%s] "
                     + "was not found.", systemName, environmentId);

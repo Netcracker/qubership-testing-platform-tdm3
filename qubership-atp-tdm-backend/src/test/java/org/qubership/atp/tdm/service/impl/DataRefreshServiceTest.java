@@ -60,12 +60,7 @@ public class DataRefreshServiceTest extends AbstractTestDataTest {
         when(environmentsService.getLazyEnvironment(any())).thenReturn(lazyEnvironment);
         when(environmentsService.getConnectionsSystemById(any(), any())).thenReturn(connections);
 
-        when(gitEnvironmentsService.getLazyProjectById(any())).thenReturn(lazyProject);
-        when(gitEnvironmentsService.getLazyEnvironment(any())).thenReturn(lazyEnvironment);
-        when(gitEnvironmentsService.getConnectionsSystemById(any(), any())).thenReturn(connections);
-
-        when(gitEnvironmentsService.getEnvNameById(any())).thenReturn(environmentName);
-        when(gitEnvironmentsService.getFullSystemByName(any(), any())).thenReturn(system);
+        when(environmentsService.getFullSystemByName(any(), any())).thenReturn(system);
     }
 
 
@@ -94,7 +89,6 @@ public class DataRefreshServiceTest extends AbstractTestDataTest {
         String tableName = "tdm_test_data_run_refresh";
         createTestDataTableCatalog(projectId, systemId, environmentId, tableTitle, tableName);
         createTestDataTable(tableName);
-        when(gitEnvironmentsService.getFullProject(any())).thenReturn(project);
         when(environmentsService.getFullProject(any())).thenReturn(project);
         testDataService.importSqlTestData(projectId,
                 Collections.singletonList(environmentId), system.getName(),
@@ -116,7 +110,6 @@ public class DataRefreshServiceTest extends AbstractTestDataTest {
         String tableName = "tdm_test_data_run_refresh_disabled";
         createTestDataTableCatalog(projectId, systemId, environmentId,
                 "TDM Test Data Run Refresh Disabled", tableName, query);
-        when(gitEnvironmentsService.getFullProject(any())).thenReturn(project);
         TestDataRefreshConfig config = new TestDataRefreshConfig(UUID.randomUUID(), false, "0 0/5 * * * ?", false, queryTimeout);
         dataRefreshService.saveRefreshConfig(tableName, queryTimeout, config);
         RefreshResults refreshResults = dataRefreshService.runRefresh(config.getId());
@@ -138,7 +131,6 @@ public class DataRefreshServiceTest extends AbstractTestDataTest {
 
         List<UUID> rowIdsToOccupy = extractRowIds(table.getData().subList(0, 2));
         testDataService.occupyTestData(tableName, "TestUser1DRST", rowIdsToOccupy);
-        when(gitEnvironmentsService.getFullProject(any())).thenReturn(project);
         int actualOccupiedRows = testDataService.
                 getTestData(tableName, null, null, null, null, true).getData().size();
         Assertions.assertEquals(countOccupiedRows, actualOccupiedRows);

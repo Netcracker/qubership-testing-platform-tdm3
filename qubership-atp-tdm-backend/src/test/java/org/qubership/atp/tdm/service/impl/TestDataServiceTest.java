@@ -68,8 +68,7 @@ public class TestDataServiceTest extends AbstractTestDataTest {
         when(environmentsService.getLazyEnvironments(any())).thenReturn(Collections.singletonList(lazyEnvironment));
         when(environmentsService.getConnectionsSystemById(any(), any())).thenReturn(connections);
 
-        when(gitEnvironmentsService.getEnvNameById(any())).thenReturn(environmentName);
-        when(gitEnvironmentsService.getFullSystemByName(any(), any())).thenReturn(system);
+        when(environmentsService.getFullSystemByName(any(), any())).thenReturn(system);
     }
 
 
@@ -663,7 +662,6 @@ public class TestDataServiceTest extends AbstractTestDataTest {
     @Test
     public void testDataService_importSqlTestDataWrongEnvironment_returnErrorMessage() {
         when(environmentsService.getEnvNameById(any())).thenThrow(new RuntimeException());
-        when(gitEnvironmentsService.getEnvNameById(any())).thenThrow(new RuntimeException());
         List<ImportTestDataStatistic> expectedStatistic = new ArrayList<>();
         String error = String.format("Environment: [%s] was not found.", environmentId);
         ImportTestDataStatistic statistic = new ImportTestDataStatistic(environmentId.toString(),
@@ -700,7 +698,6 @@ public class TestDataServiceTest extends AbstractTestDataTest {
     public void testDataService_importSqlTestDataWrongConnection_returnErrorMessage() throws Exception {
         // Mock the connection service to return connections without the 'DB' connection
         when(environmentsService.getConnectionsSystemById(any(), any())).thenReturn(Arrays.asList(dbConnectionErrorName));
-        when(gitEnvironmentsService.getConnectionsSystemById(any(), any())).thenReturn(Arrays.asList(dbConnectionErrorName));
 
         List<ImportTestDataStatistic> expectedStatistic = new ArrayList<>();
         String error = format(TdmEnvDbConnectionException.DEFAULT_MESSAGE, "DB");
@@ -972,7 +969,6 @@ public class TestDataServiceTest extends AbstractTestDataTest {
     @Test
     public void testDataService_createTableBySql_updateBySql_returnConnectionException() throws Exception {
         when(environmentsService.getConnectionsSystemById(any(), any())).thenReturn(Arrays.asList(dbConnectionErrorCredentials));
-        when(gitEnvironmentsService.getConnectionsSystemById(any(), any())).thenReturn(Arrays.asList(dbConnectionErrorCredentials));
         String tableName = "tdm_test_sql_update_sql_source_table";
         createTestDataTable(tableName);
 

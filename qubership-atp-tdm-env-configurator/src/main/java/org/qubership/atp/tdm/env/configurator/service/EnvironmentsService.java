@@ -24,6 +24,7 @@ import org.qubership.atp.tdm.env.configurator.model.LazyEnvironment;
 import org.qubership.atp.tdm.env.configurator.model.LazyProject;
 import org.qubership.atp.tdm.env.configurator.model.LazySystem;
 import org.qubership.atp.tdm.env.configurator.model.Project;
+import org.qubership.atp.tdm.env.configurator.model.System;
 
 import jakarta.annotation.Nonnull;
 
@@ -60,6 +61,8 @@ public interface EnvironmentsService {
     List<LazySystem> getLazySystems(@Nonnull UUID environmentId);
 
     List<LazySystem> getLazySystemsByProjectIdWithConnections(UUID projectId);
+
+    System getFullSystemByName(@Nonnull UUID environmentId, @Nonnull String systemName);
 
     boolean resetCaches();
 }

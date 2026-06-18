@@ -14,18 +14,16 @@
  *  limitations under the License.
  */
 
-package org.qubership.atp.tdm.env.configurator.model.envgen;
+package org.qubership.atp.tdm.exceptions.internal;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.qubership.atp.tdm.exceptions.TdmInternalException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class YamlConfiguration {
+@ResponseStatus(value = HttpStatus.NOT_FOUND)
+public class EnvironmentNotFoundException extends TdmInternalException {
 
-    @JsonProperty("atp_envgene_configuration")
-    private Configuration configuration;
+    public EnvironmentNotFoundException(String envName, String projectName) {
+        super(String.format("Environment [%s] not found in project [%s].", envName, projectName));
+    }
 }

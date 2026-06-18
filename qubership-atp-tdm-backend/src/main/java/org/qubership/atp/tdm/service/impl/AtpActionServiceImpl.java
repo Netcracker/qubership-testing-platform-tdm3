@@ -220,22 +220,23 @@ public class AtpActionServiceImpl implements AtpActionService {
                                             @Nonnull String systemName, @Nonnull String tableTitle) {
 
         if (StringUtils.isBlank(projectName)) {
-            return new ResponseMessage(ResponseType.ERROR, "Project name is missed");
+            throw new IllegalArgumentException("Project name is missed");
         }
         if (StringUtils.isBlank(envName)) {
-            return new ResponseMessage(ResponseType.ERROR, "Environment name is missed");
+            throw new IllegalArgumentException("Environment name is missed");
         }
         if (StringUtils.isBlank(systemName)) {
-            return new ResponseMessage(ResponseType.ERROR, "System name is missed");
+            throw new IllegalArgumentException("System name is missed");
         }
         if (StringUtils.isBlank(tableTitle)) {
-            return new ResponseMessage(ResponseType.ERROR, "Title table name is missed");
+            throw new IllegalArgumentException("Title table name is missed");
         }
         log.info("ATP Action. Getting table name based on Table Title: {}", tableTitle);
         EnvironmentContext envContext = getEnvironmentContext(projectName, envName, systemName);
         if (envContext.getSystemId() == null) {
-            return new ResponseMessage(ResponseType.ERROR,
-                    String.format("System was not resolved for env=\"%s\", system=\"%s\".", envName, systemName));
+            throw new IllegalArgumentException(
+                    String.format("System was not resolved for env=\"%s\", system=\"%s\".", envName, systemName)
+            );
         }
         return repository.resolveTableName(envContext.getProjectId(), envContext.getSystemId(), tableTitle);
     }
@@ -276,6 +277,7 @@ public class AtpActionServiceImpl implements AtpActionService {
         log.info("Data from the environments tool is loaded.");
         return new EnvironmentContext(projectId, envId, systemId);
     }
+
 
     private String formResultLink(@Nonnull UUID projectName, @Nullable UUID envName,
                                   @Nullable UUID systemName) {

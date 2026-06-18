@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.qubership.atp.tdm.env.configurator.model.envgen;
+package org.qubership.atp.tdm.env.configurator.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 

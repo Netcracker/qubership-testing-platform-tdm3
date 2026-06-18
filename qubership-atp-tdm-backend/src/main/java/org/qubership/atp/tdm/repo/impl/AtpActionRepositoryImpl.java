@@ -512,7 +512,7 @@ public class AtpActionRepositoryImpl implements AtpActionRepository {
             try {
                 RefreshResults refreshResults = dataRefreshService
                         .runRefresh(tableCatalog.getTableName(), false);
-                String msg = String.format("Successfully refreshed %s records fot table: %s.",
+                String msg = String.format("Successfully refreshed %s records for table: %s.",
                         refreshResults.getRecordsTotal(), tableCatalog.getTableTitle());
                 responseMessages.add(new ResponseMessage(ResponseType.SUCCESS, msg, resultLink));
                 testDataTableRepository.updateLastUsage(tableCatalog.getTableName());
@@ -598,7 +598,7 @@ public class AtpActionRepositoryImpl implements AtpActionRepository {
         return Optional.ofNullable(
                 catalogRepository.findByProjectIdAndSystemIdAndTableTitle(projectId, systemId, tableTitle))
                 .map(table -> new ResponseMessage(ResponseType.SUCCESS, table.getTableName()))
-                .orElse(new ResponseMessage(ResponseType.ERROR,
+                .orElseThrow(() -> new IllegalArgumentException(
                         String.format("Table with title \"%s\" was not found!", tableTitle))
                 );
     }

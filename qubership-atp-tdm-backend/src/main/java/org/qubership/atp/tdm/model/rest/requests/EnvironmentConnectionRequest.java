@@ -14,23 +14,16 @@
  *  limitations under the License.
  */
 
-package org.qubership.atp.tdm.env.configurator.model.envgen;
+package org.qubership.atp.tdm.model.rest.requests;
 
 import java.util.Map;
-import java.util.UUID;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class YamlConnection {
+public class EnvironmentConnectionRequest {
 
-    private UUID id;
-    private UUID projectId;
     private String name;
-    private ConnectionType type;
+    private String type;
     private Map<String, String> parameters;
 }

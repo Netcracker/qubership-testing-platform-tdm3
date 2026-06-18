@@ -14,20 +14,24 @@
  *  limitations under the License.
  */
 
-package org.qubership.atp.tdm.env.configurator.model.envgen;
+package org.qubership.atp.tdm.repo;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.qubership.atp.tdm.model.DynamicSystem;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class Configuration {
+@Repository
+public interface DynamicSystemRepository extends JpaRepository<DynamicSystem, UUID> {
 
-    @JsonProperty("systems")
-    private List<YamlSystem> systems;
+    List<DynamicSystem> findAllByEnvId(UUID envId);
+
+    Optional<DynamicSystem> findByEnvIdAndSystemName(UUID envId, String systemName);
+
+    boolean existsByEnvIdAndSystemName(UUID envId, String systemName);
+
+    void deleteByEnvIdAndSystemName(UUID envId, String systemName);
 }

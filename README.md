@@ -10,7 +10,6 @@ This approach gives a user the only entry point for test data usage on different
 
 Differences of TDM3 Service from TDM Service are the following:
 - Internal PostgreSQL Database is replaced to H2 file database,
-- Instead of QSTP Environments Service, EnvGene Tool is used,
 - Auth functionality is reduced. As a result, Spring Application should be initialized with 'disable-security' active profile,
 - Mongo service usage is removed.
 
@@ -58,6 +57,212 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 
 1. Build project first: build by maven "clean" and "package", run as backend on port 8080.
 
+## Dynamic Environment API
+
+The **Dynamic Environment API** lets you create, update, and delete test environments at runtime without editing YAML configuration files. Environments are registered in the in-memory cache immediately and persisted to the H2 database so they survive service restarts.
+
+**Base path:** `/api/tdm/rest/create-env`
+
+When the service is deployed behind the ATP gateway, prepend the configured gateway prefix (`ATP_SERVICE_PATH`, default `/api/atp-tdm/v1`) to the base path above.
+
+All endpoints accept `Content-Type: application/json` and return a `ResponseMessage` object:
+
+```json
+{
+  "type": "SUCCESS",
+  "content": "Environment [myEnv] created successfully."
+}
+```
+
+`type` is either `SUCCESS` or `ERROR`. On failure, `content` contains a human-readable error message.
+
+### Request body
+
+Fields can be sent as a flat JSON object or nested under an `environment` property (both formats are supported):
+
+| Field              | Required            | Used by   | Description                                                                  |
+|--------------------|---------------------|-----------|------------------------------------------------------------------------------|
+| `projectName`      | yes                 | all       | Name of an existing TDM project.                                             |
+| `envName`          | yes                 | all       | Environment name to create, update, or delete.                               |
+| `systemName`       | yes (create/update) | POST, PUT | System name within the environment.                                          |
+| `connection`       | yes (create/update) | POST, PUT | Connection details for the system (see below).                               |
+| `newEnvName`       | no                  | PUT       | Rename the environment.                                                      |
+| `newSystemName`    | no                  | PUT       | Rename the target system.                                                    |
+| `systemDeleteName` | no                  | DELETE    | When set, deletes only this system; otherwise deletes the whole environment. |
+
+**Connection object** (`connection`):
+
+| Field        | Required | Description                                                                                                     |
+|--------------|----------|-----------------------------------------------------------------------------------------------------------------|
+| `name`       | yes      | Connection display name (e.g. `"DB"`).                                                                          |
+| `type`       | yes      | Connection type (case-insensitive). See [supported types](#supported-connection-types).                         |
+| `parameters` | yes      | Key-value map of connection parameters (e.g. host, port, credentials). Please use lowercase! Must not be empty. |
+
+### Endpoints
+
+| Method   | Path                       | Description                                                                         |
+|----------|----------------------------|-------------------------------------------------------------------------------------|
+| `POST`   | `/api/tdm/rest/create-env` | Create a new environment with a system, or add a system to an existing environment. |
+| `PUT`    | `/api/tdm/rest/create-env` | Update connection parameters and optionally rename the environment or system.       |
+| `DELETE` | `/api/tdm/rest/create-env` | Delete an entire environment, or a single system within it.                         |
+
+### Supported connection types
+
+`DB`, `DDRS`, `Diameter Synchronous`, `File over FTP`, `File over SFTP`, `File over SMB`, `GIT`, `HTTP`, `HTTP-CIP`, `HTTP-Consul`, `HTTP-KubernetesProject`, `HTTP-OpenShiftProject`, `HTTP-OpenShiftRout`, `JMS Asynchronous`, `LDAP`, `REST over HTTP`, `REST Synchronous`, `SOAP Over HTTP Synchronous`, `SOAP Over JMS`, `SS7 Transport`, `SSH`, `TA Engines Provider`
+
+### HTTP status codes
+
+| Code  | When                                                                                   |
+|-------|----------------------------------------------------------------------------------------|
+| `200` | Operation completed successfully.                                                      |
+| `400` | Validation error (e.g. duplicate system, invalid connection type, missing parameters). |
+| `404` | Environment not found (DELETE only).                                                   |
+
+### User guide
+
+#### 1. Create a new environment
+
+Creates an environment with one system and registers it in TDM. The project must already exist.
+
+```bash
+curl -X POST http://localhost:8080/api/tdm/rest/create-env \
+  -H "Content-Type: application/json" \
+  -d '{
+    "projectName": "MyProject",
+    "envName": "myEnv",
+    "systemName": "system1",
+    "connection": {
+      "name": "DB",
+      "type": "DB",
+      "parameters": {
+        "host": "localhost",
+        "port": "5432"
+      }
+    }
+  }'
+```
+
+#### 2. Add another system to an existing environment
+
+Send another `POST` with the same `projectName` and `envName` but a different `systemName`. If the system name already exists, the API returns `400` with a message to use `PUT` instead.
+
+```bash
+curl -X POST http://localhost:8080/api/tdm/rest/create-env \
+  -H "Content-Type: application/json" \
+  -d '{
+    "projectName": "MyProject",
+    "envName": "myEnv",
+    "systemName": "system2",
+    "connection": {
+      "name": "HTTP",
+      "type": "HTTP",
+      "parameters": {
+        "url": "https://example.com"
+      }
+    }
+  }'
+```
+
+#### 3. Update connection parameters
+
+Use `PUT` to change connection settings for an existing system. You can also rename the environment or system with `newEnvName` / `newSystemName`.
+
+```bash
+curl -X PUT http://localhost:8080/api/tdm/rest/create-env \
+  -H "Content-Type: application/json" \
+  -d '{
+    "projectName": "MyProject",
+    "envName": "myEnv",
+    "systemName": "system1",
+    "connection": {
+      "name": "DB",
+      "type": "DB",
+      "parameters": {
+        "host": "db.example.com",
+        "port": "5432"
+      }
+    }
+  }'
+```
+
+Rename environment (all systems in the environment are renamed):
+
+```bash
+curl -X PUT http://localhost:8080/api/tdm/rest/create-env \
+  -H "Content-Type: application/json" \
+  -d '{
+    "projectName": "MyProject",
+    "envName": "myEnv",
+    "systemName": "system1",
+    "newEnvName": "renamedEnv",
+    "connection": {
+      "name": "DB",
+      "type": "DB",
+      "parameters": {
+        "host": "localhost",
+        "port": "5432"
+      }
+    }
+  }'
+```
+
+#### 4. Delete an environment or system
+
+Delete the entire environment (all systems):
+
+```bash
+curl -X DELETE http://localhost:8080/api/tdm/rest/create-env \
+  -H "Content-Type: application/json" \
+  -d '{
+    "projectName": "MyProject",
+    "envName": "myEnv"
+  }'
+```
+
+Delete a single system (other systems in the same environment remain):
+
+```bash
+curl -X DELETE http://localhost:8080/api/tdm/rest/create-env \
+  -H "Content-Type: application/json" \
+  -d '{
+    "projectName": "MyProject",
+    "envName": "myEnv",
+    "systemDeleteName": "system1"
+  }'
+```
+
+#### Alternative request format
+
+The same payload can be wrapped in an `environment` object (useful when calling from ATP Actions):
+
+```json
+{
+  "environment": {
+    "projectName": "MyProject",
+    "envName": "myEnv",
+    "systemName": "system1",
+    "connection": {
+      "name": "DB",
+      "type": "DB",
+      "parameters": {
+        "host": "localhost",
+        "port": "5432"
+      }
+    }
+  }
+}
+```
+
+#### Typical workflow
+
+1. Ensure the target **project** exists in TDM.
+2. **Create** the environment with `POST` and the first system connection.
+3. **Add** more systems with additional `POST` calls if needed.
+4. **Update** connection details or rename with `PUT` when infrastructure changes.
+5. **Delete** obsolete systems or whole environments with `DELETE`.
+
+After creation, the environment is available in the TDM UI and for test data operations on that project. Dynamic environments are stored in H2 and reloaded into cache on service startup.
+
 ## How to deploy tool
 
 1. Navigate to the builder job
@@ -88,13 +293,6 @@ The following parameters are passed to `application.properties` during deploymen
 | `SERVICE_NAME`                                 | `string`  | `yes`      | `"atp3-tdm-be"`                                          | Deployment Config/Service name.                                                                                                                                                                |
 | `LOG_LEVEL`                                    | `string`  | `no`       | `"INFO"`                                                 | Logging level for the application.                                                                                                                                                             |
 | `ACTIVE_PROFILES_SPRING`                       | `string`  | `no`       | `"disable-security"`                                     | Spring profile for security configuration.                                                                                                                                                     |
-| `ENVGENE_GIT_REPO_URL`                         | `string`  | `yes`      | `""`                                                     | Full Git repository URL including project path.                                                                                                                                                |
-| `ENVGENE_GIT_REPO_TOKEN`                       | `string`  | `yes`      | `""`                                                     | Access token for private Git repositories.                                                                                                                                                     |
-| `ENVGENE_GIT_REPO_BRANCH`                      | `string`  | `no`       | `"master"`                                               | Git branch or tag reference for environments configuration.                                                                                                                                    |
-| `ENVGENE_GIT_REPO_DEPLOYMENT_PATH`             | `string`  | `no`       | `"effective-set/deployment"`                             | Base path to deployment configuration in Git repository. Used to construct full paths to deployment files.                                                                                     |
-| `ENVGENE_GIT_REPO_NC_APP_PATH`                 | `string`  | `no`       | `"atp/atp3-playwright-runner"`                           | Application-specific path within deployment configuration. Used to construct full paths to deployment files.                                                                                   |
-| `ENVGENE_GIT_REPO_CREDENTIALS_PATH`            | `string`  | `no`       | `"values/credentials.yaml"`                              | Relative path to credentials file within the application deployment path. Combined with `ENVGENE_GIT_REPO_DEPLOYMENT_PATH` and `ENVGENE_GIT_REPO_NC_APP_PATH` to form the full path.           |
-| `ENVGENE_GIT_REPO_DEPLOYMENT_PARAMETERS_PATH`  | `string`  | `no`       | `"values/deployment-parameters.yaml"`                    | Relative path to deployment parameters file within the application deployment path. Combined with `ENVGENE_GIT_REPO_DEPLOYMENT_PATH` and `ENVGENE_GIT_REPO_NC_APP_PATH` to form the full path. |
 | `PROJECTS_INFO`                                | `json`    | `no`       | `{}`                                                     | JSON object mapping project IDs to project names.                                                                                                                                              |
 | `KEYCLOAK_ENABLED`                             | `boolean` | `no`       | `false`                                                  | Enable or disable Keycloak authentication.                                                                                                                                                     |
 | `KEYCLOAK_AUTH_URL`                            | `string`  | `no`       | `""`                                                     | Keycloak authentication server URL.                                                                                                                                                            |
