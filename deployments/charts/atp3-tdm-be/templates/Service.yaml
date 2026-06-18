@@ -3,6 +3,8 @@ kind: Service
 apiVersion: v1
 metadata:
   name: '{{ .Values.SERVICE_NAME }}'
+  labels:
+    metrics-type: atp3-service
 spec:
   ports:
     - name: web
