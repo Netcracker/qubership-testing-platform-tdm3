@@ -10,6 +10,9 @@ spec:
     - name: web
       port: 8080
       protocol: TCP
+    - name: actuator
+      port: 8090
+      protocol: TCP
     - name: ssl
       port: 9000
       protocol: TCP

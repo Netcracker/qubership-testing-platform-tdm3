@@ -44,6 +44,7 @@ FEIGN_ATP_MAILSENDER_ROUTE: "api/atp-mail-sender/v1"
 FEIGN_ATP_HIGHCHARTS_NAME: "ATP-CHARTS"
 FEIGN_ATP_HIGHCHARTS_ROUTE: "api/atp-charts/v1"
 FEIGN_ATP_HIGHCHARTS_URL: ""
+MONITOR_PORT: "8090"
 
 atp3tdm:
   externalQueryDefaultTimeout: "1800"

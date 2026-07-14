@@ -88,6 +88,9 @@ spec:
             - containerPort: 8080
               name: web
               protocol: TCP
+            - containerPort: 8090
+              name: actuator
+              protocol: TCP
             - containerPort: 9000
               name: ssl
               protocol: TCP

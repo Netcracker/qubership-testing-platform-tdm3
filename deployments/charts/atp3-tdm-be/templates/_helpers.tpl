@@ -73,6 +73,8 @@ ATP_HTTP_LOGGING_URI_IGNORE: "{{ .Values.atp3tdm.atpHttpLoggingUriIgnore }}"
 ATP_INTERNAL_GATEWAY_ENABLED: "{{ .Values.atp3tdm.atpInternalGatewayEnabled }}"
 ATP_SERVICE_PATH: "{{ .Values.atp3tdm.atpServicePath }}"
 ATP_SERVICE_PUBLIC: "{{ .Values.atp3tdm.atpServicePublic }}"
+MONITOR_PORT: "{{ .Values.MONITOR_PORT }}"
+SERVICE_NAME: "{{ .Values.SERVICE_NAME }}"
 
 CONTENT_SECURITY_POLICY: "{{ .Values.CONTENT_SECURITY_POLICY }}"
 ENVIRONMENTS_CACHE_DURATIONS: "{{ .Values.atp3tdm.environmentsCacheDurations }}"
