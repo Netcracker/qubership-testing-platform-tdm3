@@ -1,0 +1,4190 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "license" : {
+      "name" : "Apache-2.0",
+      "url" : "https://www.apache.org/licenses/LICENSE-2.0"
+    },
+    "title" : "ATP-TDM"
+  },
+  "security" : [
+    {
+      "Bearer Authentication" : [ ]
+    }
+  ],
+  "tags" : [
+    {
+      "description" : "Test Data Controller V2",
+      "name" : "test-data-controller-v2"
+    }
+  ],
+  "paths" : {
+    "/api/tdm/alter/created/when" : {
+      "get" : {
+        "description" : "Old update.",
+        "operationId" : "alterCreatedWhenColumn",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/alter/occupy/statistic" : {
+      "get" : {
+        "description" : "Old update.",
+        "operationId" : "alterOccupyStatistic",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/change/title" : {
+      "put" : {
+        "description" : "Changes table title.",
+        "operationId" : "changeTestDataTitle",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangeTitleRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/cleanup/config" : {
+      "post" : {
+        "description" : "Save / update data cleanup settings.",
+        "operationId" : "saveCleanupConfig",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CleanupSettings"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CleanupSettings"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "data-cleanup-controller"
+        ]
+      }
+    },
+    "/api/tdm/cleanup/config/{id}" : {
+      "get" : {
+        "description" : "Get cleanup configuration for specified dataset / table ID.",
+        "operationId" : "getCleanupConfig",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "id",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CleanupSettings"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "data-cleanup-controller"
+        ]
+      }
+    },
+    "/api/tdm/cleanup/fill/cleanup/type" : {
+      "get" : {
+        "description" : "Old update.",
+        "operationId" : "fillCleanupTypeColumn",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "data-cleanup-controller"
+        ]
+      }
+    },
+    "/api/tdm/cleanup/next/run" : {
+      "get" : {
+        "description" : "Get next run's date / time details.",
+        "operationId" : "getNextScheduledRun_2",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "cronExpression",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "data-cleanup-controller"
+        ]
+      }
+    },
+    "/api/tdm/cleanup/run" : {
+      "post" : {
+        "description" : "Force run data cleanup.",
+        "operationId" : "runDataCleanup",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CleanupSettings"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CleanupResults"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "data-cleanup-controller"
+        ]
+      }
+    },
+    "/api/tdm/data/available/recalculate" : {
+      "get" : {
+        "description" : "Get all distinct values by system_id and column_name",
+        "operationId" : "getDistinctColumnValues",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "systemId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "columnName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "environmentId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TableColumnValues"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/data/refresh/config" : {
+      "post" : {
+        "description" : "Save / update data refresh settings.",
+        "operationId" : "saveRefreshConfig",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "tableName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "queryTimeout",
+            "required" : true,
+            "schema" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TestDataRefreshConfig"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TestDataRefreshConfig"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "data-refresh-controller"
+        ]
+      }
+    },
+    "/api/tdm/data/refresh/config/{id}" : {
+      "get" : {
+        "description" : "Get refresh configuration for specified dataset / table ID.",
+        "operationId" : "getRefreshConfig",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "id",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TestDataRefreshConfig"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "data-refresh-controller"
+        ]
+      }
+    },
+    "/api/tdm/data/refresh/next/run" : {
+      "get" : {
+        "description" : "Get next run's date / time details.",
+        "operationId" : "getNextScheduledRun_1",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "cronExpression",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "data-refresh-controller"
+        ]
+      }
+    },
+    "/api/tdm/data/refresh/run" : {
+      "post" : {
+        "description" : "Force run data refresh.",
+        "operationId" : "runDataRefresh",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "tableName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "queryTimeout",
+            "required" : true,
+            "schema" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "allEnv",
+            "required" : true,
+            "schema" : {
+              "type" : "boolean"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/RefreshResults"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "data-refresh-controller"
+        ]
+      }
+    },
+    "/api/tdm/delete/rows" : {
+      "put" : {
+        "description" : "Delete selected rows from table.",
+        "operationId" : "deleteTestDataTableRows",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "tableName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "string",
+                  "format" : "uuid"
+                }
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/download/csv" : {
+      "get" : {
+        "description" : "Download table as csv file.",
+        "operationId" : "getTestDataTableAsCsvFile",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "tableName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/download/excel" : {
+      "get" : {
+        "description" : "Download table as excel file.",
+        "operationId" : "getTestDataTableAsExcelFile",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "tableName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/environment/tables/list" : {
+      "get" : {
+        "description" : "Get tables id and name under project and environment.",
+        "operationId" : "getTestDataTablesListByEnvironment",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "envId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/environments/{environmentId}/systems/lazy" : {
+      "get" : {
+        "operationId" : "getLazySystems",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "environmentId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/LazySystem"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "environments-controller"
+        ]
+      }
+    },
+    "/api/tdm/envs/reset/caches" : {
+      "get" : {
+        "operationId" : "resetCaches",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "environments-controller"
+        ]
+      }
+    },
+    "/api/tdm/evaluate/query" : {
+      "put" : {
+        "description" : "Evaluate query.",
+        "operationId" : "evaluateQuery",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "tableName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/fill/envId" : {
+      "get" : {
+        "description" : "Old update.",
+        "operationId" : "fillEnvIdColumn",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/fix/occupied/by/column" : {
+      "get" : {
+        "description" : "Old update.",
+        "operationId" : "alterOccupiedByColumn",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/import/excel" : {
+      "post" : {
+        "description" : "Import excel to TDM.",
+        "operationId" : "importExcelTestData",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "environmentId",
+            "required" : false,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "systemId",
+            "required" : false,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "tableTitle",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "runSqlScript",
+            "required" : true,
+            "schema" : {
+              "type" : "boolean"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ImportTestDataStatistic"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/import/sql" : {
+      "post" : {
+        "description" : "Import sql to TDM.",
+        "operationId" : "importSqlTestData_1",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "environmentsIds",
+            "required" : true,
+            "schema" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string",
+                "format" : "uuid"
+              }
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "systemName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "tableTitle",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "query",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "queryTimeout",
+            "required" : true,
+            "schema" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ImportTestDataStatistic"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/link/preview" : {
+      "post" : {
+        "description" : "Get preview for linker.",
+        "operationId" : "getPreviewLink",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "systemId",
+            "required" : false,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "columnName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "tableName",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "pickUpFullLinkFromTableCell",
+            "required" : true,
+            "schema" : {
+              "type" : "boolean"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/link/setup" : {
+      "post" : {
+        "description" : "Setup links.",
+        "operationId" : "setupColumnLinks",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "isAll",
+            "required" : true,
+            "schema" : {
+              "type" : "boolean"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "systemId",
+            "required" : false,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "tableName",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "columnName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "validateUnoccupiedResources",
+            "required" : true,
+            "schema" : {
+              "type" : "boolean"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "pickUpFullLinkFromTableCell",
+            "required" : true,
+            "schema" : {
+              "type" : "boolean"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/occupy" : {
+      "put" : {
+        "description" : "Occupy test data.",
+        "operationId" : "occupyTestData",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "tableName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "occupiedBy",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "string",
+                  "format" : "uuid"
+                }
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/projects/lazy" : {
+      "get" : {
+        "operationId" : "getProjects",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/LazyProject"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "environments-controller"
+        ]
+      }
+    },
+    "/api/tdm/projects/{projectId}/environments/lazy" : {
+      "get" : {
+        "operationId" : "getLazyEnvironments",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/LazyEnvironment"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "environments-controller"
+        ]
+      }
+    },
+    "/api/tdm/projects/{projectId}/environments/lazy/refresh" : {
+      "get" : {
+        "operationId" : "getLazyEnvironmentsRefresh",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/LazyEnvironment"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "environments-controller"
+        ]
+      }
+    },
+    "/api/tdm/release" : {
+      "put" : {
+        "description" : "Release test data.",
+        "operationId" : "releaseTestData",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "tableName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "string",
+                  "format" : "uuid"
+                }
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/resolve/discrepancy/testDataFlagsTableAndTestDataTableCatalog" : {
+      "get" : {
+        "description" : "Resolve discrepancy TestDataFlagsTable and TestDataTableCatalog.",
+        "operationId" : "resolveDiscrepancyTestDataFlagsTableAndTestDataTableCatalog",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/rest/add-info-to-row" : {
+      "post" : {
+        "description" : "ATP Action. Add info to row in table.",
+        "operationId" : "addInfoToRow",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RestApiRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ResponseMessage"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "atp-action-controller"
+        ]
+      }
+    },
+    "/api/tdm/rest/create-env" : {
+      "delete" : {
+        "description" : "ATP Action. Delete a dynamic environment or a single system within it.",
+        "operationId" : "deleteEnvironment",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EnvironmentManagementRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResponseMessage"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResponseMessage"
+                }
+              }
+            },
+            "description" : "Not Found"
+          }
+        },
+        "tags" : [
+          "atp-env-controller"
+        ]
+      },
+      "post" : {
+        "description" : "ATP Action. Create dynamic environment with system and connection.",
+        "operationId" : "createEnvironment",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EnvironmentManagementRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResponseMessage"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResponseMessage"
+                }
+              }
+            },
+            "description" : "Not Found"
+          }
+        },
+        "tags" : [
+          "atp-env-controller"
+        ]
+      },
+      "put" : {
+        "description" : "ATP Action. Update connection parameters for an existing dynamic environment.",
+        "operationId" : "updateEnvironment",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EnvironmentManagementRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResponseMessage"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResponseMessage"
+                }
+              }
+            },
+            "description" : "Not Found"
+          }
+        },
+        "tags" : [
+          "atp-env-controller"
+        ]
+      }
+    },
+    "/api/tdm/rest/get-record" : {
+      "post" : {
+        "description" : "ATP Action. Get test data from table.",
+        "operationId" : "getTestData_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RestApiRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ResponseMessage"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "atp-action-controller"
+        ]
+      }
+    },
+    "/api/tdm/rest/get-records" : {
+      "post" : {
+        "description" : "ATP Action. Get multiple column test data from table.",
+        "operationId" : "getMultipleColumnTestData",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RestApiRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ResponseMessage"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "atp-action-controller"
+        ]
+      }
+    },
+    "/api/tdm/rest/insert-records" : {
+      "post" : {
+        "description" : "ATP Action. Insert records to table.",
+        "operationId" : "insertTestData",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RestApiRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResponseMessage"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "atp-action-controller"
+        ]
+      }
+    },
+    "/api/tdm/rest/occupy-records" : {
+      "post" : {
+        "description" : "ATP Action. Occupy test data in table.",
+        "operationId" : "occupyTestData_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RestApiRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ResponseMessage"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "atp-action-controller"
+        ]
+      }
+    },
+    "/api/tdm/rest/occupy-records-full-row" : {
+      "post" : {
+        "description" : "ATP Action. Occupy test data in table.",
+        "operationId" : "occupyTestDataFullRow",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RestApiRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ResponseMessage"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "atp-action-controller"
+        ]
+      }
+    },
+    "/api/tdm/rest/refresh-tables" : {
+      "post" : {
+        "description" : "ATP Action. Refresh tables by name.",
+        "operationId" : "refreshTables",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RestApiRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ResponseMessage"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "atp-action-controller"
+        ]
+      }
+    },
+    "/api/tdm/rest/release-records" : {
+      "post" : {
+        "description" : "ATP Action. Release test data in table.",
+        "operationId" : "releaseTestData_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RestApiRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ResponseMessage"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "atp-action-controller"
+        ]
+      }
+    },
+    "/api/tdm/rest/release-records/bulk" : {
+      "post" : {
+        "description" : "ATP Action. Release test data in table.",
+        "operationId" : "releaseFullTestData",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RestApiRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ResponseMessage"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "atp-action-controller"
+        ]
+      }
+    },
+    "/api/tdm/rest/resolve-table" : {
+      "post" : {
+        "description" : "ATP Action. Resolves Table Name based on environment and table title.",
+        "operationId" : "resolveTableName",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RestApiRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResponseMessage"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "atp-action-controller"
+        ]
+      }
+    },
+    "/api/tdm/rest/run-cleanup-table" : {
+      "post" : {
+        "description" : "ATP Action. Run cleanup for table.",
+        "operationId" : "runCleanupForTable",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RestApiRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ResponseMessage"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "atp-action-controller"
+        ]
+      }
+    },
+    "/api/tdm/rest/truncate-table" : {
+      "post" : {
+        "description" : "ATP Action. Truncate table.",
+        "operationId" : "truncateTable",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RestApiRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ResponseMessage"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "atp-action-controller"
+        ]
+      }
+    },
+    "/api/tdm/rest/update-records" : {
+      "post" : {
+        "description" : "ATP Action. Update test data in table.",
+        "operationId" : "updateTestData",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RestApiRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ResponseMessage"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "atp-action-controller"
+        ]
+      }
+    },
+    "/api/tdm/statistics/available/column/configuration" : {
+      "get" : {
+        "description" : "Get available data by column configuration.",
+        "operationId" : "getAvailableDataStatsConfig",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "systemId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "environmentId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AvailableDataStatisticsConfig"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      },
+      "post" : {
+        "description" : "Set available data by column configuration.",
+        "operationId" : "saveAvailableDataStatsConfig",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AvailableDataStatisticsConfig"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      }
+    },
+    "/api/tdm/statistics/data/available" : {
+      "get" : {
+        "description" : "Get test data availability.",
+        "operationId" : "getTestDataAvailability",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "systemId",
+            "required" : false,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/GeneralStatisticsItem"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      }
+    },
+    "/api/tdm/statistics/data/created/when" : {
+      "get" : {
+        "description" : "Get test data by created when date.",
+        "operationId" : "getTestDataCreatedWhen",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "systemId",
+            "required" : false,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "dateFrom",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "dateTo",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DateStatistics"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      }
+    },
+    "/api/tdm/statistics/data/occupied" : {
+      "get" : {
+        "description" : "Get test data consumption.",
+        "operationId" : "getTestDataConsumption",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "systemId",
+            "required" : false,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "dateFrom",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "dateTo",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ConsumedStatistics"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      }
+    },
+    "/api/tdm/statistics/data/occupied/available" : {
+      "get" : {
+        "description" : "Get available data by column",
+        "operationId" : "getAvailableData",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "systemId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "environmentId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AvailableDataByColumnStats"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      }
+    },
+    "/api/tdm/statistics/data/occupied/users" : {
+      "post" : {
+        "description" : "Get statistics by users.",
+        "operationId" : "getStatisticsByUsers",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UsersOccupyStatisticRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UsersOccupyStatisticResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      }
+    },
+    "/api/tdm/statistics/data/outdated" : {
+      "get" : {
+        "description" : "Get test data consumption with outdated.",
+        "operationId" : "getTestDataConsumptionWhitOutdated",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "systemId",
+            "required" : false,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "dateFrom",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "dateTo",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "expirationDate",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OutdatedStatistics"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      }
+    },
+    "/api/tdm/statistics/delete/schedule" : {
+      "put" : {
+        "description" : "Delete schedule for statistics monitoring.",
+        "operationId" : "deleteScheduledRun",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TestDataTableMonitoring"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      }
+    },
+    "/api/tdm/statistics/delete/schedule/users" : {
+      "put" : {
+        "description" : "Delete schedule for statistics users monitoring.",
+        "operationId" : "deleteUsersScheduledRun",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TestDataTableUsersMonitoring"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      }
+    },
+    "/api/tdm/statistics/fix/occupied/date/column" : {
+      "get" : {
+        "description" : "Old update.",
+        "operationId" : "alterOccupiedDateColumn",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      }
+    },
+    "/api/tdm/statistics/next/run" : {
+      "get" : {
+        "description" : "Get next run's date / time details.",
+        "operationId" : "getNextScheduledRun",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "cronExpression",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      }
+    },
+    "/api/tdm/statistics/schedule" : {
+      "get" : {
+        "description" : "Get statistics monitoring schedule.",
+        "operationId" : "getMonitoringSchedule",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TestDataTableMonitoring"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      },
+      "post" : {
+        "description" : "Setup next run in schedule for statistics monitoring.",
+        "operationId" : "setupScheduledRun",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TestDataTableMonitoring"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      }
+    },
+    "/api/tdm/statistics/schedule/available" : {
+      "delete" : {
+        "description" : "Delete available data monitoring configuration.",
+        "operationId" : "deleteAvailableDataMonitoringConfig",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "systemId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "environmentId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      },
+      "get" : {
+        "description" : "Get available data monitoring configuration.",
+        "operationId" : "getAvailableDataMonitoringConfig",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "systemId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "environmentId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TestAvailableDataMonitoring"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      },
+      "post" : {
+        "description" : "Save available data monitoring configuration.",
+        "operationId" : "saveAvailableDataMonitoringConfig",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TestAvailableDataMonitoring"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      }
+    },
+    "/api/tdm/statistics/schedule/users" : {
+      "get" : {
+        "description" : "Get statistics users monitoring schedule.",
+        "operationId" : "getUsersMonitoringSchedule",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TestDataTableUsersMonitoring"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      },
+      "post" : {
+        "description" : "Setup next run in schedule for statistics users monitoring.",
+        "operationId" : "setupUsersScheduledRun",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TestDataTableUsersMonitoring"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      }
+    },
+    "/api/tdm/statistics/threshold" : {
+      "get" : {
+        "description" : "Get threshold for statistics.",
+        "operationId" : "getThreshold",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "statistics-controller"
+        ]
+      }
+    },
+    "/api/tdm/table" : {
+      "delete" : {
+        "description" : "Drop selected table.",
+        "operationId" : "deleteTestData",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "tableName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      },
+      "post" : {
+        "description" : "Get test data table.",
+        "operationId" : "getTestData",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TestDataRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TestDataTable"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/table/column/distinct/values" : {
+      "get" : {
+        "description" : "Get column distinct values.",
+        "operationId" : "getColumnDistinctValues",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "tableName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "columnName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "occupied",
+            "required" : true,
+            "schema" : {
+              "type" : "boolean"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ColumnValues"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/table/environments" : {
+      "get" : {
+        "description" : "Returns a list of environment IDs that have tables with the requested table title for the specified project.",
+        "operationId" : "getTableEnvironments",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "tableTitle",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EnvsList"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/table/row" : {
+      "get" : {
+        "description" : "Get row value.",
+        "operationId" : "getTableRow",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "systemId",
+            "required" : false,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "tableTitle",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "columnName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "searchValue",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "occupied",
+            "required" : false,
+            "schema" : {
+              "type" : "boolean"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "object"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/tables/catalog" : {
+      "get" : {
+        "description" : "Get test data tables catalog.",
+        "operationId" : "getTestDataTablesCatalog",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "systemId",
+            "required" : false,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TestDataTableCatalog"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/tables/list" : {
+      "get" : {
+        "description" : "Get tables under project.",
+        "operationId" : "getTestDataTablesList",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TdmDataToExport"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/truncate/table" : {
+      "delete" : {
+        "description" : "Truncate data in table.",
+        "operationId" : "truncateDataInTable",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "tableName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "projectId",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "systemId",
+            "required" : false,
+            "schema" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResponseMessage"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/update/sql" : {
+      "post" : {
+        "description" : "Update existing table by sql.",
+        "operationId" : "updateTableBySql",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TestDataTableUpdateByQuery"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ImportTestDataStatistic"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/v2/import/sql" : {
+      "post" : {
+        "description" : "Import sql to TDM v2 - with request body.",
+        "operationId" : "importSqlTestData",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ImportSqlTestDataRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ImportTestDataStatistic"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller-v2"
+        ]
+      }
+    },
+    "/api/tdm/validation/unoccupied" : {
+      "get" : {
+        "description" : "Check flag 'is unoccupied validation'.",
+        "operationId" : "isUnoccupiedValidation",
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "tableName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TestDataFlagsTable"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "test-data-controller"
+        ]
+      }
+    },
+    "/api/tdm/versions/backend" : {
+      "get" : {
+        "operationId" : "getBackendVersion",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VersionDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "versions-controller"
+        ]
+      }
+    },
+    "/atp-integration/routeInfo" : {
+      "get" : {
+        "operationId" : "getRouteInfo",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AtpRoute"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [
+          "route-info-controller"
+        ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "AddInfoToRowRequest" : {
+        "type" : "object",
+        "properties" : {
+          "record-with-data-for-update" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "search-row-parameters-set" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TestDataTableFilter"
+            }
+          }
+        }
+      },
+      "AtpRoute" : {
+        "type" : "object",
+        "properties" : {
+          "contextPath" : {
+            "type" : "string"
+          },
+          "internal" : {
+            "type" : "boolean"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "port" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "public" : {
+            "type" : "boolean"
+          },
+          "serviceId" : {
+            "type" : "string"
+          },
+          "url" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AvailableDataByColumnStats" : {
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "type" : "string"
+          },
+          "statistics" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TableAvailableDataStats"
+            }
+          }
+        }
+      },
+      "AvailableDataStatisticsConfig" : {
+        "type" : "object",
+        "properties" : {
+          "activeColumnKey" : {
+            "type" : "string"
+          },
+          "columnKeys" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "environmentId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "systemId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "tablesColumns" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TableColumnValues"
+            }
+          }
+        }
+      },
+      "ChangeTitleRequest" : {
+        "type" : "object",
+        "properties" : {
+          "tableName" : {
+            "type" : "string"
+          },
+          "tableTitle" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CleanupResults" : {
+        "type" : "object",
+        "properties" : {
+          "error" : {
+            "type" : "string"
+          },
+          "recordsRemoved" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "recordsTotal" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "tableName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CleanupSettings" : {
+        "type" : "object",
+        "properties" : {
+          "environmentsList" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          "tableName" : {
+            "type" : "string"
+          },
+          "testDataCleanupConfig" : {
+            "$ref" : "#/components/schemas/TestDataCleanupConfig"
+          }
+        }
+      },
+      "ColumnValues" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "ConsumedStatistics" : {
+        "type" : "object",
+        "properties" : {
+          "dates" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ConsumedStatisticsItem"
+            }
+          }
+        }
+      },
+      "ConsumedStatisticsItem" : {
+        "type" : "object",
+        "properties" : {
+          "consumed" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "context" : {
+            "type" : "string"
+          },
+          "environment" : {
+            "type" : "string"
+          },
+          "system" : {
+            "type" : "string"
+          }
+        }
+      },
+      "DateStatistics" : {
+        "type" : "object",
+        "properties" : {
+          "dates" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DateStatisticsItem"
+            }
+          }
+        }
+      },
+      "DateStatisticsItem" : {
+        "type" : "object",
+        "properties" : {
+          "context" : {
+            "type" : "string"
+          },
+          "created" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "environment" : {
+            "type" : "string"
+          },
+          "system" : {
+            "type" : "string"
+          }
+        }
+      },
+      "EnvironmentConnectionRequest" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "parameters" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "type" : {
+            "type" : "string"
+          }
+        }
+      },
+      "EnvironmentManagementRequest" : {
+        "type" : "object",
+        "properties" : {
+          "connection" : {
+            "$ref" : "#/components/schemas/EnvironmentConnectionRequest"
+          },
+          "envName" : {
+            "type" : "string"
+          },
+          "environment" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "object"
+            },
+            "writeOnly" : true
+          },
+          "newEnvName" : {
+            "type" : "string"
+          },
+          "newSystemName" : {
+            "type" : "string"
+          },
+          "projectName" : {
+            "type" : "string"
+          },
+          "systemDeleteName" : {
+            "type" : "string"
+          },
+          "systemName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "EnvsList" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        }
+      },
+      "GeneralStatisticsItem" : {
+        "type" : "object",
+        "properties" : {
+          "available" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "context" : {
+            "type" : "string"
+          },
+          "details" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/GeneralStatisticsItem"
+            }
+          },
+          "environment" : {
+            "type" : "string"
+          },
+          "occupied" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "occupiedToday" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "system" : {
+            "type" : "string"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "GetRowRequest" : {
+        "type" : "object",
+        "properties" : {
+          "name-column-response" : {
+            "type" : "string"
+          },
+          "response-column-names" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "search-row-parameters-set" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TestDataTableFilter"
+            }
+          }
+        }
+      },
+      "ImportSqlTestDataRequest" : {
+        "type" : "object",
+        "properties" : {
+          "environmentsIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          "projectId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "query" : {
+            "type" : "string"
+          },
+          "queryTimeout" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "systemName" : {
+            "type" : "string"
+          },
+          "tableTitle" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ImportTestDataStatistic" : {
+        "type" : "object",
+        "properties" : {
+          "envName" : {
+            "type" : "string"
+          },
+          "error" : {
+            "type" : "string"
+          },
+          "processedRows" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "LazyEnvironment" : {
+        "type" : "object",
+        "properties" : {
+          "clusterName" : {
+            "type" : "string"
+          },
+          "created" : {
+            "type" : "string"
+          },
+          "createdBy" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "modified" : {
+            "type" : "string"
+          },
+          "modifiedBy" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "projectId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "systems" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "LazyProject" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
+      "LazySystem" : {
+        "type" : "object",
+        "properties" : {
+          "connections" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "created" : {
+            "type" : "string"
+          },
+          "createdBy" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "environmentIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "modified" : {
+            "type" : "string"
+          },
+          "modifiedBy" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
+      "OccupiedDataByUsersStatistics" : {
+        "type" : "object",
+        "properties" : {
+          "context" : {
+            "type" : "string"
+          },
+          "data" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "environment" : {
+            "type" : "string"
+          },
+          "system" : {
+            "type" : "string"
+          },
+          "tableName" : {
+            "type" : "string"
+          },
+          "userName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "OccupyFullRowRequest" : {
+        "type" : "object",
+        "properties" : {
+          "response-column-names" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "search-row-parameters-set" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TestDataTableFilter"
+            }
+          }
+        }
+      },
+      "OccupyRowRequest" : {
+        "type" : "object",
+        "properties" : {
+          "name-column-response" : {
+            "type" : "string"
+          },
+          "search-row-parameters-set" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TestDataTableFilter"
+            }
+          }
+        }
+      },
+      "OutdatedStatistics" : {
+        "type" : "object",
+        "properties" : {
+          "dates" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OutdatedStatisticsItem"
+            }
+          }
+        }
+      },
+      "OutdatedStatisticsItem" : {
+        "type" : "object",
+        "properties" : {
+          "consumed" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "context" : {
+            "type" : "string"
+          },
+          "created" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "environment" : {
+            "type" : "string"
+          },
+          "outdated" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "system" : {
+            "type" : "string"
+          }
+        }
+      },
+      "RefreshResults" : {
+        "type" : "object",
+        "properties" : {
+          "recordsTotal" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "ReleaseRowRequest" : {
+        "type" : "object",
+        "properties" : {
+          "name-column-response" : {
+            "type" : "string"
+          },
+          "search-row-parameters-set" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TestDataTableFilter"
+            }
+          }
+        }
+      },
+      "ResponseMessage" : {
+        "type" : "object",
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          },
+          "contentObject" : {
+            "type" : "object"
+          },
+          "link" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [
+              "success",
+              "error"
+            ]
+          }
+        }
+      },
+      "RestApiRequest" : {
+        "type" : "object",
+        "properties" : {
+          "add-info-to-row-requests" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AddInfoToRowRequest"
+            }
+          },
+          "envName" : {
+            "type" : "string"
+          },
+          "environment" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "object"
+            },
+            "writeOnly" : true
+          },
+          "get-row-requests" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/GetRowRequest"
+            }
+          },
+          "insert-records" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "additionalProperties" : {
+                "type" : "object"
+              }
+            }
+          },
+          "occupy-full-row-requests" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OccupyFullRowRequest"
+            }
+          },
+          "occupy-row-requests" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OccupyRowRequest"
+            }
+          },
+          "projectName" : {
+            "type" : "string"
+          },
+          "release-row-requests" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ReleaseRowRequest"
+            }
+          },
+          "systemName" : {
+            "type" : "string"
+          },
+          "title-table" : {
+            "type" : "string"
+          },
+          "update-row-requests" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/UpdateRowRequest"
+            }
+          }
+        }
+      },
+      "TableAvailableDataStats" : {
+        "type" : "object",
+        "properties" : {
+          "options" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "tableName" : {
+            "type" : "string"
+          },
+          "tableTitle" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TableColumnValues" : {
+        "type" : "object",
+        "properties" : {
+          "tableName" : {
+            "type" : "string"
+          },
+          "tableTitle" : {
+            "type" : "string"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "TdmDataToExport" : {
+        "type" : "object",
+        "properties" : {
+          "projectId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "tableIdsList" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "TestAvailableDataMonitoring" : {
+        "type" : "object",
+        "properties" : {
+          "activeColumn" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "environmentId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "recipients" : {
+            "type" : "string"
+          },
+          "schedule" : {
+            "type" : "string"
+          },
+          "scheduled" : {
+            "type" : "boolean"
+          },
+          "systemId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "threshold" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "TestDataCleanupConfig" : {
+        "type" : "object",
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "queryTimeout" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "schedule" : {
+            "type" : "string"
+          },
+          "scheduled" : {
+            "type" : "string"
+          },
+          "searchClass" : {
+            "type" : "string"
+          },
+          "searchDate" : {
+            "type" : "string"
+          },
+          "searchSql" : {
+            "type" : "string"
+          },
+          "shared" : {
+            "type" : "boolean"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [
+              "SQL",
+              "DATE",
+              "CLASS"
+            ]
+          }
+        }
+      },
+      "TestDataFlagsTable" : {
+        "type" : "object",
+        "properties" : {
+          "tableName" : {
+            "type" : "string"
+          },
+          "unoccupiedValidation" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "TestDataRefreshConfig" : {
+        "type" : "object",
+        "properties" : {
+          "allEnv" : {
+            "type" : "boolean"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "queryTimout" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "schedule" : {
+            "type" : "string"
+          },
+          "scheduled" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "TestDataRequest" : {
+        "type" : "object",
+        "properties" : {
+          "dataTableOrder" : {
+            "$ref" : "#/components/schemas/TestDataTableOrder"
+          },
+          "filters" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TestDataTableFilter"
+            }
+          },
+          "limit" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "occupied" : {
+            "type" : "boolean"
+          },
+          "offset" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "tableName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TestDataTable" : {
+        "type" : "object",
+        "properties" : {
+          "columns" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TestDataTableColumn"
+            }
+          },
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "additionalProperties" : {
+                "type" : "object"
+              }
+            }
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "query" : {
+            "type" : "string"
+          },
+          "records" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [
+              "ALL",
+              "AVAILABLE",
+              "OCCUPIED"
+            ]
+          },
+          "updateByQuery" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TestDataTableCatalog" : {
+        "type" : "object",
+        "properties" : {
+          "cleanupConfigId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "environmentId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "importQuery" : {
+            "type" : "string"
+          },
+          "lastUsage" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "projectId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "queryTimeout" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "refreshConfigId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "systemId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "tableName" : {
+            "type" : "string"
+          },
+          "tableTitle" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TestDataTableColumn" : {
+        "type" : "object",
+        "properties" : {
+          "bulkLink" : {
+            "type" : "boolean"
+          },
+          "columnLink" : {
+            "type" : "string"
+          },
+          "columnType" : {
+            "type" : "string",
+            "enum" : [
+              "TEXT",
+              "DATE",
+              "LINK"
+            ]
+          },
+          "filterType" : {
+            "type" : "string",
+            "enum" : [
+              "TEXT",
+              "DATE",
+              "LIST",
+              "NONE"
+            ]
+          },
+          "identity" : {
+            "$ref" : "#/components/schemas/TestDataTableColumnIdentity"
+          },
+          "orderType" : {
+            "type" : "string",
+            "enum" : [
+              "ASC",
+              "DESC",
+              "TRUE"
+            ]
+          }
+        }
+      },
+      "TestDataTableColumnIdentity" : {
+        "type" : "object",
+        "properties" : {
+          "columnName" : {
+            "type" : "string"
+          },
+          "tableName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TestDataTableFilter" : {
+        "type" : "object",
+        "properties" : {
+          "caseSensitive" : {
+            "type" : "boolean"
+          },
+          "name-column" : {
+            "type" : "string"
+          },
+          "search-criterion" : {
+            "type" : "string"
+          },
+          "search-values" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "TestDataTableMonitoring" : {
+        "type" : "object",
+        "properties" : {
+          "cronExpression" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "projectId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "recipients" : {
+            "type" : "string"
+          },
+          "schedule" : {
+            "type" : "string"
+          },
+          "scheduled" : {
+            "type" : "string"
+          },
+          "threshold" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "TestDataTableOrder" : {
+        "type" : "object",
+        "properties" : {
+          "columnName" : {
+            "type" : "string"
+          },
+          "orderType" : {
+            "type" : "string",
+            "enum" : [
+              "ASC",
+              "DESC",
+              "TRUE"
+            ]
+          }
+        }
+      },
+      "TestDataTableUpdateByQuery" : {
+        "type" : "object",
+        "properties" : {
+          "environmentId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "projectId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "query" : {
+            "type" : "string"
+          },
+          "queryTimeout" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "systemId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "tableName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TestDataTableUsersMonitoring" : {
+        "type" : "object",
+        "properties" : {
+          "cronExpression" : {
+            "type" : "string"
+          },
+          "csvReport" : {
+            "type" : "boolean"
+          },
+          "daysCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "htmlReport" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "projectId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "recipients" : {
+            "type" : "string"
+          },
+          "schedule" : {
+            "type" : "string"
+          },
+          "scheduled" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "UpdateRowRequest" : {
+        "type" : "object",
+        "properties" : {
+          "record-with-data-for-update" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "search-row-parameters-set" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TestDataTableFilter"
+            }
+          }
+        }
+      },
+      "UsersOccupyStatisticRequest" : {
+        "type" : "object",
+        "properties" : {
+          "dataTableOrder" : {
+            "$ref" : "#/components/schemas/TestDataTableOrder"
+          },
+          "dateFrom" : {
+            "type" : "string"
+          },
+          "dateTo" : {
+            "type" : "string"
+          },
+          "filters" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TestDataTableFilter"
+            }
+          },
+          "limit" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "offset" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "projectId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }
+      },
+      "UsersOccupyStatisticResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OccupiedDataByUsersStatistics"
+            }
+          },
+          "records" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "VersionDto" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      }
+    },
+    "securitySchemes" : {
+      "Bearer Authentication" : {
+        "bearerFormat" : "JWT",
+        "scheme" : "bearer",
+        "type" : "http"
+      }
+    }
+  }
+}

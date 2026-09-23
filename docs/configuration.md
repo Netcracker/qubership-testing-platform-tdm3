@@ -35,7 +35,7 @@ exits before the JVM starts when either is empty. The Helm chart sets both.
 | `ATP_TDM_URL`            | `localhost:8080`   | -                                            | Base URL of the TDM UI in the links to project and table pages that ATP actions return.                 |
 | `MAX_FILE_SIZE`          | `100MB`            | `atp3tdm.maxFileSize`: `100MB`               | Largest file the service accepts in one upload, such as an Excel import. Uses Spring `DataSize` syntax. |
 | `MAX_REQUEST_SIZE`       | `100MB`            | `atp3tdm.maxRequestSize`: `100MB`            | Largest multipart request the service accepts. Uses Spring `DataSize` syntax.                           |
-| `SWAGGER_ENABLED`        | `true`             | `SWAGGER_ENABLED`: `false`                   | Turns the springdoc OpenAPI endpoint on or off.                                                         |
+| `SWAGGER_ENABLED`        | `true`             | `SWAGGER_ENABLED`: `false`                   | Serves the OpenAPI description at `/v3/api-docs` and Swagger UI at `/swagger-ui.html`.                  |
 
 ## Projects
 
