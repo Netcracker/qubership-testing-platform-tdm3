@@ -43,7 +43,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequestMapping("/api/tdm/v2")
 @RestController
-@Tag(name = "test-data-controller-v2", description = "Test Data Controller V2")
+@Tag(name = "test-data-controller-v2", description = "Versions of test data operations that take their "
+        + "parameters in the request body.")
 public class TestDataControllerV2 {
 
     private final TestDataService testDataService;
@@ -59,7 +60,10 @@ public class TestDataControllerV2 {
      * Import Sql TestData v2 - uses request body instead of request parameters.
      * This endpoint provides better compatibility and cleaner parameter handling.
      */
-    @Operation(description = "Import sql to TDM v2 - with request body.")
+    @Operation(operationId = "importSqlTestDataV2", summary = "Import rows with an SQL query",
+            description = "Does what POST /api/tdm/import/sql does, with the parameters in the request body. "
+                    + "For each environment, runs the query against the database of the system with this name, "
+                    + "and adds the result to the table with this title, or creates the table.")
     @PreAuthorize("@entityAccess.checkAccess("
             + "T(org.qubership.atp.tdm.utils.UsersManagementEntities).TEST_DATA.getName(),"
             + "#request.projectId, 'CREATE')")

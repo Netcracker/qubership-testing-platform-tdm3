@@ -22,10 +22,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import lombok.AllArgsConstructor;
 
 @RestController()
 @RequestMapping("/api/tdm/versions")
+@Tag(name = "versions-controller", description = "Version of the service.")
 @AllArgsConstructor
 public class VersionsController /* implements VersionsControllerApi */ {
 
@@ -34,6 +38,7 @@ public class VersionsController /* implements VersionsControllerApi */ {
     /**
      * Returns current service version.
      */
+    @Operation(summary = "Get the service name and version")
     @GetMapping(value = "/backend")
     public VersionDto getBackendVersion() {
         return service.getBackendVersion();
