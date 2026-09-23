@@ -2,60 +2,101 @@
 
 ## About
 
-The main goal of TDM (Test Data Management) Service is to simplify test data usage and management on the project for manual and automated Standalone/End-to-End testing.
+The main goal of TDM (Test Data Management) Service is to simplify test data usage and management on the project for
+manual and automated Standalone/End-to-End testing.
 
-The concept of test data management assumes usage of TDM tool as single centralized data storage, for creation, updating and tracking of test data usage on different environments.
+The concept of test data management assumes usage of TDM tool as single centralized data storage, for creation,
+updating and tracking of test data usage on different environments.
 
-This approach gives a user the only entry point for test data usage on different environments. New scripts for test data collecting or updating can be performed in few clicks on different servers.
+This approach gives a user the only entry point for test data usage on different environments. New scripts for test
+data collecting or updating can be performed in few clicks on different servers.
 
-Differences of TDM3 Service from TDM Service are the following:
-- Internal PostgreSQL Database is replaced to H2 file database,
-- Auth functionality is reduced. As a result, Spring Application should be initialized with 'disable-security' active profile,
-- Mongo service usage is removed.
+TDM3 differs from the TDM service in these ways:
 
-## How to start Backend
+- It keeps its data in an H2 file database instead of PostgreSQL.
+- Authentication is reduced, so the service runs with the `disable-security` Spring profile. See
+  [`ACTIVE_PROFILES_SPRING`](docs/configuration.md#general).
+- It does not use MongoDB.
 
-1. Main class `org.qubership.atp.tdm.Main`
-2. VM options (contains links, can be edited in parent-db pom.xml):
-   `
-   -Dspring.config.location=C:\atp-tdm\qubership-atp-tdm-backend\target\config\application.properties
-   -Dspring.cloud.bootstrap.location=C:\atp-tdm\qubership-atp-tdm-backend\target\config\bootstrap.properties
-   `
-3. Select "Working directory" `$MODULE_WORKING_DIRS$`
+This repository holds the backend: a Spring Boot 3 service on Java 21 that runs on Undertow. The UI is developed in a
+separate repository. The backend serves the UI files from the `web/` directory of its working directory; the build
+packs `qubership-atp-tdm-backend/web/` into the distribution when that directory exists. Without UI files, the REST API
+works, and a request to `/` returns HTTP 500.
 
-Just run Main#main with args from step above
+## Repository layout
 
-## How to start Tests with Docker
-Prerequisites
-- Docker installed local
-- VM options: -DLOCAL_DOCKER_START=true
+| Module                                                                                           | Contents                                                                                        |
+|--------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| [`qubership-atp-tdm-backend`](qubership-atp-tdm-backend)                                         | The service: REST controllers, services, repositories, Liquibase changelog, and configuration.  |
+| [`qubership-atp-tdm-env-configurator`](qubership-atp-tdm-env-configurator)                       | Access to projects, environments, and systems that test data tables refer to.                   |
+| [`qubership-atp-tdm-rest-openapi-specifications`](qubership-atp-tdm-rest-openapi-specifications) | OpenAPI specifications; the backend build generates controller interfaces and models from them. |
+| [`qubership-atp-tdm-distribution`](qubership-atp-tdm-distribution)                               | The distribution ZIP that the Docker image is built from.                                       |
+| [`qubership-atp-tdm-benchmarks`](qubership-atp-tdm-benchmarks)                                   | JMH benchmarks.                                                                                 |
+| [`qubership-atp-tdm-contract-test-pacts`](qubership-atp-tdm-contract-test-pacts)                 | Pact consumer tests for the clients of other ATP services.                                      |
+| [`parent`](parent)                                                                               | Parent POMs with dependency versions and the H2 settings for local runs.                        |
+| [`deployments/charts/atp3-tdm-be`](deployments/charts/atp3-tdm-be)                               | Helm chart.                                                                                     |
 
-## How to start development of frontend
+## Build
 
-1. Download and install [Node.js](https://nodejs.org/en/download/)
-2. Install node modules from package.json with `npm i`
+You need JDK 21 and Maven 3.9. Build with the `github` profile, which CI uses too:
 
-Run `npm start` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+```bash
+mvn -P github clean package
+```
 
-Run `npm run hmr` for a dev server with hot module replacement. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files but won't reload the page.
+The build runs the unit tests and produces the distribution ZIP
+`qubership-atp-tdm-distribution/target/qubership-atp-tdm-distribution-<version>-dist.zip`. Add `-DskipTests` to skip
+the tests.
 
-Run `npm run svg` for injecting SVG bundle from svg-icons folder to index.html.
+The [`Dockerfile`](Dockerfile) builds the image from that ZIP. It expects the build output under
+`build-context/qubership-atp-tdm-distribution/target/`, which is where the CI workflow puts it.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## Run locally
 
-Run `npm run build` to build the project. The build artifacts will be stored in the `dist/` directory.
+1. Build the service as described in [Build](#build).
+2. Unpack the distribution ZIP into an empty directory, and open a terminal in the directory that contains `config/`
+   and `lib/`.
+3. Set the database variables. The H2 database file is created on the first start, relative to the working directory:
 
-Run `npm run report` to see the report about bundle.
+   ```bash
+   export JDBC_URL="jdbc:h2:file:./database/atptdm;MODE=PostgreSQL"
+   export TDM_DB_USER=tdmadmin
+   export TDM_DB_PASSWORD=tdmadmin
+   ```
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+4. Start the service:
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](https://www.protractortest.org/).
+   ```bash
+   java --add-opens java.base/java.lang=ALL-UNNAMED \
+     -Dspring.config.location=file:./config/application.properties \
+     -cp "config/:lib/*" org.qubership.atp.tdm.Main
+   ```
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI readme](https://github.com/angular/angular-cli/blob/main/README.md).
+   On Windows, separate the classpath entries with `;`: `-cp "config/;lib/*"`.
 
-## How to run UI with backend
+The service listens on these addresses:
 
-1. Build project first: build by maven "clean" and "package", run as backend on port 8080.
+| URL                                               | Purpose                                                             |
+|---------------------------------------------------|---------------------------------------------------------------------|
+| `http://localhost:8080/api/tdm/versions/backend`  | Service name and version. Use it to check that the service is up.   |
+| `http://localhost:8080/api/tdm/...`               | REST API.                                                           |
+| `http://localhost:8080/h2-console`                | H2 web console. Connect with the same JDBC URL, user, and password. |
+| `http://localhost:8080/rest/deployment/readiness` | Readiness probe.                                                    |
+| `http://localhost:8080/rest/deployment/liveness`  | Liveness probe.                                                     |
+| `http://localhost:8090/metrics`                   | Prometheus metrics.                                                 |
+
+To run the service from IntelliJ IDEA, use the `backend` run configuration in
+[`.run/backend.run.xml`](.run/backend.run.xml). It starts `org.qubership.atp.tdm.Main` with the repository root as the
+working directory, so the H2 database file is created in `database/` at the repository root.
+
+## Run tests
+
+`mvn -P github clean package` runs the unit tests of all modules. The Pact consumer tests in
+`qubership-atp-tdm-contract-test-pacts` write the pact files to `target/classes/pacts` of that module. Two kinds of
+tests do not run in the build:
+
+- Classes named `*RestAssuredTest` in `qubership-atp-tdm-backend`, which Surefire excludes.
+- The benchmarks in `qubership-atp-tdm-benchmarks`, which run only with `-Dskip.tests=false`.
 
 ## Dynamic Environment API
 
@@ -263,87 +304,41 @@ The same payload can be wrapped in an `environment` object (useful when calling 
 
 After creation, the environment is available in the TDM UI and for test data operations on that project. Dynamic environments are stored in H2 and reloaded into cache on service startup.
 
-## How to deploy tool
+## Deploy with Helm
 
-1. Navigate to the builder job
-2. Click "Build with Parameters"
-3. Fill required parameters:
+The Helm chart is in [`deployments/charts/atp3-tdm-be`](deployments/charts/atp3-tdm-be). It deploys one replica with
+the `Recreate` strategy, and keeps the H2 database on a `ReadWriteOnce` persistent volume claim named
+`<SERVICE_NAME>-pvc`, mounted at `/atp-tdm/database`.
 
-    * CLOUD_URL = **dev-atp-cloud.com:8443**
-    * OPENSHIFT_WORKSPACE = **dev1**
-    * OPENSHIFT_USER = **{domain_login}**
-    * OPENSHIFT_PASSWORD = **{domain_password}**
-    * ARTIFACT_DESCRIPTOR_GROUP_ID = **org.qubership.deploy.product**
-    * ARTIFACT_DESCRIPTOR_ARTIFACT_ID = **prod.ta_atp-tdm**
-    * ARTIFACT_DESCRIPTOR_VERSION = **master_20191112-002747**
-    * DEPLOYMENT_MODE = **update**
+CI publishes the image `ghcr.io/netcracker/qubership-testing-platform-tdm3` with the tags `<branch>-<timestamp>` and
+`<branch>_latest`, for example `main_latest`.
 
-4. Click button "Build"
-5. Navigate to the openshift
-6. Navigate to the "Applications" -> "Routes"
-7. Find a link to the tool with the specified project name
-8. Check the tool - open the URL from the column "Hostname"
+`values.yaml` does not set the resources and the replica count. Take them from a resource profile in
+[`resource-profiles`](deployments/charts/atp3-tdm-be/resource-profiles), `dev.yaml` or `prod.yaml`:
 
-## Deploy parameters
+```bash
+helm install atp3-tdm-be deployments/charts/atp3-tdm-be \
+  --namespace <namespace> \
+  -f deployments/charts/atp3-tdm-be/resource-profiles/dev.yaml \
+  --set DOCKER_TAG=ghcr.io/netcracker/qubership-testing-platform-tdm3:main_latest \
+  --set CLOUD_PUBLIC_HOST=<cluster domain> \
+  --set ATP_TDM_URL=https://<service host> \
+  --set atp3tdm.storageClassName=<storage class>
+```
 
-The following parameters are passed to `application.properties` during deployment:
+| Value                      | Description                                                                                                                           |
+|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| `DOCKER_TAG`               | Full image reference, including the registry and the tag.                                                                             |
+| `CLOUD_PUBLIC_HOST`        | Domain for the Ingress host `<SERVICE_NAME>-<namespace>.<CLOUD_PUBLIC_HOST>`. Set `ATP3_TDM_BE_URL` instead to choose the whole host. |
+| `atp3tdm.storageClassName` | Storage class of the database volume. The chart default is `csi-sc-cinderplugin`.                                                     |
+| `ATP_TDM_URL`              | Public URL of the service. `run.sh` requires it for the UI unless `atp3tdm.identityProviderUrl` is set.                               |
 
-| Parameter                                      | Type      | Mandatory  | Default value                                            | Description                                                                                                                                                                                    |
-|------------------------------------------------|-----------|------------|----------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `SERVICE_NAME`                                 | `string`  | `yes`      | `"atp3-tdm-be"`                                          | Deployment Config/Service name.                                                                                                                                                                |
-| `LOG_LEVEL`                                    | `string`  | `no`       | `"INFO"`                                                 | Logging level for the application.                                                                                                                                                             |
-| `ACTIVE_PROFILES_SPRING`                       | `string`  | `no`       | `"disable-security"`                                     | Spring profile for security configuration.                                                                                                                                                     |
-| `PROJECTS_INFO`                                | `json`    | `no`       | `{}`                                                     | JSON object mapping project IDs to project names.                                                                                                                                              |
-| `KEYCLOAK_ENABLED`                             | `boolean` | `no`       | `false`                                                  | Enable or disable Keycloak authentication.                                                                                                                                                     |
-| `KEYCLOAK_AUTH_URL`                            | `string`  | `no`       | `""`                                                     | Keycloak authentication server URL.                                                                                                                                                            |
-| `KEYCLOAK_REALM`                               | `string`  | `no`       | `"atp3"`                                                 | Keycloak realm name.                                                                                                                                                                           |
-| `SERVICE_REGISTRY_URL`                         | `string`  | `no`       | `""`                                                     | Eureka service registry URL.                                                                                                                                                                   |
-| `EUREKA_CLIENT_ENABLED`                        | `boolean` | `no`       | `false`                                                  | Enable or disable Eureka client.                                                                                                                                                               |
-| `MAIL_SENDER_ENABLE`                           | `boolean` | `no`       | `true`                                                   | Enable or disable mail sender functionality.                                                                                                                                                   |
-| `MAIL_SENDER_URL`                              | `string`  | `no`       | `""`                                                     | Mail sender service URL.                                                                                                                                                                       |
-| `FROM_EMAIL_ADDRESS`                           | `string`  | `no`       | `"example@example.com"`                                  | Sender email address for notifications.                                                                                                                                                        |
-| `ENVIRONMENTS_SPRING_CACHE_TYPE`               | `string`  | `no`       | `"GENERIC"`                                              | Spring cache type (e.g., GENERIC, NONE).                                                                                                                                                       |
-| `ENVIRONMENTS_CACHE_DURATIONS`                 | `integer` | `no`       | `15`                                                     | Cache duration in minutes for environments.                                                                                                                                                    |
-| `EXTERNAL_QUERY_DEFAULT_TIMEOUT`               | `integer` | `no`       | `1800`                                                   | Default timeout for external queries in seconds.                                                                                                                                               |
-| `EXTERNAL_QUERY_MAX_TIMEOUT`                   | `integer` | `no`       | `3600`                                                   | Maximum timeout for external queries in seconds.                                                                                                                                               |
-| `LOG_GRAYLOG_ON`                               | `boolean` | `no`       | `true`                                                   | Enable or disable Graylog logging.                                                                                                                                                             |
-| `LOG_GRAYLOG_HOST`                             | `string`  | `no`       | `""`                                                     | Graylog server host.                                                                                                                                                                           |
-| `LOG_GRAYLOG_PORT`                             | `integer` | `no`       | `12201`                                                  | Graylog server port.                                                                                                                                                                           |
-| `ATP_CRYPTO_KEY`                               | `string`  | `yes`      | `""`                                                     | Public key for encryption (when ENCRYPT=secrets).                                                                                                                                              |
-| `ATP_CRYPTO_PRIVATE_KEY`                       | `string`  | `yes`      | `""`                                                     | Private key for encryption (when ENCRYPT=secrets).                                                                                                                                             |
-| `ATP_TDM_URL`                                  | `string`  | `no`       | `"localhost:8080"`                                       | URL of the ATP TDM service.                                                                                                                                                                    |
-| `JDBC_URL`                                     | `string`  | `yes`      | `""`                                                     | JDBC connection URL for the database.                                                                                                                                                          |
-| `TDM_DB_USER`                                  | `string`  | `yes`      | `""`                                                     | Database username (stored in secrets).                                                                                                                                                         |
-| `TDM_DB_PASSWORD`                              | `string`  | `yes`      | `""`                                                     | Database password (stored in secrets).                                                                                                                                                         |
-| `ATP_SERVICE_PUBLIC`                           | `boolean` | `no`       | `true`                                                   | Register service as public in gateway.                                                                                                                                                         |
-| `ATP_SERVICE_PATH`                             | `string`  | `no`       | `"/api/atp-tdm/v1/**"`                                   | Service API path pattern.                                                                                                                                                                      |
-| `LOCALE_RESOLVER`                              | `string`  | `no`       | `"en"`                                                   | Locale resolver language code.                                                                                                                                                                 |
-| `KEYCLOAK_CLIENT_NAME`                         | `string`  | `no`       | `"atp-tdm"`                                              | Keycloak client name.                                                                                                                                                                          |
-| `KEYCLOAK_SECRET`                              | `string`  | `no`       | `""`                                                     | Keycloak client secret (stored in secrets).                                                                                                                                                    |
-| `PROJECT_INFO_ENDPOINT`                        | `string`  | `yes`      | `""`                                                     | Endpoint URL for project information.                                                                                                                                                          |
-| `CONTENT_SECURITY_POLICY`                      | `string`  | `no`       | `"default-src 'self' *"`                                 | Content Security Policy header value.                                                                                                                                                          |
-| `ZIPKIN_ENABLE`                                | `boolean` | `no`       | `false`                                                  | Enable or disable Zipkin tracing.                                                                                                                                                              |
-| `ZIPKIN_PROBABILITY`                           | `float`   | `no`       | `1.0`                                                    | Zipkin sampling probability.                                                                                                                                                                   |
-| `ZIPKIN_URL`                                   | `string`  | `no`       | `"http://127.0.0.1:9411"`                                | Zipkin server URL.                                                                                                                                                                             |
-| `MONITOR_PORT`                                 | `integer` | `no`       | `8090`                                                   | Monitoring endpoints port.                                                                                                                                                                     |
-| `MAX_FILE_SIZE`                                | `string`  | `no`       | `"100MB"`                                                | Maximum file size for uploads.                                                                                                                                                                 |
-| `MAX_REQUEST_SIZE`                             | `string`  | `no`       | `"100MB"`                                                | Maximum request size.                                                                                                                                                                          |
-| `ATP_INTERNAL_GATEWAY_ENABLED`                 | `boolean` | `no`       | `false`                                                  | Enable internal gateway routing.                                                                                                                                                               |
-| `FEIGN_CONNECT_TIMEOUT`                        | `integer` | `no`       | `300000`                                                 | Feign client connection timeout in milliseconds.                                                                                                                                               |
-| `FEIGN_READ_TIMEOUT`                           | `integer` | `no`       | `300000`                                                 | Feign client read timeout in milliseconds.                                                                                                                                                     |
-| `LIQUIBASE_LAUNCH_ENABLED`                     | `boolean` | `no`       | `true`                                                   | Enable or disable Liquibase migrations.                                                                                                                                                        |
-| `ATP_HTTP_LOGGING_HEADERS`                     | `boolean` | `no`       | `true`                                                   | Enable HTTP headers logging.                                                                                                                                                                   |
-| `ATP_HTTP_LOGGING_HEADERS_IGNORE`              | `string`  | `no`       | `""`                                                     | Comma-separated list of headers to ignore in logging.                                                                                                                                          |
-| `ATP_HTTP_LOGGING_URI_IGNORE`                  | `string`  | `no`       | `"/rest/deployment/readiness /rest/deployment/liveness"` | URI patterns to ignore in logging.                                                                                                                                                             |
-| `LOCK_DEFAULT_DURATION_SEC`                    | `integer` | `no`       | `60`                                                     | Default lock duration in seconds.                                                                                                                                                              |
-| `LOCK_RETRY_TIMEOUT_SEC`                       | `integer` | `no`       | `10800`                                                  | Lock retry timeout in seconds.                                                                                                                                                                 |
-| `LOCK_RETRY_PACE_SEC`                          | `integer` | `no`       | `3`                                                      | Lock retry interval in seconds.                                                                                                                                                                |
-| `LOCK_BULK_ACTION_SEC`                         | `integer` | `no`       | `3600`                                                   | Lock duration for bulk actions in seconds.                                                                                                                                                     |
-| `SWAGGER_ENABLED`                              | `boolean` | `no`       | `true`                                                   | Enable or disable Swagger API documentation.                                                                                                                                                   |
-| `PROJECTS_TIME_ZONE`                           | `string`  | `no`       | `"GMT+03:00"`                                            | Time zone for projects.                                                                                                                                                                        |
-| `PROJECTS_DATE_FORMAT`                         | `string`  | `no`       | `"d MMM yyyy"`                                           | Date format for projects display.                                                                                                                                                              |
-| `PROJECTS_TIME_FORMAT`                         | `string`  | `no`       | `"hh:mm:ss a"`                                           | Time format for projects display.                                                                                                                                                              |
-| `PROJECTS_EXPIRATION_MONTHS_TIMEOUT`           | `integer` | `no`       | `1`                                                      | Project expiration timeout in months.                                                                                                                                                          |
-| `TABLE_EXPIRATION_CRON`                        | `string`  | `no`       | `"0 0 0 ? * * *"`                                        | Cron expression for table expiration job.                                                                                                                                                      |
-| `DEFAULT_TABLE_EXPIRATION_MONTHS`              | `integer` | `no`       | `1`                                                      | Default table expiration period in months.                                                                                                                                                     |
+[`.github/deploy_templates/values-dev.yaml`](.github/deploy_templates/values-dev.yaml) is the values file of the CI
+test deployment. The chart passes most other values to the service as environment variables; see the
+[configuration reference](docs/configuration.md).
 
+## Configuration
+
+The service reads its settings from environment variables. The
+[configuration reference](docs/configuration.md) lists every variable with its default, the Helm value that sets it,
+and what it controls.
