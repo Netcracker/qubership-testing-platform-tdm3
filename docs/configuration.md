@@ -29,7 +29,7 @@ exits before the JVM starts when either is empty. The Helm chart sets both.
 | Variable                 | Default            | Helm                                         | Description                                                                                             |
 |--------------------------|--------------------|----------------------------------------------|---------------------------------------------------------------------------------------------------------|
 | `SERVICE_NAME`           | `atp-tdm`          | `SERVICE_NAME`: `atp3-tdm-be`                | Spring application name. The service registers under it in Eureka and tags its metrics with it.         |
-| `ACTIVE_PROFILES_SPRING` | `disable-security` | `ACTIVE_PROFILES_SPRING`: `disable-security` | Active Spring profiles. TDM3 runs with `disable-security`; see the [README](../README.md#about).        |
+| `ACTIVE_PROFILES_SPRING` | `disable-security` | `ACTIVE_PROFILES_SPRING`: `disable-security` | Active Spring profiles. TDM3 runs with `disable-security`; see the [Readme](../README.md#about).        |
 | `LOG_LEVEL`              | `INFO`             | `atp3tdm.logLevel`: `INFO`                   | Log level of the `org.qubership.atp.tdm` loggers and of the root logger.                                |
 | `LOCALE_RESOLVER`        | `en`               | `atp3tdm.localeResolver`: `en`               | Language of a request that has no `Accept-Language` header.                                             |
 | `ATP_TDM_URL`            | `localhost:8080`   | -                                            | Base URL of the TDM UI in the links to project and table pages that ATP actions return.                 |
@@ -73,8 +73,8 @@ In the Helm chart, the database file lives on a persistent volume:
 | `atp3tdm.h2DbAddr`         | `database`            | Directory of the database file, relative to `/atp-tdm`. The volume is mounted at `/atp-tdm/database`, so another value puts the file outside the volume. |
 | `atp3tdm.tdmDb`            | empty                 | Name of the database file. Empty means `<namespace>_<SERVICE_NAME>` with hyphens replaced by underscores.                                                |
 | `atp3tdm.h2DbProperty`     | `MODE=PostgreSQL`     | Settings appended to the JDBC URL after `;`.                                                                                                             |
-| `atp3tdm.tdmDbUser`        | empty                 | Database user. Empty means the same value as the database file name.                                                                                     |
-| `atp3tdm.tdmDbPassword`    | empty                 | Database password. Empty means the same value as the database file name.                                                                                 |
+| `atp3tdm.tdmDbUser`        | empty                 | Database user. Empty means the same value as the database filename.                                                                                      |
+| `atp3tdm.tdmDbPassword`    | empty                 | Database password. Empty means the same value as the database filename.                                                                                  |
 | `atp3tdm.storageSize`      | `1Gi`                 | Size of the persistent volume claim `<SERVICE_NAME>-pvc`.                                                                                                |
 | `atp3tdm.storageClassName` | `csi-sc-cinderplugin` | Storage class of the persistent volume claim.                                                                                                            |
 
