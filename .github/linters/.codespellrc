@@ -1,0 +1,5 @@
+[codespell]
+check-hidden =
+skip = */package-lock.json,*/go.mod,*/go.sum,*.log,.git
+# com.google.errorprone is the Maven group ID of Error Prone, not a misspelling.
+ignore-words-list = errorprone

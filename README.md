@@ -25,16 +25,16 @@ works, and a request to `/` returns HTTP 500.
 
 ## Repository layout
 
-| Module                                                                                           | Contents                                                                                        |
-|--------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
-| [`qubership-atp-tdm-backend`](qubership-atp-tdm-backend)                                         | The service: REST controllers, services, repositories, Liquibase changelog, and configuration.  |
-| [`qubership-atp-tdm-env-configurator`](qubership-atp-tdm-env-configurator)                       | Access to projects, environments, and systems that test data tables refer to.                   |
-| [`qubership-atp-tdm-rest-openapi-specifications`](qubership-atp-tdm-rest-openapi-specifications) | OpenAPI specifications; the backend build generates controller interfaces and models from them. |
-| [`qubership-atp-tdm-distribution`](qubership-atp-tdm-distribution)                               | The distribution ZIP that the Docker image is built from.                                       |
-| [`qubership-atp-tdm-benchmarks`](qubership-atp-tdm-benchmarks)                                   | JMH benchmarks.                                                                                 |
-| [`qubership-atp-tdm-contract-test-pacts`](qubership-atp-tdm-contract-test-pacts)                 | Pact consumer tests for the clients of other ATP services.                                      |
-| [`parent`](parent)                                                                               | Parent POMs with dependency versions and the H2 settings for local runs.                        |
-| [`deployments/charts/atp3-tdm-be`](deployments/charts/atp3-tdm-be)                               | Helm chart.                                                                                     |
+| Module                                                                                           | Contents                                                                                                                                                         |
+|--------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`qubership-atp-tdm-backend`](qubership-atp-tdm-backend)                                         | The service: REST controllers, services, repositories, Liquibase changelog, and configuration.                                                                   |
+| [`qubership-atp-tdm-env-configurator`](qubership-atp-tdm-env-configurator)                       | Access to projects, environments, and systems that test data tables refer to.                                                                                    |
+| [`qubership-atp-tdm-rest-openapi-specifications`](qubership-atp-tdm-rest-openapi-specifications) | OpenAPI specifications of the earlier TDM API. The backend build generates interfaces and models from them, and the controllers do not implement the interfaces. |
+| [`qubership-atp-tdm-distribution`](qubership-atp-tdm-distribution)                               | The distribution ZIP that the Docker image is built from.                                                                                                        |
+| [`qubership-atp-tdm-benchmarks`](qubership-atp-tdm-benchmarks)                                   | JMH benchmarks.                                                                                                                                                  |
+| [`qubership-atp-tdm-contract-test-pacts`](qubership-atp-tdm-contract-test-pacts)                 | Pact consumer tests for the clients of other ATP services.                                                                                                       |
+| [`parent`](parent)                                                                               | Parent POMs with dependency versions and the H2 settings for local runs.                                                                                         |
+| [`deployments/charts/atp3-tdm-be`](deployments/charts/atp3-tdm-be)                               | Helm chart.                                                                                                                                                      |
 
 ## Build
 
@@ -80,6 +80,8 @@ The service listens on these addresses:
 |---------------------------------------------------|---------------------------------------------------------------------|
 | `http://localhost:8080/api/tdm/versions/backend`  | Service name and version. Use it to check that the service is up.   |
 | `http://localhost:8080/api/tdm/...`               | REST API.                                                           |
+| `http://localhost:8080/swagger-ui.html`           | Swagger UI.                                                         |
+| `http://localhost:8080/v3/api-docs`               | OpenAPI description of the REST API, as JSON.                       |
 | `http://localhost:8080/h2-console`                | H2 web console. Connect with the same JDBC URL, user, and password. |
 | `http://localhost:8080/rest/deployment/readiness` | Readiness probe.                                                    |
 | `http://localhost:8080/rest/deployment/liveness`  | Liveness probe.                                                     |
@@ -97,6 +99,26 @@ tests do not run in the build:
 
 - Classes named `*RestAssuredTest` in `qubership-atp-tdm-backend`, which Surefire excludes.
 - The benchmarks in `qubership-atp-tdm-benchmarks`, which run only with `-Dskip.tests=false`.
+
+### Updating the OpenAPI description
+
+`OpenApiDescriptionTest` fails when the REST API differs from the committed description in
+[`docs/openapi.json`](docs/openapi.json). The failure lists the added, removed, and changed paths and schemas. After a
+change to a controller or to a request or response model, regenerate the file from the repository root, review its
+diff, and commit it with the change:
+
+```bash
+mvn -P github -pl qubership-atp-tdm-backend -am test -Dtest=OpenApiDescriptionTest -Dsurefire.failIfNoSpecifiedTests=false -Dopenapi.update=true
+```
+
+## REST API
+
+[`docs/openapi.json`](docs/openapi.json) is the OpenAPI description of the REST API, generated from the controllers. A
+running service also serves it at `/v3/api-docs` and shows it in Swagger UI at `/swagger-ui.html`, unless
+[`SWAGGER_ENABLED`](docs/configuration.md#general) is `false`. The Helm chart sets it to `false`.
+
+The OpenAPI files in `qubership-atp-tdm-rest-openapi-specifications` describe the API of the earlier TDM service, and
+the controllers do not follow them.
 
 ## Dynamic Environment API
 
