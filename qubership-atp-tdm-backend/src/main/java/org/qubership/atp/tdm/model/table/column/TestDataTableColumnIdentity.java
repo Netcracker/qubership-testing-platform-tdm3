@@ -20,6 +20,8 @@ import java.io.Serializable;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -33,8 +35,10 @@ import lombok.ToString;
 @ToString
 @Embeddable
 public class TestDataTableColumnIdentity implements Serializable {
+    @Schema(description = "Database table name of the table.")
     @Column(name = "table_name")
     private String tableName;
+    @Schema(description = "Column name.")
     @Column(name = "column_name")
     private String columnName;
 }

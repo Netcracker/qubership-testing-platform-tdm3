@@ -23,15 +23,27 @@ import java.util.stream.Collectors;
 import org.qubership.atp.tdm.model.rest.ApiDataFilter;
 import org.qubership.atp.tdm.model.table.TestDataTableFilter;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
 public abstract class AbstractRowRequest {
 
+    @Schema(description = "Row to act on: every condition must match. The row is found among the available rows, "
+            + "except where the request's own operation reads the occupied rows instead.")
     @JsonProperty("search-row-parameters-set")
     protected List<ApiDataFilter> filters;
 
+    /**
+     * Returns {@link #filters} converted to the shape the repository layer's search conditions expect.
+     *
+     * <p>Ignored by Jackson: its return type differs from {@link #filters}, and without {@code @JsonIgnore} it
+     * would replace {@code ApiDataFilter} with this method's return type in the generated request schema.</p>
+     */
+    @JsonIgnore
     public List<TestDataTableFilter> getFilters() {
         return filters.stream().map(filter -> new TestDataTableFilter(filter.getColumn(), filter.getSearchCondition(),
                 Collections.singletonList(filter.getValue()), filter.isCaseSensitive())).collect(Collectors.toList());

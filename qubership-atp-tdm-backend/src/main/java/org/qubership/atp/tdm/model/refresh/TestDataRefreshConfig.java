@@ -25,26 +25,37 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Transient;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Schema(description = "Refresh schedule of a table.")
 @Data
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
 public class TestDataRefreshConfig implements ScheduleConfig {
 
+    @Schema(description = "Refresh configuration ID. Generated when the configuration is saved.")
     @Id
     @Column(name = "id")
     private UUID id;
+    @Schema(description = "Runs the refresh on the schedule when set; a saved but disabled configuration can "
+            + "still be run with POST /api/tdm/data/refresh/run.")
     @Column(name = "enabled")
     private boolean enabled;
+    @Schema(description = "Quartz cron expression, starting with the seconds field.")
     @Column(name = "schedule")
     private String schedule;
+    @Schema(description = "Also refreshes the tables of the project with the same title and the same import "
+            + "query.")
     @Column(name = "all_env")
     private boolean allEnv;
 
+    @Schema(description = "Not read or returned by the REST API; PUT /api/tdm/data/refresh/config sets the query "
+            + "timeout through its own queryTimeout parameter instead.")
     @Transient
     private Integer queryTimout;
 

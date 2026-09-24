@@ -21,18 +21,28 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nonnull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+@Schema(description = "Available and occupied row counts of one table. A row grouped across systems "
+        + "carries the per-system rows in details instead of available, occupied, occupiedToday, and "
+        + "total.")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class GeneralStatisticsItem extends StatisticsItem {
 
+    @Schema(description = "Number of available rows.")
     private Long available;
+    @Schema(description = "Number of occupied rows.")
     private Long occupied;
+    @Schema(description = "Number of rows occupied today.")
     private Long occupiedToday;
+    @Schema(description = "Number of rows, available and occupied.")
     private Long total;
+    @Schema(description = "Set instead of available, occupied, occupiedToday, and total on a row grouped across "
+            + "systems: one entry per system, with those four fields set.")
     private List<GeneralStatisticsItem> details;
 
     /**

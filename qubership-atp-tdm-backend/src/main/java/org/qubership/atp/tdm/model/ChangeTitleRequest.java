@@ -16,10 +16,14 @@
 
 package org.qubership.atp.tdm.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+@Schema(description = "Request body of the rename-table operation.")
 @Data
 public class ChangeTitleRequest {
+    @Schema(description = "Database table name of the table to rename.")
     private String tableName;
+    @Schema(description = "New title for the table.")
     private String tableTitle;
 }

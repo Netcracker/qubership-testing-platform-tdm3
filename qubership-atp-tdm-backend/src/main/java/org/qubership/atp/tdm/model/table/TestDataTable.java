@@ -22,22 +22,37 @@ import java.util.Map;
 import org.qubership.atp.tdm.model.table.column.TestDataTableColumn;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+@Schema(description = "Content of a test data table, for the TDM UI grid. TableSerializer writes this class "
+        + "to a nested {header: {rows}, body: {rows}, records, name, query, updateByQuery} shape rather than "
+        + "these fields directly; title, columns, and type do not appear in the JSON output.")
 @Data
 @EqualsAndHashCode
 @ToString
 @JsonSerialize(using = TableSerializer.class)
 public class TestDataTable {
 
+    @Schema(description = "Database table name of the table.")
     private String name;
+    @Schema(description = "Title of the table. Not written to the JSON output; see the class description.")
     private String title;
+    @Schema(description = "Columns of the table, in storage order. Not written to the JSON output; see the "
+            + "class description.")
     private List<TestDataTableColumn> columns;
+    @Schema(description = "Rows of the table, one map of column name to value per row.")
     private List<Map<String, Object>> data;
+    @Schema(description = "Number of rows in data.")
     private int records;
+    @Schema(description = "Import query that fills the table.")
     private String query;
+    @Schema(description = "Query that updates the table's rows from POST /api/tdm/update/sql.")
     private String updateByQuery;
+    @Schema(description = "Whether data holds available or occupied rows. Not written to the JSON output; see "
+            + "the class description.")
     private TestDataType type;
 }

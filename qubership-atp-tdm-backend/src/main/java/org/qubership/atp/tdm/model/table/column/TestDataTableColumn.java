@@ -26,6 +26,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Transient;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -40,17 +42,23 @@ import lombok.ToString;
 @Entity
 public class TestDataTableColumn {
 
+    @Schema(description = "Table and column name.")
     @EmbeddedId
     private TestDataTableColumnIdentity identity;
+    @Schema(description = "How the column's values are typed and rendered.")
     @Enumerated(EnumType.STRING)
     @Column(name = "column_type")
     private ColumnType columnType;
+    @Schema(description = "URL template for the column's values, read when columnType is LINK.")
     @Column(name = "column_link")
     private String columnLink;
+    @Schema(description = "Splits a LINK column's value on \";\" into several links instead of one.")
     @Column(name = "bulk_link")
     private boolean bulkLink;
+    @Schema(description = "Not persisted in this entity's own table.")
     @Transient
     private OrderType orderType;
+    @Schema(description = "Not persisted in this entity's own table.")
     @Transient
     private FilterType filterType;
 

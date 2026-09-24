@@ -20,18 +20,30 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+@Schema(description = "Request body of every atp-env-controller operation (POST, PUT, and DELETE "
+        + "/api/tdm/rest/create-env). Its fields can be sent flat, as shown here, or nested under an "
+        + "\"environment\" property; both are equivalent.")
 @Data
 public class EnvironmentManagementRequest {
 
+    @Schema(description = "Project name from PROJECTS_INFO.")
     private String projectName;
+    @Schema(description = "Environment name to create, update, or delete.")
     private String envName;
+    @Schema(description = "System name within the environment. Read by POST and PUT.")
     private String systemName;
+    @Schema(description = "New environment name. Read by PUT to rename the environment.")
     private String newEnvName;
+    @Schema(description = "New system name. Read by PUT to rename systemName.")
     private String newSystemName;
-    /** For DELETE requests: when set, only this system is deleted; otherwise the whole env is deleted. */
+    @Schema(description = "Read by DELETE: when set, only this system is deleted; otherwise the whole "
+            + "environment is deleted.")
     private String systemDeleteName;
+    @Schema(description = "Connection details for systemName. Read by POST and PUT.")
     private EnvironmentConnectionRequest connection;
 
     @JsonProperty("environment")

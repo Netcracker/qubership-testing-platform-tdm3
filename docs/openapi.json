@@ -3154,16 +3154,42 @@
           "record-with-data-for-update" : {
             "type" : "object",
             "additionalProperties" : {
-              "type" : "string"
-            }
+              "type" : "string",
+              "description" : "Column names and the values to write to them, in every row that matches the filters."
+            },
+            "description" : "Column names and the values to write to them, in every row that matches the filters."
           },
           "search-row-parameters-set" : {
             "type" : "array",
+            "description" : "Row to act on: every condition must match. The row is found among the available rows, except where the request's own operation reads the occupied rows instead.",
             "items" : {
-              "$ref" : "#/components/schemas/TestDataTableFilter"
+              "$ref" : "#/components/schemas/ApiDataFilter"
             }
           }
-        }
+        },
+        "description" : "Values to append to the matching rows. Each value in record-with-data-for-update is added on a new line to the current value of its column; the column keeps its old value if it has one."
+      },
+      "ApiDataFilter" : {
+        "type" : "object",
+        "properties" : {
+          "caseSensitive" : {
+            "type" : "boolean",
+            "description" : "Matches the column case-sensitively. Ignored by \"From\" and \"To\"."
+          },
+          "name-column" : {
+            "type" : "string",
+            "description" : "Name of the column to search in."
+          },
+          "search-criterion" : {
+            "type" : "string",
+            "description" : "\"Contains\", \"startWith\", \"Equals\", \"From\", or \"To\", case-insensitive."
+          },
+          "search-value" : {
+            "type" : "string",
+            "description" : "Value to compare the column against."
+          }
+        },
+        "description" : "One search condition on a column, used by the ATP action row requests to find the row to act on."
       },
       "AtpRoute" : {
         "type" : "object",
@@ -3196,198 +3222,263 @@
         "type" : "object",
         "properties" : {
           "description" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Name of the column the counts are grouped by."
           },
           "statistics" : {
             "type" : "array",
+            "description" : "One entry per table.",
             "items" : {
               "$ref" : "#/components/schemas/TableAvailableDataStats"
             }
           }
-        }
+        },
+        "description" : "Number of available rows of each table for each value of a chosen column."
       },
       "AvailableDataStatisticsConfig" : {
         "type" : "object",
         "properties" : {
           "activeColumnKey" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Same value as description: the column currently grouped on."
           },
           "columnKeys" : {
             "type" : "array",
+            "description" : "Names of the columns available to group on, common to every table of the system.",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "description" : "Names of the columns available to group on, common to every table of the system."
             }
           },
           "description" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Name of the column currently grouped on; one of columnKeys."
           },
           "environmentId" : {
             "type" : "string",
+            "description" : "Environment ID.",
             "format" : "uuid"
           },
           "systemId" : {
             "type" : "string",
+            "description" : "System ID.",
             "format" : "uuid"
           },
           "tablesColumns" : {
             "type" : "array",
+            "description" : "Per-table filter: for each table, the column values to count as available. A table missing here counts every value.",
             "items" : {
               "$ref" : "#/components/schemas/TableColumnValues"
             }
           }
-        }
+        },
+        "description" : "Available-data-by-column monitoring configuration of one system's environment."
       },
       "ChangeTitleRequest" : {
         "type" : "object",
         "properties" : {
           "tableName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Database table name of the table to rename."
           },
           "tableTitle" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "New title for the table."
           }
-        }
+        },
+        "description" : "Request body of the rename-table operation."
       },
       "CleanupResults" : {
         "type" : "object",
         "properties" : {
           "error" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Set instead of the record counts when the cleanup failed."
           },
           "recordsRemoved" : {
             "type" : "integer",
+            "description" : "Number of rows the cleanup removed.",
             "format" : "int32"
           },
           "recordsTotal" : {
             "type" : "integer",
+            "description" : "Number of rows in the table before the cleanup.",
             "format" : "int32"
           },
           "tableName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Database table name of the table the cleanup ran on."
           }
-        }
+        },
+        "description" : "Result of one cleanup run, for one table."
       },
       "CleanupSettings" : {
         "type" : "object",
         "properties" : {
           "environmentsList" : {
             "type" : "array",
+            "description" : "IDs of the environments of the tables that already share this configuration, in the response of GET /api/tdm/cleanup/config/{id}; the environments to share it with, when saving.",
             "items" : {
               "type" : "string",
+              "description" : "IDs of the environments of the tables that already share this configuration, in the response of GET /api/tdm/cleanup/config/{id}; the environments to share it with, when saving.",
               "format" : "uuid"
             }
           },
           "tableName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Database table name of the table to save the configuration for. Read only when saving; not set in the response of GET /api/tdm/cleanup/config/{id}."
           },
           "testDataCleanupConfig" : {
             "$ref" : "#/components/schemas/TestDataCleanupConfig"
           }
-        }
+        },
+        "description" : "Cleanup settings of a table, and, when saving them, the environments of the other tables with the same title and system to apply them to too."
       },
       "ColumnValues" : {
         "type" : "object",
         "properties" : {
           "items" : {
             "type" : "array",
+            "description" : "The distinct values.",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "description" : "The distinct values."
             }
           }
-        }
+        },
+        "description" : "The distinct values found in one column of a table."
       },
       "ConsumedStatistics" : {
         "type" : "object",
         "properties" : {
           "dates" : {
             "type" : "array",
+            "description" : "Label of each part of the period. items.consumed has one value per label, in the same order.",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "description" : "Label of each part of the period. items.consumed has one value per label, in the same order."
             }
           },
           "items" : {
             "type" : "array",
+            "description" : "One entry per table.",
             "items" : {
               "$ref" : "#/components/schemas/ConsumedStatisticsItem"
             }
           }
-        }
+        },
+        "description" : "Number of rows occupied in each part of the requested period, for every table."
       },
       "ConsumedStatisticsItem" : {
         "type" : "object",
         "properties" : {
           "consumed" : {
             "type" : "array",
+            "description" : "Number of rows occupied in each part of the period, one value per label of ConsumedStatistics.dates, in the same order.",
             "items" : {
               "type" : "integer",
+              "description" : "Number of rows occupied in each part of the period, one value per label of ConsumedStatistics.dates, in the same order.",
               "format" : "int64"
             }
           },
           "context" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Title of the table."
+          },
+          "details" : {
+            "type" : "array",
+            "description" : "Set instead of consumed on a row grouped across systems: one entry per system, with consumed set.",
+            "items" : {
+              "$ref" : "#/components/schemas/ConsumedStatisticsItem"
+            }
           },
           "environment" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Environment name, or \"across all\" for a row that sums every environment of the project."
           },
           "system" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "System name, or \"across all\" for a row that sums every system of the environment."
           }
-        }
+        },
+        "description" : "Number of rows of one table occupied in each part of the requested period."
       },
       "DateStatistics" : {
         "type" : "object",
         "properties" : {
           "dates" : {
             "type" : "array",
+            "description" : "Label of each part of the period. items.created has one value per label, in the same order.",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "description" : "Label of each part of the period. items.created has one value per label, in the same order."
             }
           },
           "items" : {
             "type" : "array",
+            "description" : "One entry per table.",
             "items" : {
               "$ref" : "#/components/schemas/DateStatisticsItem"
             }
           }
-        }
+        },
+        "description" : "Number of rows created in each part of the requested period, for every table."
       },
       "DateStatisticsItem" : {
         "type" : "object",
         "properties" : {
           "context" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Title of the table."
           },
           "created" : {
             "type" : "array",
+            "description" : "Number of rows created in each part of the period, one value per label of DateStatistics.dates, in the same order.",
             "items" : {
               "type" : "integer",
+              "description" : "Number of rows created in each part of the period, one value per label of DateStatistics.dates, in the same order.",
               "format" : "int64"
             }
           },
+          "details" : {
+            "type" : "array",
+            "description" : "Set instead of created on a row grouped across systems: one entry per system, with created set.",
+            "items" : {
+              "$ref" : "#/components/schemas/DateStatisticsItem"
+            }
+          },
           "environment" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Environment name, or \"across all\" for a row that sums every environment of the project."
           },
           "system" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "System name, or \"across all\" for a row that sums every system of the environment."
           }
-        }
+        },
+        "description" : "Number of rows of one table created in each part of the requested period."
       },
       "EnvironmentConnectionRequest" : {
         "type" : "object",
         "properties" : {
           "name" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Connection name."
           },
           "parameters" : {
             "type" : "object",
             "additionalProperties" : {
-              "type" : "string"
-            }
+              "type" : "string",
+              "description" : "Connection parameters, specific to type: for example url, username, and password for a DB connection."
+            },
+            "description" : "Connection parameters, specific to type: for example url, username, and password for a DB connection."
           },
           "type" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Connection type, such as \"DB\" or \"HTTP\". See the supported connection types in the atp-env-controller documentation."
           }
-        }
+        },
+        "description" : "Connection details for systemName. Read by POST and PUT."
       },
       "EnvironmentManagementRequest" : {
         "type" : "object",
@@ -3396,7 +3487,8 @@
             "$ref" : "#/components/schemas/EnvironmentConnectionRequest"
           },
           "envName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Environment name to create, update, or delete."
           },
           "environment" : {
             "type" : "object",
@@ -3406,391 +3498,501 @@
             "writeOnly" : true
           },
           "newEnvName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "New environment name. Read by PUT to rename the environment."
           },
           "newSystemName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "New system name. Read by PUT to rename systemName."
           },
           "projectName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Project name from PROJECTS_INFO."
           },
           "systemDeleteName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Read by DELETE: when set, only this system is deleted; otherwise the whole environment is deleted."
           },
           "systemName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "System name within the environment. Read by POST and PUT."
           }
-        }
+        },
+        "description" : "Request body of every atp-env-controller operation (POST, PUT, and DELETE /api/tdm/rest/create-env). Its fields can be sent flat, as shown here, or nested under an \"environment\" property; both are equivalent."
       },
       "EnvsList" : {
         "type" : "object",
         "properties" : {
           "items" : {
             "type" : "array",
+            "description" : "Environment IDs.",
             "items" : {
               "type" : "string",
+              "description" : "Environment IDs.",
               "format" : "uuid"
             }
           }
-        }
+        },
+        "description" : "A list of environment IDs."
       },
       "GeneralStatisticsItem" : {
         "type" : "object",
         "properties" : {
           "available" : {
             "type" : "integer",
+            "description" : "Number of available rows.",
             "format" : "int64"
           },
           "context" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Title of the table."
           },
           "details" : {
             "type" : "array",
+            "description" : "Set instead of available, occupied, occupiedToday, and total on a row grouped across systems: one entry per system, with those four fields set.",
             "items" : {
               "$ref" : "#/components/schemas/GeneralStatisticsItem"
             }
           },
           "environment" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Environment name, or \"across all\" for a row that sums every environment of the project."
           },
           "occupied" : {
             "type" : "integer",
+            "description" : "Number of occupied rows.",
             "format" : "int64"
           },
           "occupiedToday" : {
             "type" : "integer",
+            "description" : "Number of rows occupied today.",
             "format" : "int64"
           },
           "system" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "System name, or \"across all\" for a row that sums every system of the environment."
           },
           "total" : {
             "type" : "integer",
+            "description" : "Number of rows, available and occupied.",
             "format" : "int64"
           }
-        }
+        },
+        "description" : "Available and occupied row counts of one table. A row grouped across systems carries the per-system rows in details instead of available, occupied, occupiedToday, and total."
       },
       "GetRowRequest" : {
         "type" : "object",
         "properties" : {
           "name-column-response" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Name of the column whose value the response returns. Read by POST /api/tdm/rest/get-record."
           },
           "response-column-names" : {
             "type" : "array",
+            "description" : "Names of the columns whose values the response returns. Read by POST /api/tdm/rest/get-records.",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "description" : "Names of the columns whose values the response returns. Read by POST /api/tdm/rest/get-records."
             }
           },
           "search-row-parameters-set" : {
             "type" : "array",
+            "description" : "Row to act on: every condition must match. The row is found among the available rows, except where the request's own operation reads the occupied rows instead.",
             "items" : {
-              "$ref" : "#/components/schemas/TestDataTableFilter"
+              "$ref" : "#/components/schemas/ApiDataFilter"
             }
           }
-        }
+        },
+        "description" : "Reads the first available row that matches the filters, without occupying it. POST /api/tdm/rest/get-record reads nameColumnResponse; POST /api/tdm/rest/get-records reads responseColumnNames; each endpoint ignores the other field."
       },
       "ImportSqlTestDataRequest" : {
         "type" : "object",
         "properties" : {
           "environmentsIds" : {
             "type" : "array",
+            "description" : "Environment IDs to import into; one table is imported or updated per environment.",
             "items" : {
               "type" : "string",
+              "description" : "Environment IDs to import into; one table is imported or updated per environment.",
               "format" : "uuid"
             }
           },
           "projectId" : {
             "type" : "string",
+            "description" : "Project ID.",
             "format" : "uuid"
           },
           "query" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "SQL query that returns the rows to import."
           },
           "queryTimeout" : {
             "type" : "integer",
+            "description" : "Query timeout, in seconds.",
             "format" : "int32"
           },
           "systemName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "System name whose DB connection runs the query."
           },
           "tableTitle" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Title of the table to create or update."
           }
-        }
+        },
+        "description" : "Request body of POST /api/tdm/v2: runs a query against a system and imports its result as a new test data table, or as new rows of an existing one with the same title, for each listed environment."
       },
       "ImportTestDataStatistic" : {
         "type" : "object",
         "properties" : {
           "envName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Environment name the import ran on."
           },
           "error" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Set instead of processedRows when the import failed for this environment."
           },
           "processedRows" : {
             "type" : "integer",
+            "description" : "Number of rows imported.",
             "format" : "int32"
           }
-        }
+        },
+        "description" : "Result of an SQL import into one environment."
       },
       "LazyEnvironment" : {
         "type" : "object",
         "properties" : {
           "clusterName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Cluster name."
           },
           "created" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "When the environment was created."
           },
           "createdBy" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Who created the environment."
           },
           "description" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Environment description."
           },
           "id" : {
             "type" : "string",
+            "description" : "Environment ID.",
             "format" : "uuid"
           },
           "modified" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "When the environment was last modified."
           },
           "modifiedBy" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Who last modified the environment."
           },
           "name" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Environment name."
           },
           "projectId" : {
             "type" : "string",
+            "description" : "Project ID.",
             "format" : "uuid"
           },
           "systems" : {
             "type" : "array",
+            "description" : "Names of the environment's systems.",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "description" : "Names of the environment's systems."
             }
           }
-        }
+        },
+        "description" : "A dynamic environment."
       },
       "LazyProject" : {
         "type" : "object",
         "properties" : {
           "id" : {
             "type" : "string",
+            "description" : "Project ID.",
             "format" : "uuid"
           },
           "name" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Project name."
           }
-        }
+        },
+        "description" : "A project."
       },
       "LazySystem" : {
         "type" : "object",
         "properties" : {
           "connections" : {
             "type" : "array",
+            "description" : "Names of the system's connections.",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "description" : "Names of the system's connections."
             }
           },
           "created" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "When the system was created."
           },
           "createdBy" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Who created the system."
           },
           "description" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "System description."
           },
           "environmentIds" : {
             "type" : "array",
+            "description" : "IDs of the environments the system belongs to.",
             "items" : {
               "type" : "string",
+              "description" : "IDs of the environments the system belongs to.",
               "format" : "uuid"
             }
           },
           "id" : {
             "type" : "string",
+            "description" : "System ID.",
             "format" : "uuid"
           },
           "modified" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "When the system was last modified."
           },
           "modifiedBy" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Who last modified the system."
           },
           "name" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "System name."
           }
-        }
+        },
+        "description" : "A system of a dynamic environment."
       },
       "OccupiedDataByUsersStatistics" : {
         "type" : "object",
         "properties" : {
           "context" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Title of the table."
           },
           "data" : {
             "type" : "object",
             "additionalProperties" : {
               "type" : "integer",
+              "description" : "Number of rows occupied on each date.",
               "format" : "int64"
-            }
+            },
+            "description" : "Number of rows occupied on each date."
           },
           "environment" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Environment name, or \"across all\" for a row that sums every environment of the project."
           },
           "system" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "System name, or \"across all\" for a row that sums every system of the environment."
           },
           "tableName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Database table name of the table."
           },
           "userName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Name of the user who occupied the rows."
           }
-        }
+        },
+        "description" : "Rows one user occupied in one table, one entry per occupation date."
       },
       "OccupyFullRowRequest" : {
         "type" : "object",
         "properties" : {
           "response-column-names" : {
             "type" : "array",
+            "description" : "Names of the columns whose values the response returns. The row stays available if one of them does not exist.",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "description" : "Names of the columns whose values the response returns. The row stays available if one of them does not exist."
             }
           },
           "search-row-parameters-set" : {
             "type" : "array",
+            "description" : "Row to act on: every condition must match. The row is found among the available rows, except where the request's own operation reads the occupied rows instead.",
             "items" : {
-              "$ref" : "#/components/schemas/TestDataTableFilter"
+              "$ref" : "#/components/schemas/ApiDataFilter"
             }
           }
-        }
+        },
+        "description" : "Occupies the first available row that matches the filters, and returns the values of several of its columns."
       },
       "OccupyRowRequest" : {
         "type" : "object",
         "properties" : {
           "name-column-response" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Name of the column whose value the response returns."
           },
           "search-row-parameters-set" : {
             "type" : "array",
+            "description" : "Row to act on: every condition must match. The row is found among the available rows, except where the request's own operation reads the occupied rows instead.",
             "items" : {
-              "$ref" : "#/components/schemas/TestDataTableFilter"
+              "$ref" : "#/components/schemas/ApiDataFilter"
             }
           }
-        }
+        },
+        "description" : "Occupies the first available row that matches the filters, and returns the value of one of its columns."
       },
       "OutdatedStatistics" : {
         "type" : "object",
         "properties" : {
           "dates" : {
             "type" : "array",
+            "description" : "Label of each part of the period. items.created, items.consumed, and items.outdated each have one value per label, in the same order.",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "description" : "Label of each part of the period. items.created, items.consumed, and items.outdated each have one value per label, in the same order."
             }
           },
           "items" : {
             "type" : "array",
+            "description" : "One entry per table.",
             "items" : {
               "$ref" : "#/components/schemas/OutdatedStatisticsItem"
             }
           }
-        }
+        },
+        "description" : "Number of rows created, consumed, and outdated in each part of the requested period, for every table."
       },
       "OutdatedStatisticsItem" : {
         "type" : "object",
         "properties" : {
           "consumed" : {
             "type" : "array",
+            "description" : "Number of rows occupied in each part of the period, in the same order.",
             "items" : {
               "type" : "integer",
+              "description" : "Number of rows occupied in each part of the period, in the same order.",
               "format" : "int64"
             }
           },
           "context" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Title of the table."
           },
           "created" : {
             "type" : "array",
+            "description" : "Number of rows created in each part of the period, one value per label of OutdatedStatistics.dates, in the same order.",
             "items" : {
               "type" : "integer",
+              "description" : "Number of rows created in each part of the period, one value per label of OutdatedStatistics.dates, in the same order.",
               "format" : "int64"
             }
           },
+          "details" : {
+            "type" : "array",
+            "description" : "Set instead of created, consumed, and outdated on a row grouped across systems: one entry per system, with those three fields set.",
+            "items" : {
+              "$ref" : "#/components/schemas/OutdatedStatisticsItem"
+            }
+          },
           "environment" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Environment name, or \"across all\" for a row that sums every environment of the project."
           },
           "outdated" : {
             "type" : "array",
+            "description" : "Number of rows occupied on or after expirationDate days past the start of the period, in the same order.",
             "items" : {
               "type" : "integer",
+              "description" : "Number of rows occupied on or after expirationDate days past the start of the period, in the same order.",
               "format" : "int64"
             }
           },
           "system" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "System name, or \"across all\" for a row that sums every system of the environment."
           }
-        }
+        },
+        "description" : "Number of rows of one table created, consumed, and outdated in each part of the requested period."
       },
       "RefreshResults" : {
         "type" : "object",
         "properties" : {
           "recordsTotal" : {
             "type" : "integer",
+            "description" : "Number of rows the table has after the refresh.",
             "format" : "int32"
           }
-        }
+        },
+        "description" : "Result of one refresh run, for one table."
       },
       "ReleaseRowRequest" : {
         "type" : "object",
         "properties" : {
           "name-column-response" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Name of the column whose value the response returns."
           },
           "search-row-parameters-set" : {
             "type" : "array",
+            "description" : "Row to act on: every condition must match. The row is found among the available rows, except where the request's own operation reads the occupied rows instead.",
             "items" : {
-              "$ref" : "#/components/schemas/TestDataTableFilter"
+              "$ref" : "#/components/schemas/ApiDataFilter"
             }
           }
-        }
+        },
+        "description" : "Releases the occupied row that matches the filters, and returns the value of one of its columns. Fails when more than one occupied row matches."
       },
       "ResponseMessage" : {
         "type" : "object",
         "properties" : {
           "content" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "A message: the result on success, or the reason for the failure."
           },
           "contentObject" : {
-            "type" : "object"
+            "type" : "object",
+            "description" : "A structured result, set instead of or in addition to content by some operations."
           },
           "link" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "URL of the affected table or environment in the TDM UI, or an empty string."
           },
           "type" : {
             "type" : "string",
+            "description" : "Whether the operation succeeded.",
             "enum" : [
-              "success",
-              "error"
+              "SUCCESS",
+              "ERROR"
             ]
           }
-        }
+        },
+        "description" : "Outcome of an operation, on success or failure alike. Returned by the ATP action operations and by the Dynamic Environment API."
       },
       "RestApiRequest" : {
         "type" : "object",
         "properties" : {
           "add-info-to-row-requests" : {
             "type" : "array",
+            "description" : "Read by /add-info-to-row.",
             "items" : {
               "$ref" : "#/components/schemas/AddInfoToRowRequest"
             }
           },
           "envName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Environment name. A trailing timestamp such as \" 2024-05-01T10:15:30\" is ignored. When missing, the first table with this title in the project is used."
           },
           "environment" : {
             "type" : "object",
@@ -3801,53 +4003,65 @@
           },
           "get-row-requests" : {
             "type" : "array",
+            "description" : "Read by /get-record and /get-records.",
             "items" : {
               "$ref" : "#/components/schemas/GetRowRequest"
             }
           },
           "insert-records" : {
             "type" : "array",
+            "description" : "Rows to insert, one map of column name to value per row. Read by /insert-records.",
             "items" : {
               "type" : "object",
               "additionalProperties" : {
-                "type" : "object"
-              }
+                "type" : "object",
+                "description" : "Rows to insert, one map of column name to value per row. Read by /insert-records."
+              },
+              "description" : "Rows to insert, one map of column name to value per row. Read by /insert-records."
             }
           },
           "occupy-full-row-requests" : {
             "type" : "array",
+            "description" : "Read by /occupy-records-full-row.",
             "items" : {
               "$ref" : "#/components/schemas/OccupyFullRowRequest"
             }
           },
           "occupy-row-requests" : {
             "type" : "array",
+            "description" : "Read by /occupy-records.",
             "items" : {
               "$ref" : "#/components/schemas/OccupyRowRequest"
             }
           },
           "projectName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Project name from PROJECTS_INFO."
           },
           "release-row-requests" : {
             "type" : "array",
+            "description" : "Read by /release-records.",
             "items" : {
               "$ref" : "#/components/schemas/ReleaseRowRequest"
             }
           },
           "systemName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "System name. When missing, the first table with this title in the project is used."
           },
           "title-table" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Title of the table."
           },
           "update-row-requests" : {
             "type" : "array",
+            "description" : "Read by /update-records.",
             "items" : {
               "$ref" : "#/components/schemas/UpdateRowRequest"
             }
           }
-        }
+        },
+        "description" : "The request body of every atp-action-controller operation. Each operation reads only projectName, envName, systemName, and title-table, plus the one list field that names it."
       },
       "TableAvailableDataStats" : {
         "type" : "object",
@@ -3856,128 +4070,162 @@
             "type" : "object",
             "additionalProperties" : {
               "type" : "integer",
+              "description" : "Number of available rows for each value found in the chosen column, keyed by that value.",
               "format" : "int32"
-            }
+            },
+            "description" : "Number of available rows for each value found in the chosen column, keyed by that value."
           },
           "tableName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Database table name of the table."
           },
           "tableTitle" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Title of the table."
           }
-        }
+        },
+        "description" : "Number of available rows of one table, broken down by the value of a chosen column."
       },
       "TableColumnValues" : {
         "type" : "object",
         "properties" : {
           "tableName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Database table name of the table."
           },
           "tableTitle" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Title of the table."
           },
           "values" : {
             "type" : "array",
+            "description" : "Column values to count as available for this table's row in AvailableDataByColumnStats.",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "description" : "Column values to count as available for this table's row in AvailableDataByColumnStats."
             }
           }
-        }
+        },
+        "description" : "Per-table filter: for each table, the column values to count as available. A table missing here counts every value."
       },
       "TdmDataToExport" : {
         "type" : "object",
         "properties" : {
           "projectId" : {
             "type" : "string",
+            "description" : "Project ID.",
             "format" : "uuid"
           },
           "tableIdsList" : {
             "type" : "array",
+            "description" : "Database table names of the tables to export.",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "description" : "Database table names of the tables to export."
             }
           }
-        }
+        },
+        "description" : "Selection of test data tables to export, for the ATP Export Import service."
       },
       "TestAvailableDataMonitoring" : {
         "type" : "object",
         "properties" : {
           "activeColumn" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Same value as description: name of the monitored column."
           },
           "description" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Name of the monitored column, or an empty string when none is chosen yet."
           },
           "environmentId" : {
             "type" : "string",
+            "description" : "Environment ID.",
             "format" : "uuid"
           },
           "recipients" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Comma-separated email addresses to notify."
           },
           "schedule" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Quartz cron expression, starting with the seconds field."
           },
           "scheduled" : {
-            "type" : "boolean"
+            "type" : "boolean",
+            "description" : "Runs the check on the schedule when set."
           },
           "systemId" : {
             "type" : "string",
+            "description" : "System ID.",
             "format" : "uuid"
           },
           "threshold" : {
             "type" : "integer",
+            "description" : "Sends the email when the available count drops below this threshold.",
             "format" : "int32"
           }
-        }
+        },
+        "description" : "Available-data monitoring schedule of one system's environment: a periodic email when a chosen column's available-row count drops below a threshold."
       },
       "TestDataCleanupConfig" : {
         "type" : "object",
         "properties" : {
           "enabled" : {
-            "type" : "boolean"
+            "type" : "boolean",
+            "description" : "Runs the cleanup on the schedule when set; a saved but disabled configuration can still be run with POST /api/tdm/cleanup/run."
           },
           "id" : {
             "type" : "string",
+            "description" : "Cleanup configuration ID. Generated when the configuration is saved.",
             "format" : "uuid"
           },
           "queryTimeout" : {
             "type" : "integer",
+            "description" : "Timeout of searchSql, in seconds, from 1 to EXTERNAL_QUERY_MAX_TIMEOUT (3600 by default).",
             "format" : "int32"
           },
           "schedule" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Quartz cron expression, starting with the seconds field."
           },
           "scheduled" : {
             "type" : "string"
           },
           "searchClass" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Name of the cleaner class to run. Read when type is CLASS; see the note on type."
           },
           "searchDate" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Age of the rows to remove, as a number of weeks and days before now, such as \"3w4d\". Read when type is DATE; compared against the row's CREATED_WHEN."
           },
           "searchSql" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "SQL query that returns the rows to remove. Read when type is SQL."
           },
           "shared" : {
-            "type" : "boolean"
+            "type" : "boolean",
+            "description" : "Applies this configuration to the tables of every environment with the same title and system, instead of to one table."
           },
           "type" : {
             "type" : "string",
+            "description" : "Which of searchSql, searchDate, or searchClass finds the rows to remove. searchClass is accepted but always rejected in this build: no cleaner class is registered.",
             "enum" : [
               "SQL",
               "DATE",
               "CLASS"
             ]
           }
-        }
+        },
+        "description" : "Which rows a cleanup removes from a table, and the cron schedule to run it on."
       },
       "TestDataFlagsTable" : {
         "type" : "object",
         "properties" : {
           "tableName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Database table name of the table."
           },
           "unoccupiedValidation" : {
             "type" : "boolean"
@@ -3988,26 +4236,32 @@
         "type" : "object",
         "properties" : {
           "allEnv" : {
-            "type" : "boolean"
+            "type" : "boolean",
+            "description" : "Also refreshes the tables of the project with the same title and the same import query."
           },
           "enabled" : {
-            "type" : "boolean"
+            "type" : "boolean",
+            "description" : "Runs the refresh on the schedule when set; a saved but disabled configuration can still be run with POST /api/tdm/data/refresh/run."
           },
           "id" : {
             "type" : "string",
+            "description" : "Refresh configuration ID. Generated when the configuration is saved.",
             "format" : "uuid"
           },
           "queryTimout" : {
             "type" : "integer",
+            "description" : "Not read or returned by the REST API; PUT /api/tdm/data/refresh/config sets the query timeout through its own queryTimeout parameter instead.",
             "format" : "int32"
           },
           "schedule" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Quartz cron expression, starting with the seconds field."
           },
           "scheduled" : {
             "type" : "boolean"
           }
-        }
+        },
+        "description" : "Refresh schedule of a table."
       },
       "TestDataRequest" : {
         "type" : "object",
@@ -4017,23 +4271,28 @@
           },
           "filters" : {
             "type" : "array",
+            "description" : "Column filters to apply.",
             "items" : {
               "$ref" : "#/components/schemas/TestDataTableFilter"
             }
           },
           "limit" : {
             "type" : "integer",
+            "description" : "Maximum number of rows to return.",
             "format" : "int32"
           },
           "occupied" : {
-            "type" : "boolean"
+            "type" : "boolean",
+            "description" : "Reads occupied rows instead of available ones."
           },
           "offset" : {
             "type" : "integer",
+            "description" : "Number of rows to skip, for paging.",
             "format" : "int32"
           },
           "tableName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Database table name of the table to read."
           }
         }
       },
@@ -4042,34 +4301,43 @@
         "properties" : {
           "columns" : {
             "type" : "array",
+            "description" : "Columns of the table, in storage order. Not written to the JSON output; see the class description.",
             "items" : {
               "$ref" : "#/components/schemas/TestDataTableColumn"
             }
           },
           "data" : {
             "type" : "array",
+            "description" : "Rows of the table, one map of column name to value per row.",
             "items" : {
               "type" : "object",
               "additionalProperties" : {
-                "type" : "object"
-              }
+                "type" : "object",
+                "description" : "Rows of the table, one map of column name to value per row."
+              },
+              "description" : "Rows of the table, one map of column name to value per row."
             }
           },
           "name" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Database table name of the table."
           },
           "query" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Import query that fills the table."
           },
           "records" : {
             "type" : "integer",
+            "description" : "Number of rows in data.",
             "format" : "int32"
           },
           "title" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Title of the table. Not written to the JSON output; see the class description."
           },
           "type" : {
             "type" : "string",
+            "description" : "Whether data holds available or occupied rows. Not written to the JSON output; see the class description.",
             "enum" : [
               "ALL",
               "AVAILABLE",
@@ -4077,49 +4345,61 @@
             ]
           },
           "updateByQuery" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Query that updates the table's rows from POST /api/tdm/update/sql."
           }
-        }
+        },
+        "description" : "Content of a test data table, for the TDM UI grid. TableSerializer writes this class to a nested {header: {rows}, body: {rows}, records, name, query, updateByQuery} shape rather than these fields directly; title, columns, and type do not appear in the JSON output."
       },
       "TestDataTableCatalog" : {
         "type" : "object",
         "properties" : {
           "cleanupConfigId" : {
             "type" : "string",
+            "description" : "ID of the table's cleanup configuration, or null when none is set.",
             "format" : "uuid"
           },
           "environmentId" : {
             "type" : "string",
+            "description" : "Environment ID.",
             "format" : "uuid"
           },
           "importQuery" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Query that imports the table's data, from its refresh configuration; not persisted in this entity's own table."
           },
           "lastUsage" : {
             "type" : "string",
+            "description" : "When the table was last read or written.",
             "format" : "date-time"
           },
           "projectId" : {
             "type" : "string",
+            "description" : "Project ID.",
             "format" : "uuid"
           },
           "queryTimeout" : {
             "type" : "integer",
+            "description" : "Timeout of importQuery, in seconds; not persisted in this entity's own table.",
             "format" : "int32"
           },
           "refreshConfigId" : {
             "type" : "string",
+            "description" : "ID of the table's refresh configuration, or null when none is set.",
             "format" : "uuid"
           },
           "systemId" : {
             "type" : "string",
+            "description" : "System ID.",
             "format" : "uuid"
           },
           "tableName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Database table name of the table."
           },
           "tableTitle" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Title of the table."
           }
         }
       },
@@ -4127,13 +4407,16 @@
         "type" : "object",
         "properties" : {
           "bulkLink" : {
-            "type" : "boolean"
+            "type" : "boolean",
+            "description" : "Splits a LINK column's value on \";\" into several links instead of one."
           },
           "columnLink" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "URL template for the column's values, read when columnType is LINK."
           },
           "columnType" : {
             "type" : "string",
+            "description" : "How the column's values are typed and rendered.",
             "enum" : [
               "TEXT",
               "DATE",
@@ -4142,6 +4425,7 @@
           },
           "filterType" : {
             "type" : "string",
+            "description" : "Not persisted in this entity's own table.",
             "enum" : [
               "TEXT",
               "DATE",
@@ -4154,53 +4438,66 @@
           },
           "orderType" : {
             "type" : "string",
+            "description" : "Not persisted in this entity's own table.",
             "enum" : [
               "ASC",
               "DESC",
               "TRUE"
             ]
           }
-        }
+        },
+        "description" : "Columns of the table, in storage order. Not written to the JSON output; see the class description."
       },
       "TestDataTableColumnIdentity" : {
         "type" : "object",
         "properties" : {
           "columnName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Column name."
           },
           "tableName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Database table name of the table."
           }
-        }
+        },
+        "description" : "Table and column name."
       },
       "TestDataTableFilter" : {
         "type" : "object",
         "properties" : {
           "caseSensitive" : {
-            "type" : "boolean"
+            "type" : "boolean",
+            "description" : "Matches the column case-sensitively. Ignored by \"From\" and \"To\"."
           },
           "name-column" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Name of the column to search in."
           },
           "search-criterion" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "\"Contains\", \"startWith\", \"Equals\", \"From\", or \"To\", case-insensitive."
           },
           "search-values" : {
             "type" : "array",
+            "description" : "Values to compare the column against. Only the first value is read; the others are ignored.",
             "items" : {
-              "type" : "string"
+              "type" : "string",
+              "description" : "Values to compare the column against. Only the first value is read; the others are ignored."
             }
           }
-        }
+        },
+        "description" : "One search condition on a column, used to filter the rows of a table."
       },
       "TestDataTableMonitoring" : {
         "type" : "object",
         "properties" : {
           "cronExpression" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Quartz cron expression, starting with the seconds field."
           },
           "enabled" : {
-            "type" : "boolean"
+            "type" : "boolean",
+            "description" : "Runs the check on the schedule when set."
           },
           "id" : {
             "type" : "string",
@@ -4208,10 +4505,12 @@
           },
           "projectId" : {
             "type" : "string",
+            "description" : "Project ID.",
             "format" : "uuid"
           },
           "recipients" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Comma-separated email addresses to notify."
           },
           "schedule" : {
             "type" : "string"
@@ -4221,71 +4520,88 @@
           },
           "threshold" : {
             "type" : "integer",
+            "description" : "Sends the email for a table when its available count drops below this threshold.",
             "format" : "int32"
           }
-        }
+        },
+        "description" : "General-statistics monitoring schedule of one project: a periodic email when a table's available-row count drops below a threshold."
       },
       "TestDataTableOrder" : {
         "type" : "object",
         "properties" : {
           "columnName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Name of the column to sort by."
           },
           "orderType" : {
             "type" : "string",
+            "description" : "Sort direction: ASC or DESC.",
             "enum" : [
               "ASC",
               "DESC",
               "TRUE"
             ]
           }
-        }
+        },
+        "description" : "Column and direction to sort by."
       },
       "TestDataTableUpdateByQuery" : {
         "type" : "object",
         "properties" : {
           "environmentId" : {
             "type" : "string",
+            "description" : "Environment ID.",
             "format" : "uuid"
           },
           "projectId" : {
             "type" : "string",
+            "description" : "Project ID.",
             "format" : "uuid"
           },
           "query" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "SQL query that returns the new rows."
           },
           "queryTimeout" : {
             "type" : "integer",
+            "description" : "Query timeout, in seconds.",
             "format" : "int32"
           },
           "systemId" : {
             "type" : "string",
+            "description" : "System ID whose DB connection runs the query.",
             "format" : "uuid"
           },
           "tableName" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Database table name of the test data table."
           }
-        }
+        },
+        "description" : "Request body of POST /api/tdm/update/sql: runs a query against a system and updates a table's rows from its result. The query and timeout are saved with the table."
       },
       "TestDataTableUsersMonitoring" : {
         "type" : "object",
         "properties" : {
           "cronExpression" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Quartz cron expression, starting with the seconds field."
           },
           "csvReport" : {
-            "type" : "boolean"
+            "type" : "boolean",
+            "description" : "Attaches a CSV file of the occupations to the email."
           },
           "daysCount" : {
             "type" : "integer",
+            "description" : "Number of past days the report covers.",
             "format" : "int32"
           },
           "enabled" : {
-            "type" : "boolean"
+            "type" : "boolean",
+            "description" : "Sends the report on the schedule when set."
           },
           "htmlReport" : {
-            "type" : "boolean"
+            "type" : "boolean",
+            "description" : "Includes an HTML table of the occupations in the email body."
           },
           "id" : {
             "type" : "string",
@@ -4293,10 +4609,12 @@
           },
           "projectId" : {
             "type" : "string",
+            "description" : "Project ID.",
             "format" : "uuid"
           },
           "recipients" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Comma-separated email addresses to notify."
           },
           "schedule" : {
             "type" : "string"
@@ -4304,7 +4622,8 @@
           "scheduled" : {
             "type" : "boolean"
           }
-        }
+        },
+        "description" : "Users-occupation-report schedule of one project: a periodic email of who occupied which rows."
       },
       "UpdateRowRequest" : {
         "type" : "object",
@@ -4312,16 +4631,20 @@
           "record-with-data-for-update" : {
             "type" : "object",
             "additionalProperties" : {
-              "type" : "string"
-            }
+              "type" : "string",
+              "description" : "Column names and the values to write to them, in every row that matches the filters."
+            },
+            "description" : "Column names and the values to write to them, in every row that matches the filters."
           },
           "search-row-parameters-set" : {
             "type" : "array",
+            "description" : "Row to act on: every condition must match. The row is found among the available rows, except where the request's own operation reads the occupied rows instead.",
             "items" : {
-              "$ref" : "#/components/schemas/TestDataTableFilter"
+              "$ref" : "#/components/schemas/ApiDataFilter"
             }
           }
-        }
+        },
+        "description" : "Values to write to the matching rows. Each value in record-with-data-for-update replaces the current value of its column."
       },
       "UsersOccupyStatisticRequest" : {
         "type" : "object",
@@ -4330,27 +4653,33 @@
             "$ref" : "#/components/schemas/TestDataTableOrder"
           },
           "dateFrom" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "First day of the period, as yyyy-MM-dd."
           },
           "dateTo" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Last day of the period, as yyyy-MM-dd."
           },
           "filters" : {
             "type" : "array",
+            "description" : "Filters on the table title, the user name, the system name, or the environment name. \"From\" and \"To\" are not applied here.",
             "items" : {
               "$ref" : "#/components/schemas/TestDataTableFilter"
             }
           },
           "limit" : {
             "type" : "integer",
+            "description" : "Maximum number of rows to return.",
             "format" : "int64"
           },
           "offset" : {
             "type" : "integer",
+            "description" : "Number of rows to skip, for paging.",
             "format" : "int64"
           },
           "projectId" : {
             "type" : "string",
+            "description" : "Project ID.",
             "format" : "uuid"
           }
         }
@@ -4360,26 +4689,32 @@
         "properties" : {
           "data" : {
             "type" : "array",
+            "description" : "The page of records, up to limit entries.",
             "items" : {
               "$ref" : "#/components/schemas/OccupiedDataByUsersStatistics"
             }
           },
           "records" : {
             "type" : "integer",
+            "description" : "Total number of records matching the request, across every page.",
             "format" : "int32"
           }
-        }
+        },
+        "description" : "One page of occupation records by user."
       },
       "VersionDto" : {
         "type" : "object",
         "properties" : {
           "name" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Component name."
           },
           "version" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "Component version."
           }
-        }
+        },
+        "description" : "Name and version of the service, or of one of its dependencies."
       }
     },
     "securitySchemes" : {

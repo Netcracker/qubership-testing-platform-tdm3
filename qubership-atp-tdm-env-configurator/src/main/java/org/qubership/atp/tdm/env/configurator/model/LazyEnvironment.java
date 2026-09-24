@@ -19,25 +19,37 @@ package org.qubership.atp.tdm.env.configurator.model;
 import java.util.List;
 import java.util.UUID;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Schema(description = "A dynamic environment.")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class LazyEnvironment {
 
+    @Schema(description = "Environment ID.")
     private UUID id;
+    @Schema(description = "Project ID.")
     private UUID projectId;
+    @Schema(description = "Environment name.")
     private String name;
+    @Schema(description = "Cluster name.")
     private String clusterName;
+    @Schema(description = "Environment description.")
     private String description;
+    @Schema(description = "When the environment was created.")
     private String created;
+    @Schema(description = "Who created the environment.")
     private String createdBy;
+    @Schema(description = "When the environment was last modified.")
     private String modified;
+    @Schema(description = "Who last modified the environment.")
     private String modifiedBy;
+    @Schema(description = "Names of the environment's systems.")
     private List<String> systems;
 }

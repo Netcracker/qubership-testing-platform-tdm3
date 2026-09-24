@@ -16,6 +16,7 @@
 
 package org.qubership.atp.tdm.model.statistics;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StatisticsEnvironment {
+    @Schema(description = "Environment name, or \"across all\" for a row that sums every environment of the "
+            + "project.")
     private String environment;
+    @Schema(description = "System name, or \"across all\" for a row that sums every system of the environment.")
     private String system;
 }

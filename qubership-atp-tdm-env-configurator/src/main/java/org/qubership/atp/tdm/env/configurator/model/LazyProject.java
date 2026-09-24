@@ -18,17 +18,21 @@ package org.qubership.atp.tdm.env.configurator.model;
 
 import java.util.UUID;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 
+@Schema(description = "A project.")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class LazyProject {
+    @Schema(description = "Project ID.")
     private UUID id;
+    @Schema(description = "Project name.")
     private String name;
 }

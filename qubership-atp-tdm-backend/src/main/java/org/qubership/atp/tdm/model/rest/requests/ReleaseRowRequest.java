@@ -17,12 +17,17 @@
 package org.qubership.atp.tdm.model.rest.requests;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+@Schema(description = "Releases the occupied row that matches the filters, and returns the value of one "
+        + "of its columns. Fails when more than one occupied row matches.")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class ReleaseRowRequest extends AbstractRowRequest {
+    @Schema(description = "Name of the column whose value the response returns.")
     @JsonProperty("name-column-response")
     private String nameColumnResponse;
 }
