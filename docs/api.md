@@ -105,15 +105,15 @@ run for longer than an HTTP request and report progress as they go:
 
 A client sends one text message to start the operation, a JSON object with these fields:
 
-| Field               | Description                                                                                                        |
-|---------------------|--------------------------------------------------------------------------------------------------------------------|
-| `projectId`         | Project ID.                                                                                                        |
-| `systemId`          | System ID. Read by `refresh`, `cleanup`, and `links`; ignored by `import` and `drop`.                              |
-| `tableTitle`        | Title of the tables to act on. Read by `import` and `drop`; ignored by the others.                                 |
-| `saveOccupiedData`  | For `refresh` and `import`: keeps the occupied rows instead of deleting them.                                      |
-| `executeInParallel` | Runs the tables of the operation on up to 10 threads at once, instead of one at a time.                            |
-| `sendResult`        | Also emails the results to `recipients` when the operation finishes.                                               |
-| `recipients`        | Email addresses for the result email. Read only when `sendResult` is set.                                          |
+| Field               | Description                                                                                                                                                    |
+|---------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `projectId`         | Project ID.                                                                                                                                                    |
+| `systemId`          | System ID. Read by `refresh`, `cleanup`, and `links`; ignored by `import` and `drop`.                                                                          |
+| `tableTitle`        | Title of the tables to act on. Read by `import` and `drop`; ignored by the others.                                                                             |
+| `saveOccupiedData`  | For `refresh` and `import`: keeps the occupied rows instead of deleting them.                                                                                  |
+| `executeInParallel` | Runs the tables of the operation on up to 10 threads at once, instead of one at a time.                                                                        |
+| `sendResult`        | Also emails the results to `recipients` when the operation finishes.                                                                                           |
+| `recipients`        | Email addresses for the result email. Read only when `sendResult` is set.                                                                                      |
 | `environmentId`     | Read only when `sendResult` is set: the environment and, with `systemId`, the system name the email reports. Does not filter the tables the operation acts on. |
 
 The server replies with one or more text messages, each a JSON object, and then closes the connection:
