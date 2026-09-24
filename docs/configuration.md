@@ -39,6 +39,10 @@ exits before the JVM starts when either is empty. The Helm chart sets both.
 
 ## Projects
 
+`PROJECTS_INFO` is the list of projects the service knows. ATP actions and the
+[Dynamic Environment API](../README.md#dynamic-environment-api) find a project by its name in this list, and a name
+that is not in it is rejected with `Project [<name>] not found.`
+
 At every startup, the service saves settings for each project that `PROJECTS_INFO` lists: the time zone, the date and
 time formats, and the table expiration timeout from the other variables in this table. The saved settings replace the
 earlier settings of those projects, so a change takes effect after a restart.
@@ -113,7 +117,8 @@ the database. A second operation on the same table waits until the lock is relea
 
 ## Environments cache
 
-The service caches the environments and systems that test data tables refer to.
+These variables configure the cache manager of the service. The ATP auth library caches its user and project
+lookups in it; environments and systems are read from the database without a cache.
 
 | Variable                         | Default   | Helm                                             | Description                                                  |
 |----------------------------------|-----------|--------------------------------------------------|--------------------------------------------------------------|

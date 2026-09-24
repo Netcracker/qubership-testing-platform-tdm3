@@ -14,20 +14,53 @@
   ],
   "tags" : [
     {
-      "description" : "Test Data Controller V2",
+      "description" : "Version of the service.",
+      "name" : "versions-controller"
+    },
+    {
+      "description" : "Operations that ATP actions call on a test data table. A request names the table by projectName, envName, systemName, and title-table; projectName is a project name from PROJECTS_INFO. When envName or systemName is missing, the first table with that title in the project is used. A trailing timestamp such as \" 2024-05-01T10:15:30\" in envName is ignored. Most operations return one ResponseMessage per row request, with type SUCCESS or ERROR and HTTP status 200 in both cases, so one failed row request does not stop the others.",
+      "name" : "atp-action-controller"
+    },
+    {
+      "description" : "Versions of test data operations that take their parameters in the request body.",
       "name" : "test-data-controller-v2"
+    },
+    {
+      "description" : "Dynamic environments: environments, systems, and connections created at run time and stored in the database. The project must be listed in PROJECTS_INFO. The request body can hold the fields at the top level or inside an environment object.",
+      "name" : "atp-env-controller"
+    },
+    {
+      "description" : "Refresh settings of test data tables. A refresh deletes the rows of a table and fills it again from the SQL query the table was imported with.",
+      "name" : "data-refresh-controller"
+    },
+    {
+      "description" : "Test data tables: import, read, occupy and release rows, export, and maintenance. A test data table has a title shown in the UI and a generated database table name; the tableName parameters take the database table name.",
+      "name" : "test-data-controller"
+    },
+    {
+      "description" : "Cleanup settings of test data tables: which rows to delete, found by an SQL query, a date, or a cleaner class, and the cron schedule to do it on.",
+      "name" : "data-cleanup-controller"
+    },
+    {
+      "description" : "Statistics on test data tables and the email reports sent on a schedule. Statistics without systemId group the tables of a project by table title, with the per-system values in details.",
+      "name" : "statistics-controller"
+    },
+    {
+      "description" : "Projects, environments, and systems that test data tables belong to. Projects come from PROJECTS_INFO; environments and systems are the dynamic environments stored in the database.",
+      "name" : "environments-controller"
     }
   ],
   "paths" : {
     "/api/tdm/alter/created/when" : {
       "get" : {
-        "description" : "Old update.",
+        "description" : "Adds the CREATED_WHEN column to every test data table that lacks it. A migration for tables created before the column existed.",
         "operationId" : "alterCreatedWhenColumn",
         "responses" : {
           "200" : {
             "description" : "OK"
           }
         },
+        "summary" : "Add the CREATED_WHEN column to all tables",
         "tags" : [
           "test-data-controller"
         ]
@@ -35,13 +68,14 @@
     },
     "/api/tdm/alter/occupy/statistic" : {
       "get" : {
-        "description" : "Old update.",
+        "description" : "Adds an occupation record to the statistics for every occupied row of every table. A migration for rows occupied before the statistics existed.",
         "operationId" : "alterOccupyStatistic",
         "responses" : {
           "200" : {
             "description" : "OK"
           }
         },
+        "summary" : "Fill in the occupation statistics from occupied rows",
         "tags" : [
           "test-data-controller"
         ]
@@ -49,7 +83,7 @@
     },
     "/api/tdm/change/title" : {
       "put" : {
-        "description" : "Changes table title.",
+        "description" : "Changes the title of the table and of its occupation statistics. Returns whether the title changed.",
         "operationId" : "changeTestDataTitle",
         "requestBody" : {
           "content" : {
@@ -73,6 +107,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Rename a table",
         "tags" : [
           "test-data-controller"
         ]
@@ -80,7 +115,7 @@
     },
     "/api/tdm/cleanup/config" : {
       "post" : {
-        "description" : "Save / update data cleanup settings.",
+        "description" : "Saves the cleanup configuration for the table in tableName and for the tables of the same system in the environments listed in environmentsList, and schedules it. queryTimeout must be between 1 and EXTERNAL_QUERY_MAX_TIMEOUT seconds (3600 by default); a value out of range returns HTTP 400.",
         "operationId" : "saveCleanupConfig",
         "requestBody" : {
           "content" : {
@@ -104,6 +139,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Save cleanup settings",
         "tags" : [
           "data-cleanup-controller"
         ]
@@ -111,10 +147,11 @@
     },
     "/api/tdm/cleanup/config/{id}" : {
       "get" : {
-        "description" : "Get cleanup configuration for specified dataset / table ID.",
+        "description" : "Returns the cleanup configuration and the environments of the tables that use it. tableName is not set in the response.",
         "operationId" : "getCleanupConfig",
         "parameters" : [
           {
+            "description" : "Cleanup configuration ID.",
             "in" : "path",
             "name" : "id",
             "required" : true,
@@ -136,6 +173,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get cleanup settings",
         "tags" : [
           "data-cleanup-controller"
         ]
@@ -143,13 +181,14 @@
     },
     "/api/tdm/cleanup/fill/cleanup/type" : {
       "get" : {
-        "description" : "Old update.",
+        "description" : "Sets the type of every cleanup configuration from the field it uses: DATE when searchDate is set, otherwise SQL when searchSql is set, otherwise CLASS when searchClass is set. A migration for configurations saved before the type existed.",
         "operationId" : "fillCleanupTypeColumn",
         "responses" : {
           "200" : {
             "description" : "OK"
           }
         },
+        "summary" : "Fill in the cleanup type of existing configurations",
         "tags" : [
           "data-cleanup-controller"
         ]
@@ -157,10 +196,11 @@
     },
     "/api/tdm/cleanup/next/run" : {
       "get" : {
-        "description" : "Get next run's date / time details.",
-        "operationId" : "getNextScheduledRun_2",
+        "description" : "Returns the next time the Quartz cron expression fires after now, as a JSON string in \"EEE MMM dd HH:mm:ss zzz yyyy\" format.",
+        "operationId" : "getNextCleanupRun",
         "parameters" : [
           {
+            "description" : "Quartz cron expression, starting with the seconds field.",
             "in" : "query",
             "name" : "cronExpression",
             "required" : true,
@@ -181,6 +221,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get the next run time of a schedule",
         "tags" : [
           "data-cleanup-controller"
         ]
@@ -188,7 +229,7 @@
     },
     "/api/tdm/cleanup/run" : {
       "post" : {
-        "description" : "Force run data cleanup.",
+        "description" : "Runs the cleanup configuration from the request body, without saving it, on the table in tableName and on the tables of the same system in the environments listed in environmentsList. Returns the number of checked and removed rows per table.",
         "operationId" : "runDataCleanup",
         "requestBody" : {
           "content" : {
@@ -215,6 +256,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Run a cleanup now",
         "tags" : [
           "data-cleanup-controller"
         ]
@@ -222,10 +264,11 @@
     },
     "/api/tdm/data/available/recalculate" : {
       "get" : {
-        "description" : "Get all distinct values by system_id and column_name",
+        "description" : "Returns, for each table of the system in the environment that has the column, the distinct values of the column.",
         "operationId" : "getDistinctColumnValues",
         "parameters" : [
           {
+            "description" : "System ID.",
             "in" : "query",
             "name" : "systemId",
             "required" : true,
@@ -235,6 +278,7 @@
             }
           },
           {
+            "description" : "Name of the column.",
             "in" : "query",
             "name" : "columnName",
             "required" : true,
@@ -243,6 +287,7 @@
             }
           },
           {
+            "description" : "Environment ID.",
             "in" : "query",
             "name" : "environmentId",
             "required" : true,
@@ -267,6 +312,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "List column values across the tables of a system",
         "tags" : [
           "test-data-controller"
         ]
@@ -274,10 +320,11 @@
     },
     "/api/tdm/data/refresh/config" : {
       "post" : {
-        "description" : "Save / update data refresh settings.",
+        "description" : "Saves the refresh configuration and the query timeout for the table, and schedules the refresh. With allEnv set in the configuration, it also applies to the tables of the project with the same title and the same import query. A queryTimeout out of range, or a table whose environment cannot run SQL queries, returns HTTP 400.",
         "operationId" : "saveRefreshConfig",
         "parameters" : [
           {
+            "description" : "Database table name of the test data table.",
             "in" : "query",
             "name" : "tableName",
             "required" : true,
@@ -286,6 +333,7 @@
             }
           },
           {
+            "description" : "Timeout of the import query, in seconds, from 1 to EXTERNAL_QUERY_MAX_TIMEOUT (3600 by default).",
             "in" : "query",
             "name" : "queryTimeout",
             "required" : true,
@@ -317,6 +365,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Save refresh settings",
         "tags" : [
           "data-refresh-controller"
         ]
@@ -324,10 +373,10 @@
     },
     "/api/tdm/data/refresh/config/{id}" : {
       "get" : {
-        "description" : "Get refresh configuration for specified dataset / table ID.",
         "operationId" : "getRefreshConfig",
         "parameters" : [
           {
+            "description" : "Refresh configuration ID.",
             "in" : "path",
             "name" : "id",
             "required" : true,
@@ -349,6 +398,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get refresh settings",
         "tags" : [
           "data-refresh-controller"
         ]
@@ -356,10 +406,11 @@
     },
     "/api/tdm/data/refresh/next/run" : {
       "get" : {
-        "description" : "Get next run's date / time details.",
-        "operationId" : "getNextScheduledRun_1",
+        "description" : "Returns the next time the Quartz cron expression fires after now, as a JSON string in \"EEE MMM dd HH:mm:ss zzz yyyy\" format.",
+        "operationId" : "getNextRefreshRun",
         "parameters" : [
           {
+            "description" : "Quartz cron expression, starting with the seconds field.",
             "in" : "query",
             "name" : "cronExpression",
             "required" : true,
@@ -380,6 +431,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get the next run time of a schedule",
         "tags" : [
           "data-refresh-controller"
         ]
@@ -387,10 +439,11 @@
     },
     "/api/tdm/data/refresh/run" : {
       "post" : {
-        "description" : "Force run data refresh.",
+        "description" : "Deletes all rows of the table, occupied rows included, and runs the import query again with the saved query timeout. Returns the number of loaded rows per table.",
         "operationId" : "runDataRefresh",
         "parameters" : [
           {
+            "description" : "Database table name of the test data table.",
             "in" : "query",
             "name" : "tableName",
             "required" : true,
@@ -399,6 +452,7 @@
             }
           },
           {
+            "description" : "Not used; the refresh runs with the query timeout saved for the table.",
             "in" : "query",
             "name" : "queryTimeout",
             "required" : true,
@@ -408,6 +462,7 @@
             }
           },
           {
+            "description" : "Also refreshes the tables of the project with the same title and the same import query.",
             "in" : "query",
             "name" : "allEnv",
             "required" : true,
@@ -431,6 +486,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Run a refresh now",
         "tags" : [
           "data-refresh-controller"
         ]
@@ -438,10 +494,10 @@
     },
     "/api/tdm/delete/rows" : {
       "put" : {
-        "description" : "Delete selected rows from table.",
         "operationId" : "deleteTestDataTableRows",
         "parameters" : [
           {
+            "description" : "Database table name of the test data table.",
             "in" : "query",
             "name" : "tableName",
             "required" : true,
@@ -455,6 +511,7 @@
             "application/json" : {
               "schema" : {
                 "type" : "array",
+                "description" : "ROW_ID values of the rows.",
                 "items" : {
                   "type" : "string",
                   "format" : "uuid"
@@ -469,6 +526,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Delete rows by ID",
         "tags" : [
           "test-data-controller"
         ]
@@ -476,10 +534,10 @@
     },
     "/api/tdm/download/csv" : {
       "get" : {
-        "description" : "Download table as csv file.",
         "operationId" : "getTestDataTableAsCsvFile",
         "parameters" : [
           {
+            "description" : "Database table name of the test data table.",
             "in" : "query",
             "name" : "tableName",
             "required" : true,
@@ -501,6 +559,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Download a table as a CSV file",
         "tags" : [
           "test-data-controller"
         ]
@@ -508,10 +567,10 @@
     },
     "/api/tdm/download/excel" : {
       "get" : {
-        "description" : "Download table as excel file.",
         "operationId" : "getTestDataTableAsExcelFile",
         "parameters" : [
           {
+            "description" : "Database table name of the test data table.",
             "in" : "query",
             "name" : "tableName",
             "required" : true,
@@ -533,6 +592,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Download a table as an Excel file",
         "tags" : [
           "test-data-controller"
         ]
@@ -540,10 +600,11 @@
     },
     "/api/tdm/environment/tables/list" : {
       "get" : {
-        "description" : "Get tables id and name under project and environment.",
+        "description" : "Returns a map of database table names to table titles.",
         "operationId" : "getTestDataTablesListByEnvironment",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -553,6 +614,7 @@
             }
           },
           {
+            "description" : "Environment ID.",
             "in" : "query",
             "name" : "envId",
             "required" : true,
@@ -577,6 +639,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "List the tables of an environment",
         "tags" : [
           "test-data-controller"
         ]
@@ -587,6 +650,7 @@
         "operationId" : "getLazySystems",
         "parameters" : [
           {
+            "description" : "Environment ID.",
             "in" : "path",
             "name" : "environmentId",
             "required" : true,
@@ -611,6 +675,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "List the systems of an environment",
         "tags" : [
           "environments-controller"
         ]
@@ -618,6 +683,7 @@
     },
     "/api/tdm/envs/reset/caches" : {
       "get" : {
+        "description" : "Does nothing and returns true.",
         "operationId" : "resetCaches",
         "responses" : {
           "200" : {
@@ -631,6 +697,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Reset the environment caches",
         "tags" : [
           "environments-controller"
         ]
@@ -638,10 +705,11 @@
     },
     "/api/tdm/evaluate/query" : {
       "put" : {
-        "description" : "Evaluate query.",
+        "description" : "Replaces the ${...} macros in the query from the request body with values from the table, and returns the result in the query field.",
         "operationId" : "evaluateQuery",
         "parameters" : [
           {
+            "description" : "Database table name of the test data table.",
             "in" : "query",
             "name" : "tableName",
             "required" : true,
@@ -654,7 +722,8 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "type" : "string"
+                "type" : "string",
+                "description" : "Query with macros."
               }
             }
           },
@@ -675,6 +744,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Substitute table values into a query",
         "tags" : [
           "test-data-controller"
         ]
@@ -682,13 +752,14 @@
     },
     "/api/tdm/fill/envId" : {
       "get" : {
-        "description" : "Old update.",
+        "description" : "Sets the environment ID in the catalog entries of tables that have a system. Deletes the tables of a project whose loading fails with a \"not found\" error. A migration for tables created before the catalog stored the environment.",
         "operationId" : "fillEnvIdColumn",
         "responses" : {
           "200" : {
             "description" : "OK"
           }
         },
+        "summary" : "Fill in the environment of existing tables",
         "tags" : [
           "test-data-controller"
         ]
@@ -696,13 +767,14 @@
     },
     "/api/tdm/fix/occupied/by/column" : {
       "get" : {
-        "description" : "Old update.",
+        "description" : "Adds the OCCUPIED_BY column to every test data table that lacks it. A migration for tables created before the column existed.",
         "operationId" : "alterOccupiedByColumn",
         "responses" : {
           "200" : {
             "description" : "OK"
           }
         },
+        "summary" : "Add the OCCUPIED_BY column to all tables",
         "tags" : [
           "test-data-controller"
         ]
@@ -710,10 +782,11 @@
     },
     "/api/tdm/import/excel" : {
       "post" : {
-        "description" : "Import excel to TDM.",
+        "description" : "Adds the rows of the file to the table with this title in the system, or creates the table. environmentId and systemId are required: without them the import fails.",
         "operationId" : "importExcelTestData",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -723,6 +796,7 @@
             }
           },
           {
+            "description" : "Environment ID.",
             "in" : "query",
             "name" : "environmentId",
             "required" : false,
@@ -732,6 +806,7 @@
             }
           },
           {
+            "description" : "System ID.",
             "in" : "query",
             "name" : "systemId",
             "required" : false,
@@ -741,6 +816,7 @@
             }
           },
           {
+            "description" : "Title of the table.",
             "in" : "query",
             "name" : "tableTitle",
             "required" : true,
@@ -749,6 +825,7 @@
             }
           },
           {
+            "description" : "After the import, updates the rows with the SQL query saved for the table.",
             "in" : "query",
             "name" : "runSqlScript",
             "required" : true,
@@ -765,7 +842,8 @@
                 "properties" : {
                   "file" : {
                     "type" : "string",
-                    "format" : "binary"
+                    "format" : "binary",
+                    "description" : "Excel file with the rows."
                   }
                 },
                 "required" : [
@@ -790,6 +868,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Import rows from an Excel file",
         "tags" : [
           "test-data-controller"
         ]
@@ -797,10 +876,11 @@
     },
     "/api/tdm/import/sql" : {
       "post" : {
-        "description" : "Import sql to TDM.",
-        "operationId" : "importSqlTestData_1",
+        "description" : "For each environment, runs the query against the database of the system with this name, and adds the result to the table with this title, or creates the table. The query and timeout are saved for refresh. Returns one import result per environment; a missing environment or system is reported in the result.",
+        "operationId" : "importSqlTestData",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -810,6 +890,7 @@
             }
           },
           {
+            "description" : "IDs of the environments to import from.",
             "in" : "query",
             "name" : "environmentsIds",
             "required" : true,
@@ -822,6 +903,7 @@
             }
           },
           {
+            "description" : "Name of the system whose DB connection runs the query.",
             "in" : "query",
             "name" : "systemName",
             "required" : true,
@@ -830,6 +912,7 @@
             }
           },
           {
+            "description" : "Title of the table.",
             "in" : "query",
             "name" : "tableTitle",
             "required" : true,
@@ -838,6 +921,7 @@
             }
           },
           {
+            "description" : "SQL query that returns the rows.",
             "in" : "query",
             "name" : "query",
             "required" : true,
@@ -846,6 +930,7 @@
             }
           },
           {
+            "description" : "Query timeout, in seconds.",
             "in" : "query",
             "name" : "queryTimeout",
             "required" : true,
@@ -870,6 +955,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Import rows with an SQL query",
         "tags" : [
           "test-data-controller"
         ]
@@ -877,10 +963,11 @@
     },
     "/api/tdm/link/preview" : {
       "post" : {
-        "description" : "Get preview for linker.",
+        "description" : "Returns, as a JSON string, the link that setup would build for the column: the value of the first row of the column when pickUpFullLinkFromTableCell is set, otherwise the url parameter of the system HTTP connection joined with the endpoint from the request body.",
         "operationId" : "getPreviewLink",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -890,6 +977,7 @@
             }
           },
           {
+            "description" : "System ID.",
             "in" : "query",
             "name" : "systemId",
             "required" : false,
@@ -899,6 +987,7 @@
             }
           },
           {
+            "description" : "Name of the column.",
             "in" : "query",
             "name" : "columnName",
             "required" : true,
@@ -907,6 +996,7 @@
             }
           },
           {
+            "description" : "Database table name; used with pickUpFullLinkFromTableCell.",
             "in" : "query",
             "name" : "tableName",
             "required" : false,
@@ -915,6 +1005,7 @@
             }
           },
           {
+            "description" : "Takes the whole link from the column value instead of building it.",
             "in" : "query",
             "name" : "pickUpFullLinkFromTableCell",
             "required" : true,
@@ -927,7 +1018,8 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "type" : "string"
+                "type" : "string",
+                "description" : "Endpoint to join with the url parameter of the system HTTP connection."
               }
             }
           }
@@ -944,6 +1036,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Preview the link of a column",
         "tags" : [
           "test-data-controller"
         ]
@@ -951,10 +1044,11 @@
     },
     "/api/tdm/link/setup" : {
       "post" : {
-        "description" : "Setup links.",
+        "description" : "Saves the link settings for the column of one table, or, with isAll, of the tables with the same title in all environments of the project.",
         "operationId" : "setupColumnLinks",
         "parameters" : [
           {
+            "description" : "Applies the settings to all tables with the same title.",
             "in" : "query",
             "name" : "isAll",
             "required" : true,
@@ -963,6 +1057,7 @@
             }
           },
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -972,6 +1067,7 @@
             }
           },
           {
+            "description" : "System ID.",
             "in" : "query",
             "name" : "systemId",
             "required" : false,
@@ -981,6 +1077,7 @@
             }
           },
           {
+            "description" : "Database table name of the test data table.",
             "in" : "query",
             "name" : "tableName",
             "required" : false,
@@ -989,6 +1086,7 @@
             }
           },
           {
+            "description" : "Name of the column.",
             "in" : "query",
             "name" : "columnName",
             "required" : true,
@@ -997,6 +1095,7 @@
             }
           },
           {
+            "description" : "Value of the validate-unoccupied-resources flag saved for the table.",
             "in" : "query",
             "name" : "validateUnoccupiedResources",
             "required" : true,
@@ -1005,6 +1104,7 @@
             }
           },
           {
+            "description" : "Takes the whole link from the column value instead of building it.",
             "in" : "query",
             "name" : "pickUpFullLinkFromTableCell",
             "required" : true,
@@ -1017,7 +1117,8 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "type" : "string"
+                "type" : "string",
+                "description" : "Endpoint to join with the url parameter of the system HTTP connection."
               }
             }
           }
@@ -1027,6 +1128,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Turn the values of a column into links",
         "tags" : [
           "test-data-controller"
         ]
@@ -1034,10 +1136,11 @@
     },
     "/api/tdm/occupy" : {
       "put" : {
-        "description" : "Occupy test data.",
+        "description" : "Marks the rows as occupied by the user in occupiedBy and records the occupation in the statistics.",
         "operationId" : "occupyTestData",
         "parameters" : [
           {
+            "description" : "Database table name of the test data table.",
             "in" : "query",
             "name" : "tableName",
             "required" : true,
@@ -1046,6 +1149,7 @@
             }
           },
           {
+            "description" : "Name of the user who occupies the rows.",
             "in" : "query",
             "name" : "occupiedBy",
             "required" : true,
@@ -1059,6 +1163,7 @@
             "application/json" : {
               "schema" : {
                 "type" : "array",
+                "description" : "ROW_ID values of the rows.",
                 "items" : {
                   "type" : "string",
                   "format" : "uuid"
@@ -1073,6 +1178,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Occupy rows by ID",
         "tags" : [
           "test-data-controller"
         ]
@@ -1080,6 +1186,7 @@
     },
     "/api/tdm/projects/lazy" : {
       "get" : {
+        "description" : "Returns the ID and name of each project in PROJECTS_INFO.",
         "operationId" : "getProjects",
         "responses" : {
           "200" : {
@@ -1096,6 +1203,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "List projects",
         "tags" : [
           "environments-controller"
         ]
@@ -1103,9 +1211,11 @@
     },
     "/api/tdm/projects/{projectId}/environments/lazy" : {
       "get" : {
+        "description" : "Returns each environment of the project with the IDs of its systems.",
         "operationId" : "getLazyEnvironments",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "path",
             "name" : "projectId",
             "required" : true,
@@ -1130,6 +1240,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "List the environments of a project",
         "tags" : [
           "environments-controller"
         ]
@@ -1137,9 +1248,11 @@
     },
     "/api/tdm/projects/{projectId}/environments/lazy/refresh" : {
       "get" : {
+        "description" : "Returns the same list as GET /api/tdm/projects/{projectId}/environments/lazy. Environments are read from the database on each request.",
         "operationId" : "getLazyEnvironmentsRefresh",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "path",
             "name" : "projectId",
             "required" : true,
@@ -1164,6 +1277,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Reload the environments of a project",
         "tags" : [
           "environments-controller"
         ]
@@ -1171,10 +1285,11 @@
     },
     "/api/tdm/release" : {
       "put" : {
-        "description" : "Release test data.",
+        "description" : "Makes the rows available again and removes their occupation records from the statistics.",
         "operationId" : "releaseTestData",
         "parameters" : [
           {
+            "description" : "Database table name of the test data table.",
             "in" : "query",
             "name" : "tableName",
             "required" : true,
@@ -1188,6 +1303,7 @@
             "application/json" : {
               "schema" : {
                 "type" : "array",
+                "description" : "ROW_ID values of the rows.",
                 "items" : {
                   "type" : "string",
                   "format" : "uuid"
@@ -1202,6 +1318,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Release rows by ID",
         "tags" : [
           "test-data-controller"
         ]
@@ -1209,13 +1326,14 @@
     },
     "/api/tdm/resolve/discrepancy/testDataFlagsTableAndTestDataTableCatalog" : {
       "get" : {
-        "description" : "Resolve discrepancy TestDataFlagsTable and TestDataTableCatalog.",
+        "description" : "Adds default validation flags for catalog tables that have none, and deletes flags of tables that are not in the catalog.",
         "operationId" : "resolveDiscrepancyTestDataFlagsTableAndTestDataTableCatalog",
         "responses" : {
           "200" : {
             "description" : "OK"
           }
         },
+        "summary" : "Align the flags table with the catalog",
         "tags" : [
           "test-data-controller"
         ]
@@ -1223,7 +1341,7 @@
     },
     "/api/tdm/rest/add-info-to-row" : {
       "post" : {
-        "description" : "ATP Action. Add info to row in table.",
+        "description" : "For each request in add-info-to-row-requests, appends each value in record-with-data-for-update on a new line to the current value of its column, in every row that matches search-row-parameters-set, and returns the number of updated rows.",
         "operationId" : "addInfoToRow",
         "requestBody" : {
           "content" : {
@@ -1250,6 +1368,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Add values to rows",
         "tags" : [
           "atp-action-controller"
         ]
@@ -1257,7 +1376,7 @@
     },
     "/api/tdm/rest/create-env" : {
       "delete" : {
-        "description" : "ATP Action. Delete a dynamic environment or a single system within it.",
+        "description" : "Deletes the system in systemDeleteName, or the whole environment when systemDeleteName is not set. Returns HTTP 404 when the environment does not exist.",
         "operationId" : "deleteEnvironment",
         "requestBody" : {
           "content" : {
@@ -1291,12 +1410,13 @@
             "description" : "Not Found"
           }
         },
+        "summary" : "Delete an environment or a system",
         "tags" : [
           "atp-env-controller"
         ]
       },
       "post" : {
-        "description" : "ATP Action. Create dynamic environment with system and connection.",
+        "description" : "Creates the environment with the system and its connection, or adds the system to an existing environment. Returns HTTP 400 when the system already exists.",
         "operationId" : "createEnvironment",
         "requestBody" : {
           "content" : {
@@ -1330,12 +1450,13 @@
             "description" : "Not Found"
           }
         },
+        "summary" : "Create an environment or add a system",
         "tags" : [
           "atp-env-controller"
         ]
       },
       "put" : {
-        "description" : "ATP Action. Update connection parameters for an existing dynamic environment.",
+        "description" : "Replaces the connection of the system, and renames the environment to newEnvName or the system to newSystemName when they are set.",
         "operationId" : "updateEnvironment",
         "requestBody" : {
           "content" : {
@@ -1369,6 +1490,7 @@
             "description" : "Not Found"
           }
         },
+        "summary" : "Update a connection, or rename an environment or system",
         "tags" : [
           "atp-env-controller"
         ]
@@ -1376,8 +1498,8 @@
     },
     "/api/tdm/rest/get-record" : {
       "post" : {
-        "description" : "ATP Action. Get test data from table.",
-        "operationId" : "getTestData_1",
+        "description" : "For each request in get-row-requests, returns the value of name-column-response from the first available row that matches search-row-parameters-set. The row is not occupied.",
+        "operationId" : "atpGetTestData",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1403,6 +1525,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Read one column of a row",
         "tags" : [
           "atp-action-controller"
         ]
@@ -1410,7 +1533,7 @@
     },
     "/api/tdm/rest/get-records" : {
       "post" : {
-        "description" : "ATP Action. Get multiple column test data from table.",
+        "description" : "For each request in get-row-requests, returns the values of response-column-names from the first available row that matches search-row-parameters-set, as a JSON object. The row is not occupied.",
         "operationId" : "getMultipleColumnTestData",
         "requestBody" : {
           "content" : {
@@ -1437,6 +1560,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Read several columns of a row",
         "tags" : [
           "atp-action-controller"
         ]
@@ -1444,7 +1568,7 @@
     },
     "/api/tdm/rest/insert-records" : {
       "post" : {
-        "description" : "ATP Action. Insert records to table.",
+        "description" : "Inserts the rows from insert-records. When no table with this title exists, creates the table first.",
         "operationId" : "insertTestData",
         "requestBody" : {
           "content" : {
@@ -1468,6 +1592,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Insert rows into a table",
         "tags" : [
           "atp-action-controller"
         ]
@@ -1475,8 +1600,8 @@
     },
     "/api/tdm/rest/occupy-records" : {
       "post" : {
-        "description" : "ATP Action. Occupy test data in table.",
-        "operationId" : "occupyTestData_1",
+        "description" : "For each request in occupy-row-requests, occupies the first available row that matches search-row-parameters-set and returns the value of name-column-response. The row is marked as occupied by ATP_User.",
+        "operationId" : "atpOccupyTestData",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1502,6 +1627,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Occupy rows and return one column",
         "tags" : [
           "atp-action-controller"
         ]
@@ -1509,7 +1635,7 @@
     },
     "/api/tdm/rest/occupy-records-full-row" : {
       "post" : {
-        "description" : "ATP Action. Occupy test data in table.",
+        "description" : "For each request in occupy-full-row-requests, occupies the first available row that matches search-row-parameters-set and returns the values of response-column-names as a JSON object. The row stays available when one of the columns does not exist. The row is marked as occupied by ATP_User.",
         "operationId" : "occupyTestDataFullRow",
         "requestBody" : {
           "content" : {
@@ -1536,6 +1662,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Occupy rows and return several columns",
         "tags" : [
           "atp-action-controller"
         ]
@@ -1543,7 +1670,7 @@
     },
     "/api/tdm/rest/refresh-tables" : {
       "post" : {
-        "description" : "ATP Action. Refresh tables by name.",
+        "description" : "Runs the refresh query of the table with this title in the system, or of every table with this title in the project when envName or systemName is missing.",
         "operationId" : "refreshTables",
         "requestBody" : {
           "content" : {
@@ -1570,6 +1697,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Refresh tables by title",
         "tags" : [
           "atp-action-controller"
         ]
@@ -1577,8 +1705,8 @@
     },
     "/api/tdm/rest/release-records" : {
       "post" : {
-        "description" : "ATP Action. Release test data in table.",
-        "operationId" : "releaseTestData_1",
+        "description" : "For each request in release-row-requests, releases the occupied row that matches search-row-parameters-set and returns the value of name-column-response. The request fails when more than one occupied row matches.",
+        "operationId" : "atpReleaseTestData",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1604,6 +1732,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Release occupied rows",
         "tags" : [
           "atp-action-controller"
         ]
@@ -1611,7 +1740,6 @@
     },
     "/api/tdm/rest/release-records/bulk" : {
       "post" : {
-        "description" : "ATP Action. Release test data in table.",
         "operationId" : "releaseFullTestData",
         "requestBody" : {
           "content" : {
@@ -1638,6 +1766,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Release all occupied rows of a table",
         "tags" : [
           "atp-action-controller"
         ]
@@ -1645,7 +1774,7 @@
     },
     "/api/tdm/rest/resolve-table" : {
       "post" : {
-        "description" : "ATP Action. Resolves Table Name based on environment and table title.",
+        "description" : "Returns the name of the database table that stores the table with this title. All four fields are required; a missing field or an unknown table returns HTTP 400.",
         "operationId" : "resolveTableName",
         "requestBody" : {
           "content" : {
@@ -1669,6 +1798,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get the database table name of a table",
         "tags" : [
           "atp-action-controller"
         ]
@@ -1676,7 +1806,7 @@
     },
     "/api/tdm/rest/run-cleanup-table" : {
       "post" : {
-        "description" : "ATP Action. Run cleanup for table.",
+        "description" : "Runs the cleanup configured for the table, and returns the number of removed rows. Unlike the other operations, projectName must hold the project ID.",
         "operationId" : "runCleanupForTable",
         "requestBody" : {
           "content" : {
@@ -1703,6 +1833,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Run the cleanup of a table",
         "tags" : [
           "atp-action-controller"
         ]
@@ -1710,7 +1841,7 @@
     },
     "/api/tdm/rest/truncate-table" : {
       "post" : {
-        "description" : "ATP Action. Truncate table.",
+        "description" : "Unlike the other operations, projectName must hold the project ID.",
         "operationId" : "truncateTable",
         "requestBody" : {
           "content" : {
@@ -1737,6 +1868,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Delete all rows of a table",
         "tags" : [
           "atp-action-controller"
         ]
@@ -1744,7 +1876,7 @@
     },
     "/api/tdm/rest/update-records" : {
       "post" : {
-        "description" : "ATP Action. Update test data in table.",
+        "description" : "For each request in update-row-requests, sets the columns in record-with-data-for-update to the given values in every row that matches search-row-parameters-set, and returns the number of updated rows.",
         "operationId" : "updateTestData",
         "requestBody" : {
           "content" : {
@@ -1771,6 +1903,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Update rows",
         "tags" : [
           "atp-action-controller"
         ]
@@ -1778,10 +1911,11 @@
     },
     "/api/tdm/statistics/available/column/configuration" : {
       "get" : {
-        "description" : "Get available data by column configuration.",
+        "description" : "Returns the settings of the available-data-by-column statistics for a system in an environment, with the column names of the system tables to choose from.",
         "operationId" : "getAvailableDataStatsConfig",
         "parameters" : [
           {
+            "description" : "System ID.",
             "in" : "query",
             "name" : "systemId",
             "required" : true,
@@ -1791,6 +1925,7 @@
             }
           },
           {
+            "description" : "Environment ID.",
             "in" : "query",
             "name" : "environmentId",
             "required" : true,
@@ -1812,12 +1947,12 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get the available-data-by-column settings",
         "tags" : [
           "statistics-controller"
         ]
       },
       "post" : {
-        "description" : "Set available data by column configuration.",
         "operationId" : "saveAvailableDataStatsConfig",
         "requestBody" : {
           "content" : {
@@ -1834,6 +1969,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Save the available-data-by-column settings",
         "tags" : [
           "statistics-controller"
         ]
@@ -1841,10 +1977,11 @@
     },
     "/api/tdm/statistics/data/available" : {
       "get" : {
-        "description" : "Get test data availability.",
+        "description" : "Returns, for each table, the number of available rows, occupied rows, rows occupied today, and all rows.",
         "operationId" : "getTestDataAvailability",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -1854,6 +1991,7 @@
             }
           },
           {
+            "description" : "System ID. When omitted, covers all systems of the project.",
             "in" : "query",
             "name" : "systemId",
             "required" : false,
@@ -1878,6 +2016,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get available and occupied row counts",
         "tags" : [
           "statistics-controller"
         ]
@@ -1885,10 +2024,11 @@
     },
     "/api/tdm/statistics/data/created/when" : {
       "get" : {
-        "description" : "Get test data by created when date.",
+        "description" : "Returns, for each table, how many rows were created in each part of the period. The values are split into days, weeks, months, or years, depending on the length of the period.",
         "operationId" : "getTestDataCreatedWhen",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -1898,6 +2038,7 @@
             }
           },
           {
+            "description" : "System ID. When omitted, covers all systems of the project.",
             "in" : "query",
             "name" : "systemId",
             "required" : false,
@@ -1907,6 +2048,7 @@
             }
           },
           {
+            "description" : "First day of the period, as yyyy-MM-dd.",
             "in" : "query",
             "name" : "dateFrom",
             "required" : true,
@@ -1915,6 +2057,7 @@
             }
           },
           {
+            "description" : "Last day of the period, as yyyy-MM-dd.",
             "in" : "query",
             "name" : "dateTo",
             "required" : true,
@@ -1935,6 +2078,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get the number of created rows per period",
         "tags" : [
           "statistics-controller"
         ]
@@ -1942,10 +2086,11 @@
     },
     "/api/tdm/statistics/data/occupied" : {
       "get" : {
-        "description" : "Get test data consumption.",
+        "description" : "Returns, for each table, how many rows were occupied in each part of the period. The values are split into days, weeks, months, or years, depending on the length of the period.",
         "operationId" : "getTestDataConsumption",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -1955,6 +2100,7 @@
             }
           },
           {
+            "description" : "System ID. When omitted, covers all systems of the project.",
             "in" : "query",
             "name" : "systemId",
             "required" : false,
@@ -1964,6 +2110,7 @@
             }
           },
           {
+            "description" : "First day of the period, as yyyy-MM-dd.",
             "in" : "query",
             "name" : "dateFrom",
             "required" : true,
@@ -1972,6 +2119,7 @@
             }
           },
           {
+            "description" : "Last day of the period, as yyyy-MM-dd.",
             "in" : "query",
             "name" : "dateTo",
             "required" : true,
@@ -1992,6 +2140,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get the number of occupied rows per period",
         "tags" : [
           "statistics-controller"
         ]
@@ -1999,10 +2148,11 @@
     },
     "/api/tdm/statistics/data/occupied/available" : {
       "get" : {
-        "description" : "Get available data by column",
+        "description" : "Returns, for each table of the system, the number of available rows per value of the configured columns. Fails when the settings of this statistics are not saved for the system and environment.",
         "operationId" : "getAvailableData",
         "parameters" : [
           {
+            "description" : "System ID.",
             "in" : "query",
             "name" : "systemId",
             "required" : true,
@@ -2012,6 +2162,7 @@
             }
           },
           {
+            "description" : "Environment ID.",
             "in" : "query",
             "name" : "environmentId",
             "required" : true,
@@ -2033,6 +2184,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get available rows by column value",
         "tags" : [
           "statistics-controller"
         ]
@@ -2040,7 +2192,7 @@
     },
     "/api/tdm/statistics/data/occupied/users" : {
       "post" : {
-        "description" : "Get statistics by users.",
+        "description" : "Returns a page of occupation records by user for the project and the period in the request body. dateTo must be later than dateFrom; otherwise the request returns HTTP 400.",
         "operationId" : "getStatisticsByUsers",
         "requestBody" : {
           "content" : {
@@ -2064,6 +2216,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get rows occupied by users",
         "tags" : [
           "statistics-controller"
         ]
@@ -2071,10 +2224,11 @@
     },
     "/api/tdm/statistics/data/outdated" : {
       "get" : {
-        "description" : "Get test data consumption with outdated.",
+        "description" : "Returns, for each table, how many rows were created, consumed, and outdated in each part of the period. Rows occupied on or after dateFrom plus expirationDate days are counted as outdated. The values are split into days, weeks, months, or years, depending on the length of the period.",
         "operationId" : "getTestDataConsumptionWhitOutdated",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -2084,6 +2238,7 @@
             }
           },
           {
+            "description" : "System ID. When omitted, covers all systems of the project.",
             "in" : "query",
             "name" : "systemId",
             "required" : false,
@@ -2093,6 +2248,7 @@
             }
           },
           {
+            "description" : "First day of the period, as yyyy-MM-dd.",
             "in" : "query",
             "name" : "dateFrom",
             "required" : true,
@@ -2101,6 +2257,7 @@
             }
           },
           {
+            "description" : "Last day of the period, as yyyy-MM-dd.",
             "in" : "query",
             "name" : "dateTo",
             "required" : true,
@@ -2109,6 +2266,7 @@
             }
           },
           {
+            "description" : "Number of days after dateFrom from which occupied rows count as outdated.",
             "in" : "query",
             "name" : "expirationDate",
             "required" : true,
@@ -2129,6 +2287,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get created, consumed, and outdated row counts per period",
         "tags" : [
           "statistics-controller"
         ]
@@ -2136,7 +2295,7 @@
     },
     "/api/tdm/statistics/delete/schedule" : {
       "put" : {
-        "description" : "Delete schedule for statistics monitoring.",
+        "description" : "Deletes the schedule of the project in projectId and stops the report. Only projectId is read from the request body.",
         "operationId" : "deleteScheduledRun",
         "requestBody" : {
           "content" : {
@@ -2153,6 +2312,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Delete the statistics report schedule",
         "tags" : [
           "statistics-controller"
         ]
@@ -2160,7 +2320,6 @@
     },
     "/api/tdm/statistics/delete/schedule/users" : {
       "put" : {
-        "description" : "Delete schedule for statistics users monitoring.",
         "operationId" : "deleteUsersScheduledRun",
         "requestBody" : {
           "content" : {
@@ -2177,6 +2336,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Delete the users report schedule",
         "tags" : [
           "statistics-controller"
         ]
@@ -2184,7 +2344,7 @@
     },
     "/api/tdm/statistics/fix/occupied/date/column" : {
       "get" : {
-        "description" : "Old update.",
+        "description" : "Adds the OCCUPIED_DATE column to every test data table that lacks it, and returns the table names. A migration for tables created before the column existed.",
         "operationId" : "alterOccupiedDateColumn",
         "responses" : {
           "200" : {
@@ -2201,6 +2361,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Add the OCCUPIED_DATE column to all tables",
         "tags" : [
           "statistics-controller"
         ]
@@ -2208,10 +2369,11 @@
     },
     "/api/tdm/statistics/next/run" : {
       "get" : {
-        "description" : "Get next run's date / time details.",
-        "operationId" : "getNextScheduledRun",
+        "description" : "Returns the next time the Quartz cron expression fires after now, in the nextRun field, in \"EEE MMM dd HH:mm:ss zzz yyyy\" format.",
+        "operationId" : "getNextStatisticsRun",
         "parameters" : [
           {
+            "description" : "Quartz cron expression, starting with the seconds field.",
             "in" : "query",
             "name" : "cronExpression",
             "required" : true,
@@ -2235,6 +2397,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get the next run time of a schedule",
         "tags" : [
           "statistics-controller"
         ]
@@ -2242,10 +2405,11 @@
     },
     "/api/tdm/statistics/schedule" : {
       "get" : {
-        "description" : "Get statistics monitoring schedule.",
+        "description" : "Returns the schedule, recipients, and threshold of the project statistics report. The report splits the tables into those with at least threshold available rows and those with fewer. Returns a disabled schedule with empty fields when the project has none.",
         "operationId" : "getMonitoringSchedule",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -2267,12 +2431,13 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get the statistics report schedule",
         "tags" : [
           "statistics-controller"
         ]
       },
       "post" : {
-        "description" : "Setup next run in schedule for statistics monitoring.",
+        "description" : "Saves the schedule of the project statistics report and reschedules it. cronExpression is a Quartz cron expression.",
         "operationId" : "setupScheduledRun",
         "requestBody" : {
           "content" : {
@@ -2289,6 +2454,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Save the statistics report schedule",
         "tags" : [
           "statistics-controller"
         ]
@@ -2296,10 +2462,10 @@
     },
     "/api/tdm/statistics/schedule/available" : {
       "delete" : {
-        "description" : "Delete available data monitoring configuration.",
         "operationId" : "deleteAvailableDataMonitoringConfig",
         "parameters" : [
           {
+            "description" : "System ID.",
             "in" : "query",
             "name" : "systemId",
             "required" : true,
@@ -2309,6 +2475,7 @@
             }
           },
           {
+            "description" : "Environment ID.",
             "in" : "query",
             "name" : "environmentId",
             "required" : true,
@@ -2323,15 +2490,16 @@
             "description" : "OK"
           }
         },
+        "summary" : "Delete the available-data report schedule",
         "tags" : [
           "statistics-controller"
         ]
       },
       "get" : {
-        "description" : "Get available data monitoring configuration.",
         "operationId" : "getAvailableDataMonitoringConfig",
         "parameters" : [
           {
+            "description" : "System ID.",
             "in" : "query",
             "name" : "systemId",
             "required" : true,
@@ -2341,6 +2509,7 @@
             }
           },
           {
+            "description" : "Environment ID.",
             "in" : "query",
             "name" : "environmentId",
             "required" : true,
@@ -2362,12 +2531,12 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get the available-data report schedule",
         "tags" : [
           "statistics-controller"
         ]
       },
       "post" : {
-        "description" : "Save available data monitoring configuration.",
         "operationId" : "saveAvailableDataMonitoringConfig",
         "requestBody" : {
           "content" : {
@@ -2384,6 +2553,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Save the available-data report schedule",
         "tags" : [
           "statistics-controller"
         ]
@@ -2391,10 +2561,11 @@
     },
     "/api/tdm/statistics/schedule/users" : {
       "get" : {
-        "description" : "Get statistics users monitoring schedule.",
+        "description" : "Returns the schedule and settings of the report on rows occupied by users. Returns a disabled schedule with empty fields when the project has none.",
         "operationId" : "getUsersMonitoringSchedule",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -2416,12 +2587,12 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get the users report schedule",
         "tags" : [
           "statistics-controller"
         ]
       },
       "post" : {
-        "description" : "Setup next run in schedule for statistics users monitoring.",
         "operationId" : "setupUsersScheduledRun",
         "requestBody" : {
           "content" : {
@@ -2438,6 +2609,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Save the users report schedule",
         "tags" : [
           "statistics-controller"
         ]
@@ -2445,7 +2617,7 @@
     },
     "/api/tdm/statistics/threshold" : {
       "get" : {
-        "description" : "Get threshold for statistics.",
+        "description" : "Returns the default threshold of available rows for the statistics report: the value of the test.data.initial.threshold property, 10 by default.",
         "operationId" : "getThreshold",
         "responses" : {
           "200" : {
@@ -2460,6 +2632,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get the default report threshold",
         "tags" : [
           "statistics-controller"
         ]
@@ -2467,10 +2640,11 @@
     },
     "/api/tdm/table" : {
       "delete" : {
-        "description" : "Drop selected table.",
+        "description" : "Drops the database table, removes it from the catalog, and stops its scheduled refresh.",
         "operationId" : "deleteTestData",
         "parameters" : [
           {
+            "description" : "Database table name of the test data table.",
             "in" : "query",
             "name" : "tableName",
             "required" : true,
@@ -2484,12 +2658,13 @@
             "description" : "OK"
           }
         },
+        "summary" : "Delete a table",
         "tags" : [
           "test-data-controller"
         ]
       },
       "post" : {
-        "description" : "Get test data table.",
+        "description" : "Returns a page of rows that match the filters in the request body, sorted as requested, from the available rows or, with occupied set, from the occupied rows.",
         "operationId" : "getTestData",
         "requestBody" : {
           "content" : {
@@ -2513,6 +2688,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Read rows of a table",
         "tags" : [
           "test-data-controller"
         ]
@@ -2520,10 +2696,11 @@
     },
     "/api/tdm/table/column/distinct/values" : {
       "get" : {
-        "description" : "Get column distinct values.",
+        "description" : "Returns the distinct values of the column among the available rows, or among the occupied rows when occupied is true.",
         "operationId" : "getColumnDistinctValues",
         "parameters" : [
           {
+            "description" : "Database table name of the test data table.",
             "in" : "query",
             "name" : "tableName",
             "required" : true,
@@ -2532,6 +2709,7 @@
             }
           },
           {
+            "description" : "Name of the column.",
             "in" : "query",
             "name" : "columnName",
             "required" : true,
@@ -2540,6 +2718,7 @@
             }
           },
           {
+            "description" : "Reads the occupied rows instead of the available ones.",
             "in" : "query",
             "name" : "occupied",
             "required" : true,
@@ -2560,6 +2739,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "List the distinct values of a column",
         "tags" : [
           "test-data-controller"
         ]
@@ -2567,10 +2747,11 @@
     },
     "/api/tdm/table/environments" : {
       "get" : {
-        "description" : "Returns a list of environment IDs that have tables with the requested table title for the specified project.",
+        "description" : "Returns the IDs of the environments that have a table with this title in the project.",
         "operationId" : "getTableEnvironments",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -2580,6 +2761,7 @@
             }
           },
           {
+            "description" : "Title of the table.",
             "in" : "query",
             "name" : "tableTitle",
             "required" : true,
@@ -2600,6 +2782,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "List the environments of a table title",
         "tags" : [
           "test-data-controller"
         ]
@@ -2607,10 +2790,11 @@
     },
     "/api/tdm/table/row" : {
       "get" : {
-        "description" : "Get row value.",
+        "description" : "Returns the first row of the table with this title whose column equals searchValue, case-sensitively.",
         "operationId" : "getTableRow",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -2620,6 +2804,7 @@
             }
           },
           {
+            "description" : "System ID.",
             "in" : "query",
             "name" : "systemId",
             "required" : false,
@@ -2629,6 +2814,7 @@
             }
           },
           {
+            "description" : "Title of the table.",
             "in" : "query",
             "name" : "tableTitle",
             "required" : true,
@@ -2637,6 +2823,7 @@
             }
           },
           {
+            "description" : "Name of the column to search in.",
             "in" : "query",
             "name" : "columnName",
             "required" : true,
@@ -2645,6 +2832,7 @@
             }
           },
           {
+            "description" : "Value to search for.",
             "in" : "query",
             "name" : "searchValue",
             "required" : true,
@@ -2653,6 +2841,7 @@
             }
           },
           {
+            "description" : "Searches the occupied rows instead of the available ones.",
             "in" : "query",
             "name" : "occupied",
             "required" : false,
@@ -2676,6 +2865,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Find a row by column value",
         "tags" : [
           "test-data-controller"
         ]
@@ -2683,10 +2873,11 @@
     },
     "/api/tdm/tables/catalog" : {
       "get" : {
-        "description" : "Get test data tables catalog.",
+        "description" : "Returns the catalog entries of the tables, with the import query and timeout of tables imported by SQL.",
         "operationId" : "getTestDataTablesCatalog",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -2696,6 +2887,7 @@
             }
           },
           {
+            "description" : "System ID. When omitted, lists the tables of all systems.",
             "in" : "query",
             "name" : "systemId",
             "required" : false,
@@ -2720,6 +2912,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "List the tables of a project",
         "tags" : [
           "test-data-controller"
         ]
@@ -2727,10 +2920,11 @@
     },
     "/api/tdm/tables/list" : {
       "get" : {
-        "description" : "Get tables under project.",
+        "description" : "Returns the project ID and the database table names of its tables.",
         "operationId" : "getTestDataTablesList",
         "parameters" : [
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -2752,6 +2946,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "List the table names of a project",
         "tags" : [
           "test-data-controller"
         ]
@@ -2759,10 +2954,11 @@
     },
     "/api/tdm/truncate/table" : {
       "delete" : {
-        "description" : "Truncate data in table.",
+        "description" : "Returns HTTP 400 when the project, or the system when given, has no table with this name.",
         "operationId" : "truncateDataInTable",
         "parameters" : [
           {
+            "description" : "Database table name of the test data table.",
             "in" : "query",
             "name" : "tableName",
             "required" : true,
@@ -2771,6 +2967,7 @@
             }
           },
           {
+            "description" : "Project ID.",
             "in" : "query",
             "name" : "projectId",
             "required" : true,
@@ -2780,6 +2977,7 @@
             }
           },
           {
+            "description" : "System ID.",
             "in" : "query",
             "name" : "systemId",
             "required" : false,
@@ -2801,6 +2999,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Delete all rows of a table",
         "tags" : [
           "test-data-controller"
         ]
@@ -2808,7 +3007,7 @@
     },
     "/api/tdm/update/sql" : {
       "post" : {
-        "description" : "Update existing table by sql.",
+        "description" : "Runs the query against the database of the system and updates the table rows from its result. The query and timeout are saved with the table.",
         "operationId" : "updateTableBySql",
         "requestBody" : {
           "content" : {
@@ -2832,6 +3031,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Update rows with an SQL query",
         "tags" : [
           "test-data-controller"
         ]
@@ -2839,8 +3039,8 @@
     },
     "/api/tdm/v2/import/sql" : {
       "post" : {
-        "description" : "Import sql to TDM v2 - with request body.",
-        "operationId" : "importSqlTestData",
+        "description" : "Does what POST /api/tdm/import/sql does, with the parameters in the request body. For each environment, runs the query against the database of the system with this name, and adds the result to the table with this title, or creates the table.",
+        "operationId" : "importSqlTestDataV2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2866,6 +3066,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Import rows with an SQL query",
         "tags" : [
           "test-data-controller-v2"
         ]
@@ -2873,10 +3074,10 @@
     },
     "/api/tdm/validation/unoccupied" : {
       "get" : {
-        "description" : "Check flag 'is unoccupied validation'.",
         "operationId" : "isUnoccupiedValidation",
         "parameters" : [
           {
+            "description" : "Database table name of the test data table.",
             "in" : "query",
             "name" : "tableName",
             "required" : true,
@@ -2897,6 +3098,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get the validation flags of a table",
         "tags" : [
           "test-data-controller"
         ]
@@ -2917,6 +3119,7 @@
             "description" : "OK"
           }
         },
+        "summary" : "Get the service name and version",
         "tags" : [
           "versions-controller"
         ]

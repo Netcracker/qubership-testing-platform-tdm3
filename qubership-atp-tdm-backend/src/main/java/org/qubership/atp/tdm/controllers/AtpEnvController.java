@@ -34,10 +34,14 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Nonnull;
 
 @RequestMapping("/api/tdm/rest/create-env")
 @RestController
+@Tag(name = "atp-env-controller", description = "Dynamic environments: environments, systems, and connections "
+        + "created at run time and stored in the database. The project must be listed in PROJECTS_INFO. The "
+        + "request body can hold the fields at the top level or inside an environment object.")
 public class AtpEnvController {
 
     private final DynamicEnvironmentService service;
@@ -47,7 +51,9 @@ public class AtpEnvController {
         this.service = service;
     }
 
-    @Operation(description = "ATP Action. Create dynamic environment with system and connection.")
+    @Operation(summary = "Create an environment or add a system",
+            description = "Creates the environment with the system and its connection, or adds the system to "
+                    + "an existing environment. Returns HTTP 400 when the system already exists.")
     @AuditAction(auditAction = "ATP Action. Create environment {{#request.envName}} "
             + "in project {{#request.projectName}}")
     @PostMapping
@@ -56,7 +62,9 @@ public class AtpEnvController {
                 request.getSystemName(), request.getConnection());
     }
 
-    @Operation(description = "ATP Action. Update connection parameters for an existing dynamic environment.")
+    @Operation(summary = "Update a connection, or rename an environment or system",
+            description = "Replaces the connection of the system, and renames the environment to newEnvName "
+                    + "or the system to newSystemName when they are set.")
     @AuditAction(auditAction = "ATP Action. Update environment {{#request.envName}} "
             + "in project {{#request.projectName}}")
     @PutMapping
@@ -66,7 +74,9 @@ public class AtpEnvController {
                 request.getNewEnvName(), request.getNewSystemName());
     }
 
-    @Operation(description = "ATP Action. Delete a dynamic environment or a single system within it.")
+    @Operation(summary = "Delete an environment or a system",
+            description = "Deletes the system in systemDeleteName, or the whole environment when "
+                    + "systemDeleteName is not set. Returns HTTP 404 when the environment does not exist.")
     @AuditAction(auditAction = "ATP Action. Delete environment {{#request.envName}} "
             + "in project {{#request.projectName}}")
     @DeleteMapping

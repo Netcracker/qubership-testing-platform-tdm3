@@ -39,10 +39,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.Gson;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Nonnull;
 
 @RequestMapping("/api/tdm/cleanup")
 @RestController()
+@Tag(name = "data-cleanup-controller", description = "Cleanup settings of test data tables: which rows to "
+        + "delete, found by an SQL query, a date, or a cleaner class, and the cron schedule to do it on.")
 public class DataCleanupController /* implements DataCleanupControllerApi */ {
 
     private final CleanupService cleanupService;
@@ -58,13 +62,16 @@ public class DataCleanupController /* implements DataCleanupControllerApi */ {
      * @param id - cleanup config id
      * @return cleanup configuration object
      */
-    @Operation(description = "Get cleanup configuration for specified dataset / table ID.")
+    @Operation(summary = "Get cleanup settings",
+            description = "Returns the cleanup configuration and the environments of the tables that use it. "
+                    + "tableName is not set in the response.")
     @PreAuthorize("@entityAccess.checkAccess("
             + "T(org.qubership.atp.tdm.utils.UsersManagementEntities).TEST_DATA.getName(),"
             + "@catalogRepository.findAllByCleanupConfigId(#id).get(0).getProjectId(), 'READ')")
     @AuditAction(auditAction = "Get cleanup configuration by id {{#id}}")
     @GetMapping(path = {"/config/{id}"})
-    public ResponseEntity<CleanupSettings> getCleanupConfig(@PathVariable("id") UUID id) {
+    public ResponseEntity<CleanupSettings> getCleanupConfig(
+            @Parameter(description = "Cleanup configuration ID.") @PathVariable("id") UUID id) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
                 .body(cleanupService.getCleanupSettings(id));
     }
@@ -76,7 +83,11 @@ public class DataCleanupController /* implements DataCleanupControllerApi */ {
      * @return CleanupSettings object after saving
      * @throws Exception in case errors while settings saving.
      */
-    @Operation(description = "Save / update data cleanup settings.")
+    @Operation(summary = "Save cleanup settings",
+            description = "Saves the cleanup configuration for the table in tableName and for the tables of the "
+                    + "same system in the environments listed in environmentsList, and schedules it. "
+                    + "queryTimeout must be between 1 and EXTERNAL_QUERY_MAX_TIMEOUT seconds (3600 by default); a "
+                    + "value out of range returns HTTP 400.")
     @PreAuthorize("@entityAccess.checkAccess("
             + "T(org.qubership.atp.tdm.utils.UsersManagementEntities).TEST_DATA.getName(),"
             + "@catalogRepository.findByTableName(#cleanupConfig.tableName).getProjectId(), 'CREATE')")
@@ -94,7 +105,10 @@ public class DataCleanupController /* implements DataCleanupControllerApi */ {
      * @return List of CleanupResults produced by cleanup run
      * @throws Exception in case errors while cleanup running.
      */
-    @Operation(description = "Force run data cleanup.")
+    @Operation(summary = "Run a cleanup now",
+            description = "Runs the cleanup configuration from the request body, without saving it, on the table "
+                    + "in tableName and on the tables of the same system in the environments listed in "
+                    + "environmentsList. Returns the number of checked and removed rows per table.")
     @PreAuthorize("@entityAccess.checkAccess("
             + "T(org.qubership.atp.tdm.utils.UsersManagementEntities).TEST_DATA.getName(),"
             + "@catalogRepository.findByTableName(#cleanupConfig.tableName).getProjectId(), 'CREATE')")
@@ -111,15 +125,22 @@ public class DataCleanupController /* implements DataCleanupControllerApi */ {
      * @return ResponseEntity of String message that contains details
      * @throws ParseException Thrown in case if invalid cron expression was provided.
      */
-    @Operation(description = "Get next run's date / time details.")
+    @Operation(operationId = "getNextCleanupRun", summary = "Get the next run time of a schedule",
+            description = "Returns the next time the Quartz cron expression fires after now, as a JSON string "
+                    + "in \"EEE MMM dd HH:mm:ss zzz yyyy\" format.")
     @AuditAction(auditAction = "Get next run's date. cron {{#cronExpression}}")
     @GetMapping(value = "/next/run")
-    public ResponseEntity<String> getNextScheduledRun(@RequestParam("cronExpression") String cronExpression)
+    public ResponseEntity<String> getNextScheduledRun(
+            @Parameter(description = "Quartz cron expression, starting with the seconds field.")
+            @RequestParam("cronExpression") String cronExpression)
             throws ParseException {
         return ResponseEntity.ok(new Gson().toJson(cleanupService.getNextScheduledRun(cronExpression)));
     }
 
-    @Operation(description = "Old update.")
+    @Operation(summary = "Fill in the cleanup type of existing configurations",
+            description = "Sets the type of every cleanup configuration from the field it uses: DATE when "
+                    + "searchDate is set, otherwise SQL when searchSql is set, otherwise CLASS when searchClass is "
+                    + "set. A migration for configurations saved before the type existed.")
     @AuditAction(auditAction = "Old update.")
     @GetMapping(path = "/fill/cleanup/type")
     public void fillCleanupTypeColumn() {
