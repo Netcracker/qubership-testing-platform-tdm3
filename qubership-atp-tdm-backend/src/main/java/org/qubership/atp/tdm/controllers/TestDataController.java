@@ -434,7 +434,7 @@ public class TestDataController /* implements TestDataControllerApi */ {
     }
 
     /**
-     * Replaces macroses (related to internal TDM table) with real values.
+     * Replaces macros (related to internal TDM table) with real values.
      *
      * @param tableName - table name
      * @param query     - source query
