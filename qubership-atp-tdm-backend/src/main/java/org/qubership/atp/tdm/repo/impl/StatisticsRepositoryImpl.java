@@ -35,6 +35,7 @@ import org.qubership.atp.tdm.model.statistics.GeneralStatisticsItem;
 import org.qubership.atp.tdm.model.statistics.OutdatedStatistics;
 import org.qubership.atp.tdm.model.statistics.OutdatedStatisticsInner;
 import org.qubership.atp.tdm.model.statistics.OutdatedStatisticsItem;
+import org.qubership.atp.tdm.model.statistics.StatisticsInterval;
 import org.qubership.atp.tdm.model.statistics.StatisticsItem;
 import org.qubership.atp.tdm.model.statistics.report.StatisticsReport;
 import org.qubership.atp.tdm.repo.ProjectInformationRepository;
@@ -120,7 +121,7 @@ public class StatisticsRepositoryImpl implements StatisticsRepository {
                                           StatisticsItem statisticsItem, TestDataOccupyStatistic occupyStatisticItem) {
         List<Long> consumed = new ArrayList<>();
         long count;
-        switch (DataUtils.statisticsInterval) {
+        switch (DataUtils.getStatisticsIntervalType(dateFrom, dateTo)) {
             case YEARS:
                 do {
                     count = 0L;
@@ -198,6 +199,7 @@ public class StatisticsRepositoryImpl implements StatisticsRepository {
                                                              @Nonnull LocalDate dateTo, int expirationDate) {
         OutdatedStatistics outdatedStatistics = new OutdatedStatistics();
         outdatedStatistics.setDates(DataUtils.getStatisticsInterval(dateFrom, dateTo));
+        StatisticsInterval interval = DataUtils.getStatisticsIntervalType(dateFrom, dateTo);
         List<OutdatedStatisticsItem> listStatisticsItems = new ArrayList<>();
         catalogList.forEach(occupyStatisticItem -> {
             LocalDate iterDate = dateFrom;
@@ -225,7 +227,7 @@ public class StatisticsRepositoryImpl implements StatisticsRepository {
                 long countCreated;
                 long countConsumed;
                 long countOutdated;
-                switch (DataUtils.statisticsInterval) {
+                switch (interval) {
                     case YEARS:
                         do {
                             countCreated = 0L;
