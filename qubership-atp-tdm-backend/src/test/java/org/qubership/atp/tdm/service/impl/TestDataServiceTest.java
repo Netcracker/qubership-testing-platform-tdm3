@@ -846,6 +846,39 @@ public class TestDataServiceTest extends AbstractTestDataTest {
     }
 
     @Test
+    public void testDataService_getTableRow_nullSystemIdFindsRowAcrossSystems() {
+        String tableName = "tdm_test_get_test_data_row_no_system_id";
+        String tableTitle = "TDM Test row table no system id";
+
+        createTestDataTable(tableName);
+        createTestDataTableCatalog(projectId, systemId, environmentId, tableTitle, tableName);
+        Map<String, Object> expectedRow = createTestDataTableRow(tableName);
+
+        try {
+            Map<String, Object> actualRow = testDataService.getTableRow(projectId, null, tableTitle, "sim",
+                    "8901260720040140811", false);
+
+            Assertions.assertEquals(expectedRow, actualRow);
+        } finally {
+            deleteTestDataTableIfExists(tableName);
+            catalogRepository.deleteByTableName(tableName);
+        }
+    }
+
+    @Test
+    public void testDataService_getTableRow_nullSystemIdAndNoTableReportsTableNotFound() {
+        String tableTitle = "TDM Test row table not found no system id";
+
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class,
+                () -> testDataService.getTableRow(projectId, null, tableTitle, "sim",
+                        "8901260720040140811", false));
+
+        String message = String.format("Table [%s] under project [%s] and system [null] wasn't found.",
+                tableTitle, projectId);
+        Assertions.assertEquals(message, exception.getMessage());
+    }
+
+    @Test
     public void testDataService_changeTestDataTitle_testDataTitleChanged() {
         String tableName = "tdm_test_change_test_data_title";
         String tableTitle = "TDM Test. Change Test Data Title";
