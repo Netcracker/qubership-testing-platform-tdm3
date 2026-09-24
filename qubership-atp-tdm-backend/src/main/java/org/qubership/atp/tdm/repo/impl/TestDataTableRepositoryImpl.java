@@ -59,6 +59,7 @@ import org.qubership.atp.common.lock.LockManager;
 import org.qubership.atp.integration.configuration.mdc.MdcUtils;
 import org.qubership.atp.tdm.env.configurator.model.Server;
 import org.qubership.atp.tdm.exceptions.TdmInternalException;
+import org.qubership.atp.tdm.exceptions.db.TdmDbCheckColumnNameException;
 import org.qubership.atp.tdm.exceptions.db.TdmDbExecuteQueryException;
 import org.qubership.atp.tdm.exceptions.db.TdmDbRowNotFoundException;
 import org.qubership.atp.tdm.exceptions.file.TdmImportExcelTestDataException;
@@ -615,10 +616,12 @@ public class TestDataTableRepositoryImpl implements TestDataTableRepository {
         DataUtils.checkTableName(tableName);
         UpdateQuery query = new UpdateQuery(tableName);
         setWhereCondition(query, filters);
-        for (String key : dataForUpdate.keySet()) {
-            query.addCustomSetClause(new CustomSql("\"" + key + "\""), dataForUpdate.get(key));
+        List<Object> values = new ArrayList<>();
+        for (Map.Entry<String, String> entry : dataForUpdate.entrySet()) {
+            query.addCustomSetClause(new CustomSql(quotedColumn(entry.getKey())), new CustomSql("?"));
+            values.add(entry.getValue());
         }
-        return jdbcTemplate.update(query.toString());
+        return jdbcTemplate.update(query.toString(), values.toArray());
     }
 
     @Override
@@ -628,11 +631,13 @@ public class TestDataTableRepositoryImpl implements TestDataTableRepository {
         DataUtils.checkTableName(tableName);
         UpdateQuery query = new UpdateQuery(tableName);
         setWhereCondition(query, filters);
-        for (String key : dataForUpdate.keySet()) {
-            query.addCustomSetClause(new CustomSql("\"" + key + "\""),
-                    new CustomExpression("CONCAT(" + "\"" + key + "\",'\r\n" + dataForUpdate.get(key) + "')"));
+        List<Object> values = new ArrayList<>();
+        for (Map.Entry<String, String> entry : dataForUpdate.entrySet()) {
+            String column = quotedColumn(entry.getKey());
+            query.addCustomSetClause(new CustomSql(column), new CustomExpression("CONCAT(" + column + ", ?)"));
+            values.add("\r\n" + entry.getValue());
         }
-        return jdbcTemplate.update(query.toString());
+        return jdbcTemplate.update(query.toString(), values.toArray());
     }
 
     @Override
@@ -829,15 +834,27 @@ public class TestDataTableRepositoryImpl implements TestDataTableRepository {
         for (TestDataTableFilter filter : filters) {
             SearchCondition searchCondition = SearchConditionFactory.getCondition(filter.getSearchCondition(),
                     filter.isCaseSensitive());
-            CustomSql column = new CustomSql("\"" + filter.getColumn() + "\"");
+            CustomSql column = new CustomSql(quotedColumn(filter.getColumn()));
             if (filter.getValues().isEmpty()) {
                 throw new IllegalIdentifierException("There is no values in filter: " + filter);
             } else {
                 String filterValue = filter.getValues().get(0); //It's not good, need to do refactor here
-                BinaryCondition binaryCondition = searchCondition.create(column, filterValue);
+                // The condition puts the value into the statement as a string literal.
+                BinaryCondition binaryCondition = searchCondition.create(column,
+                        TestDataUtils.escapeCharacters(filterValue));
                 query.addCondition(binaryCondition);
             }
         }
+    }
+
+    /**
+     * Returns the column name in double quotes, for use as an identifier in a statement.
+     *
+     * @throws TdmDbCheckColumnNameException if the name contains a double quote
+     */
+    private static String quotedColumn(String columnName) {
+        DataUtils.checkColumnName(columnName);
+        return "\"" + columnName + "\"";
     }
 
     /**
