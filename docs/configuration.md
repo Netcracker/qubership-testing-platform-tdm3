@@ -40,7 +40,7 @@ exits before the JVM starts when either is empty. The Helm chart sets both.
 ## Projects
 
 `PROJECTS_INFO` is the list of projects the service knows. ATP actions and the
-[Dynamic Environment API](../README.md#dynamic-environment-api) find a project by its name in this list, and a name
+[Dynamic Environment API](api.md#dynamic-environment-api) find a project by its name in this list, and a name
 that is not in it is rejected with `Project [<name>] not found.`
 
 At every startup, the service saves settings for each project that `PROJECTS_INFO` lists: the time zone, the date and
