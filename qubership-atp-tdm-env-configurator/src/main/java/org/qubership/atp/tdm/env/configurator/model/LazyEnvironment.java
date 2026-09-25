@@ -25,6 +25,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * A dynamic environment's own fields, with the names of its systems rather than their full data; see
+ * {@link Environment} for an environment with its systems loaded.
+ */
 @Schema(description = "A dynamic environment.")
 @Data
 @Builder

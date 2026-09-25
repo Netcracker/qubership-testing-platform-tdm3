@@ -27,9 +27,8 @@ import org.apache.hc.core5.ssl.SSLContextBuilder;
 public class HttpUtils {
 
     /**
-     * Build http client.
-     *
-     * @return http client builder.
+     * Builds an {@code HttpClientBuilder} that accepts every TLS certificate and does not verify the hostname,
+     * or a plain default builder if the trust-all SSL context cannot be built.
      */
     public static org.apache.hc.client5.http.impl.classic.HttpClientBuilder createTrustAllHttpClientBuilder() {
         try {

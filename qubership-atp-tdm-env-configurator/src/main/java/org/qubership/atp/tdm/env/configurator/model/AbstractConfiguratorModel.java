@@ -25,6 +25,9 @@ import org.qubership.atp.tdm.env.configurator.utils.Utils;
 
 import lombok.Data;
 
+/**
+ * Fields and by-name and by-ID lookup shared by {@link Project}, {@link Environment}, and {@link System}.
+ */
 @Data
 public class AbstractConfiguratorModel {
 
