@@ -101,6 +101,12 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>3.6.3</version>
+                        <configuration>
+                            <!-- Matches javac's own default doclint level: keep the html/syntax/reference/
+                            accessibility checks, but drop "missing", which would otherwise demand a doc
+                            comment on every public element in the codebase. -->
+                            <doclint>all,-missing</doclint>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -144,6 +150,12 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>3.6.3</version>
+                        <configuration>
+                            <!-- Matches javac's own default doclint level: keep the html/syntax/reference/
+                            accessibility checks, but drop "missing", which would otherwise demand a doc
+                            comment on every public element in the codebase. -->
+                            <doclint>all,-missing</doclint>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
