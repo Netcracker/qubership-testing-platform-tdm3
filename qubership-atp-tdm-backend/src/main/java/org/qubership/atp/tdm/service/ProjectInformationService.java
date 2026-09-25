@@ -24,8 +24,7 @@ import org.qubership.atp.tdm.model.ProjectInformation;
 public interface ProjectInformationService {
 
     /**
-     * Replaces the saved settings of {@link ProjectInformation#getProjectId()}, or creates them if none are saved
-     * yet.
+     * Replaces the saved settings of {@code projectInformation.projectId}, or creates them if none are saved yet.
      */
     void saveProjectInformation(ProjectInformation projectInformation);
 

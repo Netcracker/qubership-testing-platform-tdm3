@@ -127,8 +127,7 @@ public interface StatisticsService {
 
     /**
      * Counts, for every table of the system, the available rows for each value of the saved
-     * {@link AvailableDataStatisticsConfig#getActiveColumnKey()}, restricted to the saved
-     * {@link AvailableDataStatisticsConfig#getTablesColumns()} filter where one exists for a table.
+     * {@code activeColumnKey}, restricted to the saved {@code tablesColumns} filter where one exists for a table.
      */
     AvailableDataByColumnStats getAvailableDataInColumn(@Nonnull UUID systemId, @Nonnull UUID environmentId);
 

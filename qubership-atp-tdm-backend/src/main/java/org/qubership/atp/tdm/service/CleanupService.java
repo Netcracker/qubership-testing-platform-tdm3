@@ -36,9 +36,9 @@ public interface CleanupService {
 
     /**
      * Saves the configuration for every table {@link #getTablesByTableNameAndEnvironmentsListWithSameSystemName}
-     * finds for {@link CleanupSettings#getTableName()} and {@link CleanupSettings#getEnvironmentsList()}. When
-     * {@link TestDataCleanupConfig#isShared()} is set, every other table of the project with the same title is set
-     * to share it too, regardless of environment.
+     * finds for {@code cleanupSettings.tableName} and {@code cleanupSettings.environmentsList}. When
+     * {@code cleanupSettings.testDataCleanupConfig.shared} is set, every other table of the project with the same
+     * title is set to share it too, regardless of environment.
      */
     CleanupSettings saveCleanupConfig(@Nonnull CleanupSettings cleanupSettings) throws Exception;
 
@@ -57,7 +57,7 @@ public interface CleanupService {
     /**
      * Runs the unsaved configuration in {@code cleanupSettings} against every table
      * {@link #getTablesByTableNameAndEnvironmentsListWithSameSystemName} finds for
-     * {@link CleanupSettings#getTableName()} and {@link CleanupSettings#getEnvironmentsList()}.
+     * {@code cleanupSettings.tableName} and {@code cleanupSettings.environmentsList}.
      */
     List<CleanupResults> runCleanup(@Nonnull CleanupSettings cleanupSettings) throws Exception;
 

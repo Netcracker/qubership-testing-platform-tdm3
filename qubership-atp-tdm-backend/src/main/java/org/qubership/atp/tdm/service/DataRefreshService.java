@@ -37,7 +37,7 @@ public interface DataRefreshService {
 
     /**
      * Runs the saved configuration {@code configId} against its own table, replacing every row, unless
-     * {@link TestDataRefreshConfig#isEnabled()} is unset.
+     * {@code configId}'s own {@code enabled} flag is unset.
      */
     RefreshResults runRefresh(@Nonnull UUID configId);
 
