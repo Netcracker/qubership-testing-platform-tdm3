@@ -25,6 +25,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * A system's own fields, with the names of its connections rather than their full data; see {@link System} for
+ * a system with its connections loaded.
+ */
 @Schema(description = "A system of a dynamic environment.")
 @Data
 @Builder

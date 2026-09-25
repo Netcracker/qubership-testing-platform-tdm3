@@ -25,7 +25,8 @@ import org.apache.commons.collections4.ListUtils;
 public class Utils {
 
     /**
-     * Return not null list without null items.
+     * Returns {@code list} with its {@code null} elements removed, or an empty list if {@code list} is
+     * {@code null}.
      */
     public static <T> List<T> collectionWithoutNull(List<T> list) {
         return ListUtils.emptyIfNull(list)

@@ -25,6 +25,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 
+/**
+ * A project's ID and name, from {@code PROJECTS_INFO}.
+ */
 @Schema(description = "A project.")
 @Data
 @Builder

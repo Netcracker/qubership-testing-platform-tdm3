@@ -82,6 +82,10 @@ public class TestDataController /* implements TestDataControllerApi */ {
         this.metricService = metricService;
     }
 
+    /**
+     * Returns the catalog entries of {@code projectId}'s tables (or of {@code systemId} alone, when given), with
+     * the import query and timeout of the tables imported by SQL.
+     */
     @Operation(summary = "List the tables of a project",
             description = "Returns the catalog entries of the tables, with the import query and timeout of tables "
                     + "imported by SQL.")
@@ -96,6 +100,9 @@ public class TestDataController /* implements TestDataControllerApi */ {
         return testDataService.getTestDataTablesCatalog(projectId, systemId);
     }
 
+    /**
+     * Returns {@code projectId} and the database table names of its tables.
+     */
     @Operation(summary = "List the table names of a project",
             description = "Returns the project ID and the database table names of its tables.")
     @PreAuthorize("@entityAccess.checkAccess("
@@ -109,6 +116,9 @@ public class TestDataController /* implements TestDataControllerApi */ {
         return testDataService.tablesToExport(projectId);
     }
 
+    /**
+     * Maps the database table name to the title of every table of {@code projectId} in {@code envId}.
+     */
     @Operation(summary = "List the tables of an environment",
             description = "Returns a map of database table names to table titles.")
     @PreAuthorize("@entityAccess.checkAccess("
@@ -126,7 +136,10 @@ public class TestDataController /* implements TestDataControllerApi */ {
     }
 
     /**
-     * Import Excel TestData.
+     * Loads {@code file} into the table with {@code tableTitle} in {@code systemId}, creating the table if none
+     * exists yet. {@code environmentId} and {@code systemId} are required; without them the import fails. When
+     * {@code runSqlScript} is set, also runs the table's saved update-by-query script against the loaded data
+     * afterward.
      */
     @Operation(summary = "Import rows from an Excel file",
             description = "Adds the rows of the file to the table with this title in the system, or creates the "
@@ -154,7 +167,10 @@ public class TestDataController /* implements TestDataControllerApi */ {
     }
 
     /**
-     * Import Sql TestData.
+     * Runs {@code query} against {@code systemName} for each of {@code environmentsIds}, importing or updating one
+     * table with {@code tableTitle} per environment, and saves {@code query} and {@code queryTimeout} for refresh.
+     * Returns one result per environment; a missing environment or system is reported in that entry rather than
+     * thrown.
      */
     @Operation(operationId = "importSqlTestData", summary = "Import rows with an SQL query",
             description = "For each environment, runs the query against the database of the system with this name, "
@@ -185,10 +201,8 @@ public class TestDataController /* implements TestDataControllerApi */ {
     }
 
     /**
-     * Returns test data table.
-     *
-     * @param testDataRequest - test data request.
-     * @return TestDataTable
+     * Returns a page of {@code testDataRequest.tableName}'s rows matching its filters, sorted as requested, from
+     * the available rows or, with {@code occupied} set, from the occupied rows.
      */
     @Operation(summary = "Read rows of a table",
             description = "Returns a page of rows that match the filters in the request body, sorted as requested, "
@@ -205,6 +219,10 @@ public class TestDataController /* implements TestDataControllerApi */ {
                 testDataRequest.isOccupied());
     }
 
+    /**
+     * Marks {@code rows} of {@code tableName} as occupied by {@code occupiedBy} and records the occupation in the
+     * statistics.
+     */
     @Operation(summary = "Occupy rows by ID",
             description = "Marks the rows as occupied by the user in occupiedBy and records the occupation in the "
                     + "statistics.")
@@ -224,6 +242,10 @@ public class TestDataController /* implements TestDataControllerApi */ {
         testDataService.occupyTestData(tableName, occupiedBy, rows);
     }
 
+    /**
+     * Makes {@code rows} of {@code tableName} available again and removes their occupation records from the
+     * statistics.
+     */
     @Operation(summary = "Release rows by ID",
             description = "Makes the rows available again and removes their occupation records from the statistics.")
     @PreAuthorize("@entityAccess.checkAccess("
@@ -240,6 +262,9 @@ public class TestDataController /* implements TestDataControllerApi */ {
         testDataService.releaseTestData(tableName, rows);
     }
 
+    /**
+     * Deletes {@code rows} of {@code tableName}.
+     */
     @Operation(summary = "Delete rows by ID")
     @PreAuthorize("@entityAccess.checkAccess("
             + "T(org.qubership.atp.tdm.utils.UsersManagementEntities).TEST_DATA.getName(),"
@@ -255,6 +280,11 @@ public class TestDataController /* implements TestDataControllerApi */ {
         testDataService.deleteTestDataTableRows(tableName, rows);
     }
 
+    /**
+     * Drops {@code tableName}'s table, deletes its catalog entry, columns, flags, and import info, and removes its
+     * own refresh job. Also removes every cleanup configuration and general-statistics monitoring schedule that no
+     * table references any more afterward, not only {@code tableName}'s own.
+     */
     @Operation(summary = "Delete a table",
             description = "Drops the database table, removes it from the catalog, and stops its scheduled refresh.")
     @PreAuthorize("@entityAccess.checkAccess("
@@ -270,12 +300,8 @@ public class TestDataController /* implements TestDataControllerApi */ {
     }
 
     /**
-     * Remove all records from table .
-     *
-     * @param tableName table name
-     * @param projectId project id
-     * @param systemId  system id
-     * @return table which has been truncated.
+     * Deletes every row of {@code tableName}, keeping the table itself and its catalog entry. Returns HTTP 400
+     * when {@code projectId}, or {@code systemId} when given, has no table with this name.
      */
     @Operation(summary = "Delete all rows of a table",
             description = "Returns HTTP 400 when the project, or the system when given, has no table with this name.")
@@ -298,7 +324,7 @@ public class TestDataController /* implements TestDataControllerApi */ {
     }
 
     /**
-     * Get TestDataTable As Excel File.
+     * Downloads {@code tableName} as an Excel file.
      */
     @Operation(summary = "Download a table as an Excel file")
     @PreAuthorize("@entityAccess.checkAccess("
@@ -317,7 +343,7 @@ public class TestDataController /* implements TestDataControllerApi */ {
     }
 
     /**
-     * Get TestDataTable As Csv File.
+     * Downloads {@code tableName} as a CSV file.
      */
     @Operation(summary = "Download a table as a CSV file")
     @PreAuthorize("@entityAccess.checkAccess("
@@ -335,8 +361,8 @@ public class TestDataController /* implements TestDataControllerApi */ {
     }
 
     /**
-     * Method fixes issue with occupation functional (ATPII-10699).
-     * For all tables add new column "OCCUPIED_BY"
+     * Adds the {@code OCCUPIED_BY} column to every test data table that lacks it. A migration for tables created
+     * before the column existed.
      */
     @Operation(summary = "Add the OCCUPIED_BY column to all tables",
             description = "Adds the OCCUPIED_BY column to every test data table that lacks it. A migration for "
@@ -348,7 +374,9 @@ public class TestDataController /* implements TestDataControllerApi */ {
     }
 
     /**
-     * Getting link preview.
+     * Returns, as a JSON string, the link that {@link #setupColumnLinks} would build for the column: the value of
+     * the first row of {@code columnName} when {@code pickUpFullLinkFromTableCell} is set, otherwise the
+     * {@code url} parameter of the system's HTTP connection joined with {@code endpoint}.
      */
     @Operation(summary = "Preview the link of a column",
             description = "Returns, as a JSON string, the link that setup would build for the column: the value of "
@@ -377,6 +405,10 @@ public class TestDataController /* implements TestDataControllerApi */ {
         return ResponseEntity.ok(new Gson().toJson(link));
     }
 
+    /**
+     * Saves the link settings for {@code columnName} of {@code tableName}, or, with {@code isAll} set, of every
+     * table with the same title in every environment of {@code projectId}.
+     */
     @Operation(summary = "Turn the values of a column into links",
             description = "Saves the link settings for the column of one table, or, with isAll, of the tables with "
                     + "the same title in all environments of the project.")
@@ -406,6 +438,9 @@ public class TestDataController /* implements TestDataControllerApi */ {
                 validateUnoccupiedResources, pickUpFullLinkFromTableCell);
     }
 
+    /**
+     * Returns {@code tableName}'s unoccupied-row validation flag.
+     */
     @Operation(summary = "Get the validation flags of a table")
     @PreAuthorize("@entityAccess.checkAccess("
             + "T(org.qubership.atp.tdm.utils.UsersManagementEntities).TEST_DATA.getName(),"
@@ -418,6 +453,9 @@ public class TestDataController /* implements TestDataControllerApi */ {
         return testDataService.getUnoccupiedValidationFlagStatus(tableName);
     }
 
+    /**
+     * Returns the IDs of the environments that have a table with {@code tableTitle} in {@code projectId}.
+     */
     @Operation(summary = "List the environments of a table title",
             description = "Returns the IDs of the environments that have a table with this title in the project.")
     @PreAuthorize("@entityAccess.checkAccess("
@@ -434,10 +472,8 @@ public class TestDataController /* implements TestDataControllerApi */ {
     }
 
     /**
-     * Replaces macros (related to internal TDM table) with real values.
-     *
-     * @param tableName - table name
-     * @param query     - source query
+     * Replaces every {@code ${...}} sub-query in {@code query} with the comma-joined result of running it against
+     * {@code tableName}, under the {@code query} key.
      */
     @Operation(summary = "Substitute table values into a query",
             description = "Replaces the ${...} macros in the query from the request body with values from the table, "
@@ -458,6 +494,10 @@ public class TestDataController /* implements TestDataControllerApi */ {
         return result;
     }
 
+    /**
+     * Returns the distinct values of {@code columnName} among {@code tableName}'s available rows, or among its
+     * occupied rows when {@code occupied} is set.
+     */
     @Operation(summary = "List the distinct values of a column",
             description = "Returns the distinct values of the column among the available rows, or among the occupied "
                     + "rows when occupied is true.")
@@ -476,6 +516,11 @@ public class TestDataController /* implements TestDataControllerApi */ {
         return testDataService.getColumnDistinctValues(tableName, columnName, occupied);
     }
 
+    /**
+     * Returns the first row of the table with {@code tableTitle} whose {@code columnName} equals
+     * {@code searchValue}, case-sensitively, from the available rows or, with {@code occupied} set, from the
+     * occupied rows.
+     */
     @Operation(summary = "Find a row by column value",
             description = "Returns the first row of the table with this title whose column equals searchValue, "
                     + "case-sensitively.")
@@ -500,6 +545,12 @@ public class TestDataController /* implements TestDataControllerApi */ {
         return testDataService.getTableRow(projectId, systemId, tableTitle, columnName, searchValue, occupied);
     }
 
+    /**
+     * Renames {@code changeTitleRequest.tableName}'s title in the catalog, and, where the rename succeeds, in its
+     * occupation statistics too.
+     *
+     * @return whether the catalog entry was found and renamed
+     */
     @Operation(summary = "Rename a table",
             description = "Changes the title of the table and of its occupation statistics. Returns whether the title "
                     + "changed.")
@@ -515,7 +566,8 @@ public class TestDataController /* implements TestDataControllerApi */ {
     }
 
     /**
-     * Update Table By Sql.
+     * Runs {@code updateByQuery.query} against {@code updateByQuery.systemId}'s database and updates
+     * {@code updateByQuery.tableName}'s rows from the result. Saves the query and timeout with the table.
      */
     @Operation(summary = "Update rows with an SQL query",
             description = "Runs the query against the database of the system and updates the table rows from its "
@@ -533,8 +585,8 @@ public class TestDataController /* implements TestDataControllerApi */ {
     }
 
     /**
-     * Method to support implementation (ATPII-12007).
-     * For all tables add new column "CREATED_WHEN"
+     * Adds the {@code CREATED_WHEN} column to every test data table that lacks it. A migration for tables created
+     * before the column existed.
      */
     @Operation(summary = "Add the CREATED_WHEN column to all tables",
             description = "Adds the CREATED_WHEN column to every test data table that lacks it. A migration for "
@@ -545,6 +597,11 @@ public class TestDataController /* implements TestDataControllerApi */ {
         testDataService.alterCreatedWhenColumn();
     }
 
+    /**
+     * Sets the environment ID in the catalog entries of tables that have a system, and deletes the tables of a
+     * project whose loading fails with a "not found" error. A migration for tables created before the catalog
+     * stored the environment.
+     */
     @Operation(summary = "Fill in the environment of existing tables",
             description = "Sets the environment ID in the catalog entries of tables that have a system. Deletes the "
                     + "tables of a project whose loading fails with a \"not found\" error. A migration for tables "
@@ -556,7 +613,8 @@ public class TestDataController /* implements TestDataControllerApi */ {
     }
 
     /**
-     * Alter Occupy Statistic.
+     * Adds an occupation record to the statistics for every occupied row of every table. A migration for rows
+     * occupied before the statistics existed.
      */
     @Operation(summary = "Fill in the occupation statistics from occupied rows",
             description = "Adds an occupation record to the statistics for every occupied row of every table. A "
@@ -567,6 +625,10 @@ public class TestDataController /* implements TestDataControllerApi */ {
         testDataService.alterOccupyStatistic();
     }
 
+    /**
+     * Adds default validation flags for catalog tables that have none, and deletes flags of tables that are not
+     * in the catalog.
+     */
     @Operation(summary = "Align the flags table with the catalog",
             description = "Adds default validation flags for catalog tables that have none, and deletes flags of "
                     + "tables that are not in the catalog.")
@@ -576,6 +638,10 @@ public class TestDataController /* implements TestDataControllerApi */ {
         testDataService.resolveDiscrepancyTestDataFlagsTableAndTestDataTableCatalog();
     }
 
+    /**
+     * Returns, for each table of {@code systemId} in {@code environmentId} that has {@code columnName}, the
+     * column's distinct values.
+     */
     @Operation(summary = "List column values across the tables of a system",
             description = "Returns, for each table of the system in the environment that has the column, the distinct "
                     + "values of the column.")

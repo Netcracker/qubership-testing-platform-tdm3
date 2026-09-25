@@ -22,6 +22,9 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * One connection of a system, such as a database or an HTTP endpoint.
+ */
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class Connection extends AbstractConfiguratorModel {

@@ -36,7 +36,7 @@ public class VersionsController /* implements VersionsControllerApi */ {
     private final VersionsService service;
 
     /**
-     * Returns current service version.
+     * Returns the backend's own name and version.
      */
     @Operation(summary = "Get the service name and version")
     @GetMapping(value = "/backend")

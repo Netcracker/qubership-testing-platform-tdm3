@@ -26,6 +26,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+/**
+ * An environment with its systems, held by a {@link Project}.
+ */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Builder
@@ -37,21 +40,25 @@ public class Environment extends AbstractConfiguratorModel {
     private List<System> systems;
 
     /**
-     * Find system by ID.
+     * Returns the system named {@code name}.
+     *
+     * @throws NoSuchElementException if no system has that name
      */
     public System getSystemByName(String name) throws NoSuchElementException {
         return getByName(systems, name);
     }
 
     /**
-     * Find system by ID.
+     * Returns the system whose ID is {@code id}.
+     *
+     * @throws NoSuchElementException if no system has that ID
      */
     public System getSystemById(UUID id) throws NoSuchElementException {
         return getById(systems, id);
     }
 
     /**
-     * Create Environment from LazyEnvironment.
+     * Builds an {@code Environment} from {@code lazyEnvironment}'s fields, with {@code systems}.
      */
     public static Environment of(LazyEnvironment lazyEnvironment, List<System> systems) {
         Environment environment = new Environment();

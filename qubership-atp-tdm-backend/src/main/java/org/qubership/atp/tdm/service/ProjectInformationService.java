@@ -18,7 +18,14 @@ package org.qubership.atp.tdm.service;
 
 import org.qubership.atp.tdm.model.ProjectInformation;
 
+/**
+ * Per-project display settings: time zone, date and time format, and table expiration timeout.
+ */
 public interface ProjectInformationService {
+
+    /**
+     * Replaces the saved settings of {@code projectInformation.projectId}, or creates them if none are saved yet.
+     */
     void saveProjectInformation(ProjectInformation projectInformation);
 
 }

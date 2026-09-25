@@ -47,8 +47,12 @@ public class EnvironmentsConfig {
     private Integer cacheDuration;
 
     /**
-     * Cache manager.
-     * @return - ConcurrentMapCache.
+     * Builds an in-memory cache named after every constant in {@link CacheNames}, each expiring
+     * {@code environments.cache.duration} minutes (15 by default) after it is written. Registered only when
+     * {@code spring.cache.type} is {@code GENERIC}. No method in this codebase reads or writes through Spring's
+     * cache abstraction ({@code @Cacheable} and the like), so this manager currently has no effect.
+     *
+     * @throws TdmEnvInitiateCacheException if {@link CacheNames}'s fields cannot be read by reflection
      */
     @Bean
     @ConditionalOnProperty(name = "spring.cache.type", havingValue = "GENERIC")

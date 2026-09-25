@@ -16,6 +16,11 @@
 
 package org.qubership.atp.tdm.env.configurator.utils;
 
+/**
+ * Names {@link org.qubership.atp.tdm.env.configurator.configuration.EnvironmentsConfig} registers as caches. No
+ * method in this codebase reads or writes through Spring's cache abstraction, so these names currently name empty,
+ * unused caches.
+ */
 public class CacheNames {
     public static final String AUTH_PROJECT_CACHE = "projects";
 

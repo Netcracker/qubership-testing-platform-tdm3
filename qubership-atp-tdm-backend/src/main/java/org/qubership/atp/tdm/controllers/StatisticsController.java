@@ -66,6 +66,10 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
         this.statisticsService = statisticsService;
     }
 
+    /**
+     * Returns the {@code test.data.initial.threshold} property, 10 by default: the default available-rows
+     * threshold to suggest for a new report schedule.
+     */
     @Operation(summary = "Get the default report threshold",
             description = "Returns the default threshold of available rows for the statistics report: the value of "
                     + "the test.data.initial.threshold property, 10 by default.")
@@ -75,6 +79,10 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
         return statisticsService.getThreshold();
     }
 
+    /**
+     * Returns, for each table of {@code projectId} (or of {@code systemId} alone, when given), the number of
+     * available rows, occupied rows, rows occupied today, and all rows.
+     */
     @Operation(summary = "Get available and occupied row counts",
             description = "Returns, for each table, the number of available rows, occupied rows, rows occupied today, "
                     + "and all rows.")
@@ -90,6 +98,10 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
         return statisticsService.getTestDataAvailability(projectId, systemId);
     }
 
+    /**
+     * Returns, for each table, how many rows were occupied in each part of {@code dateFrom} to {@code dateTo},
+     * split into days, weeks, months, or years depending on the period's length.
+     */
     @Operation(summary = "Get the number of occupied rows per period",
             description = "Returns, for each table, how many rows were occupied in each part of the period. The "
                     + "values are split into days, weeks, months, or years, depending on the length of the period.")
@@ -108,6 +120,11 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
                 LocalDate.parse(dateFrom), LocalDate.parse(dateTo));
     }
 
+    /**
+     * Returns, for each table, how many rows were created, consumed, and outdated in each part of {@code dateFrom}
+     * to {@code dateTo}. A row occupied on or after {@code dateFrom} plus {@code expirationDate} days counts as
+     * outdated.
+     */
     @Operation(summary = "Get created, consumed, and outdated row counts per period",
             description = "Returns, for each table, how many rows were created, consumed, and outdated in each part "
                     + "of the period. Rows occupied on or after dateFrom plus expirationDate days are counted as "
@@ -130,6 +147,9 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
                 LocalDate.parse(dateFrom), LocalDate.parse(dateTo), Integer.valueOf(expirationDate));
     }
 
+    /**
+     * Returns, for each table, how many rows were created in each part of {@code dateFrom} to {@code dateTo}.
+     */
     @Operation(summary = "Get the number of created rows per period",
             description = "Returns, for each table, how many rows were created in each part of the period. The values "
                     + "are split into days, weeks, months, or years, depending on the length of the period.")
@@ -148,6 +168,10 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
                 LocalDate.parse(dateFrom), LocalDate.parse(dateTo));
     }
 
+    /**
+     * Returns {@code projectId}'s general-statistics report schedule, or a disabled one with empty fields if none
+     * is saved.
+     */
     @Operation(summary = "Get the statistics report schedule",
             description = "Returns the schedule, recipients, and threshold of the project statistics report. The "
                     + "report splits the tables into those with at least threshold available rows and those with "
@@ -162,6 +186,9 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
         return statisticsService.getMonitoringSchedule(projectId);
     }
 
+    /**
+     * Saves {@code monitoringItem} as its project's general-statistics report schedule and reschedules it.
+     */
     @Operation(summary = "Save the statistics report schedule",
             description = "Saves the schedule of the project statistics report and reschedules it. cronExpression is "
                     + "a Quartz cron expression.")
@@ -175,6 +202,10 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
         statisticsService.saveMonitoringSchedule(monitoringItem);
     }
 
+    /**
+     * Deletes the general-statistics report schedule of {@code monitoringItem.projectId} and stops the report.
+     * Only {@code projectId} is read from {@code monitoringItem}.
+     */
     @Operation(summary = "Delete the statistics report schedule",
             description = "Deletes the schedule of the project in projectId and stops the report. Only projectId is "
                     + "read from the request body.")
@@ -189,12 +220,9 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
     }
 
     /**
-     * Get getting TestDataTableUsersMonitoring.
-     *
-     * @param projectId uuid project
-     * @return TestDataTableUsersMonitoring that contains the details
+     * Returns {@code projectId}'s users-occupation report schedule, or a disabled one with empty fields if none
+     * is saved.
      */
-
     @Operation(summary = "Get the users report schedule",
             description = "Returns the schedule and settings of the report on rows occupied by users. Returns a "
                     + "disabled schedule with empty fields when the project has none.")
@@ -209,11 +237,8 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
     }
 
     /**
-     * Post save TestDataTableUsersMonitoring.
-     *
-     * @param monitoringItem TestDataTableUsersMonitoring
+     * Saves {@code monitoringItem} as its project's users-occupation report schedule and reschedules it.
      */
-
     @Operation(summary = "Save the users report schedule")
     @PreAuthorize("@entityAccess.checkAccess("
             + "T(org.qubership.atp.tdm.utils.UsersManagementEntities).STATISTICS.getName(),"
@@ -226,11 +251,8 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
     }
 
     /**
-     * Put delete TestDataTableUsersMonitoring.
-     *
-     * @param monitoringItem TestDataTableUsersMonitoring
+     * Deletes the users-occupation report schedule of {@code monitoringItem.projectId} and stops the report.
      */
-
     @Operation(summary = "Delete the users report schedule")
     @PreAuthorize("@entityAccess.checkAccess("
             + "T(org.qubership.atp.tdm.utils.UsersManagementEntities).STATISTICS.getName(),"
@@ -243,13 +265,10 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
     }
 
     /**
-     * Get next run's date / time details.
+     * Returns the next time {@code cronExpression} fires after now, under the {@code nextRun} key.
      *
-     * @param cronExpression cron expression to calculate next run based on
-     * @return nextRunHashMap that contains the details
-     * @throws ParseException Thrown in case if invalid cron expression was provided
+     * @throws ParseException if {@code cronExpression} is not a valid Quartz cron expression
      */
-
     @Operation(operationId = "getNextStatisticsRun", summary = "Get the next run time of a schedule",
             description = "Returns the next time the Quartz cron expression fires after now, in the nextRun field, in "
                     + "\"EEE MMM dd HH:mm:ss zzz yyyy\" format.")
@@ -264,11 +283,9 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
     }
 
     /**
-     * Method fixes issue with statistics functional (ATPII-10354).
-     *
-     * @return list of tables to which a new column was added
+     * Adds the {@code OCCUPIED_DATE} column to every test data table that lacks it, and returns their names. A
+     * migration for tables created before the column existed.
      */
-
     @Operation(summary = "Add the OCCUPIED_DATE column to all tables",
             description = "Adds the OCCUPIED_DATE column to every test data table that lacks it, and returns the "
                     + "table names. A migration for tables created before the column existed.")
@@ -279,10 +296,9 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
     }
 
     /**
-     * Endpoint return list of users with occupied data.
+     * Returns a page of occupation records by user for {@code request}'s project and period.
      *
-     * @param request Request data for users statistics.
-     * @return List of users with data about occupation.
+     * @throws IllegalArgumentException if {@code request.dateTo} is not later than {@code request.dateFrom}
      */
     @Operation(summary = "Get rows occupied by users",
             description = "Returns a page of occupation records by user for the project and the period in the request "
@@ -297,6 +313,10 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
         return statisticsService.getOccupiedDataByUsers(request);
     }
 
+    /**
+     * Returns the available-data-by-column settings of {@code systemId} in {@code environmentId}, with the column
+     * names its tables share, to choose from.
+     */
     @Operation(summary = "Get the available-data-by-column settings",
             description = "Returns the settings of the available-data-by-column statistics for a system in an "
                     + "environment, with the column names of the system tables to choose from.")
@@ -310,6 +330,9 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
         return statisticsService.getAvailableStatsConfig(systemId, environmentId);
     }
 
+    /**
+     * Saves {@code statsConfig} as its system's available-data-by-column settings.
+     */
     @Operation(summary = "Save the available-data-by-column settings")
     @PostMapping(value = "/available/column/configuration")
     @PreAuthorize("@entityAccess.checkAccess("
@@ -321,6 +344,13 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
         statisticsService.saveAvailableStatsConfig(statsConfig);
     }
 
+    /**
+     * Returns, for each table of {@code systemId}, the number of available rows per value of the column
+     * configured for it.
+     *
+     * @throws org.qubership.atp.tdm.exceptions.internal.TdmSearchAvailableStatisticConfigException if no
+     *      available-data-by-column settings are saved for {@code systemId} and {@code environmentId}
+     */
     @Operation(summary = "Get available rows by column value",
             description = "Returns, for each table of the system, the number of available rows per value of the "
                     + "configured columns. Fails when the settings of this statistics are not saved for the system "
@@ -335,6 +365,9 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
         return statisticsService.getAvailableDataInColumn(systemId, environmentId);
     }
 
+    /**
+     * Returns the available-data-by-column monitoring schedule of {@code systemId} in {@code environmentId}.
+     */
     @Operation(summary = "Get the available-data report schedule")
     @GetMapping(value = "/schedule/available")
     @PreAuthorize("@entityAccess.checkAccess("
@@ -346,6 +379,9 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
         return statisticsService.getAvailableDataMonitoringConfig(systemId, environmentId);
     }
 
+    /**
+     * Saves {@code monitoringConfig} as its system's available-data-by-column monitoring schedule.
+     */
     @Operation(summary = "Save the available-data report schedule")
     @PostMapping(value = "/schedule/available")
     @PreAuthorize("@entityAccess.checkAccess("
@@ -357,6 +393,9 @@ public class StatisticsController /* implements StatisticsControllerApi */ {
         statisticsService.saveAvailableDataMonitoringConfig(monitoringConfig);
     }
 
+    /**
+     * Deletes the available-data-by-column monitoring schedule of {@code systemId} in {@code environmentId}.
+     */
     @Operation(summary = "Delete the available-data report schedule")
     @DeleteMapping(value = "/schedule/available")
     @PreAuthorize("@entityAccess.checkAccess("
