@@ -15,7 +15,7 @@ release commit, not by when they were written.
   projects and environments come from, and how scheduled and bulk operations run.
 - `docs/troubleshooting.md`: a failing health check, common REST errors, and the service's custom Prometheus
   metrics.
-- `docs/api.md`: the REST and WebSocket API's endpoint groups, response and error formats, bulk operations, and the
+- `docs/api.md`: the REST and WebSocket APIs endpoint groups, response and error formats, bulk operations, and the
   Dynamic Environment API.
 - `docs/configuration.md`: every environment variable, its default, and the Helm value that sets it.
 - `@Schema` descriptions on every REST request and response model, and Javadoc on the backend service interfaces,
@@ -149,7 +149,7 @@ release commit, not by when they were written.
 
 ### Fixed
 
-- A Helm chart value in `values.yaml` was set incorrectly; corrected, with the README updated to match.
+- A Helm chart value in `values.yaml` was set incorrectly; corrected, with the `README.md` updated to match.
 - Excluded `org.apache.tomcat.embed:tomcat-embed-core`, which conflicted with the embedded Undertow server.
 
 ## [1.0.1] - 2025-11-21
