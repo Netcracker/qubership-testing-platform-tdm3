@@ -1,0 +1,4 @@
+# MD024/no-duplicate-heading: allow the same heading under different parents, such as the "Added", "Changed",
+# and "Fixed" sections Keep a Changelog (CHANGELOG.md) repeats under every release.
+MD024:
+  siblings_only: true
