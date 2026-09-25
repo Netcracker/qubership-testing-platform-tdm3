@@ -487,7 +487,7 @@ public class TestDataController /* implements TestDataControllerApi */ {
     public Map<String, Object> getTableRow(
             @Parameter(description = "Project ID.")
             @RequestParam UUID projectId,
-            @Parameter(description = "System ID.")
+            @Parameter(description = "System ID. When omitted, searches the tables of all systems.")
             @RequestParam(required = false) UUID systemId,
             @Parameter(description = "Title of the table.")
             @RequestParam String tableTitle,
