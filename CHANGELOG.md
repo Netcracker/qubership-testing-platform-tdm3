@@ -7,7 +7,7 @@ All notable changes to this project are documented in this file, in the
 Reconstructed from the commit history on 2026-09-25; entries for releases before that date are dated by their
 release commit, not by when they were written.
 
-## [Unreleased]
+## [Not released yet]
 
 ### Added
 
@@ -168,7 +168,7 @@ Initial release of TDM3, a simplified fork of the Test Data Management (TDM) ser
 - reads its environment configuration from envgene's file structure instead of integrating with the environments
   and catalogue services directly.
 
-[Unreleased]: https://github.com/Netcracker/qubership-testing-platform-tdm3/compare/v1.0.10...HEAD
+[Not released yet]: https://github.com/Netcracker/qubership-testing-platform-tdm3/compare/v1.0.10...HEAD
 [1.0.10]: https://github.com/Netcracker/qubership-testing-platform-tdm3/compare/v1.0.9...v1.0.10
 [1.0.9]: https://github.com/Netcracker/qubership-testing-platform-tdm3/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/Netcracker/qubership-testing-platform-tdm3/compare/v1.0.7...v1.0.8
