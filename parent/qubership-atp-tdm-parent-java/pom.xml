@@ -33,7 +33,7 @@
         <springfox.version>3.0.0</springfox.version>
         <xalan.version>2.7.3</xalan.version>
         <reactor-netty.version>1.0.39</reactor-netty.version>
-        <io.netty.version>4.1.127.Final</io.netty.version>
+        <io.netty.version>4.1.137.Final</io.netty.version>
         <kotlin-stdlib.version>1.8.22</kotlin-stdlib.version>
         <commons-fileupload.version>1.6.0</commons-fileupload.version>
         <org.bouncycastle.jdk18on.version>1.85</org.bouncycastle.jdk18on.version>
@@ -136,6 +136,16 @@
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-codec</artifactId>
+                <version>${io.netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-resolver-dns</artifactId>
+                <version>${io.netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec-dns</artifactId>
                 <version>${io.netty.version}</version>
             </dependency>
 
