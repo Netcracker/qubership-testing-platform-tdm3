@@ -36,7 +36,7 @@
         <io.netty.version>4.1.127.Final</io.netty.version>
         <kotlin-stdlib.version>1.8.22</kotlin-stdlib.version>
         <commons-fileupload.version>1.6.0</commons-fileupload.version>
-        <org.bouncycastle.jdk18on.version>1.78.1</org.bouncycastle.jdk18on.version>
+        <org.bouncycastle.jdk18on.version>1.85</org.bouncycastle.jdk18on.version>
         <undertow.version>2.3.21.Final</undertow.version>
 
         <atp.crypt.version>0.0.23</atp.crypt.version>
