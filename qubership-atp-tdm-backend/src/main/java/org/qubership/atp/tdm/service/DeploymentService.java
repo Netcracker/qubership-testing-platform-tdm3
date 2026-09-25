@@ -18,9 +18,20 @@ package org.qubership.atp.tdm.service;
 
 import java.util.Map;
 
+/**
+ * Liveness and readiness for the deployment probes, both backed by a read of the table catalog.
+ */
 public interface DeploymentService {
 
+    /**
+     * Reads the table catalog and returns {@code {"type": "liveness", "status": "true"}}, or throws if the catalog
+     * is not reachable.
+     */
     Map<String, String> liveness();
 
+    /**
+     * Reads the table catalog and returns {@code {"type": "readiness", "status": "true"}}, or throws if the catalog
+     * is not reachable.
+     */
     Map<String, String> readiness();
 }

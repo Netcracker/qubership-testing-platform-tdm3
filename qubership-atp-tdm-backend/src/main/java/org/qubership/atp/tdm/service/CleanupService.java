@@ -27,26 +27,61 @@ import org.qubership.atp.tdm.model.cleanup.TestDataCleanupConfig;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 
+/**
+ * Cleanup configuration and cleanup runs of test data tables.
+ */
 public interface CleanupService {
 
     TestDataCleanupConfig getCleanupConfig(@Nonnull UUID id);
 
+    /**
+     * Saves the configuration for every table {@link #getTablesByTableNameAndEnvironmentsListWithSameSystemName}
+     * finds for {@link CleanupSettings#getTableName()} and {@link CleanupSettings#getEnvironmentsList()}. When
+     * {@link TestDataCleanupConfig#isShared()} is set, every other table of the project with the same title is set
+     * to share it too, regardless of environment.
+     */
     CleanupSettings saveCleanupConfig(@Nonnull CleanupSettings cleanupSettings) throws Exception;
 
+    /**
+     * Runs the saved configuration {@code configId} against every table that shares it.
+     */
     List<CleanupResults> runCleanup(@Nonnull UUID configId) throws Exception;
 
+    /**
+     * Runs {@code config} against {@code tableName} directly, without saving the configuration or looking one up.
+     *
+     * @throws SecurityException if {@code config}'s type is {@code CLASS}; no cleaner class is registered
+     */
     CleanupResults runCleanup(@Nonnull String tableName, @Nonnull TestDataCleanupConfig config) throws Exception;
 
+    /**
+     * Runs the unsaved configuration in {@code cleanupSettings} against every table
+     * {@link #getTablesByTableNameAndEnvironmentsListWithSameSystemName} finds for
+     * {@link CleanupSettings#getTableName()} and {@link CleanupSettings#getEnvironmentsList()}.
+     */
     List<CleanupResults> runCleanup(@Nonnull CleanupSettings cleanupSettings) throws Exception;
 
     String getNextScheduledRun(@Nullable String cronExpression) throws ParseException;
 
+    /**
+     * Deletes every saved configuration that no table's catalog entry references any more, and its Quartz job.
+     */
     void removeUnused();
 
+    /**
+     * Sets {@code type} on every saved configuration from the field it uses: {@code DATE} when {@code searchDate}
+     * is set, otherwise {@code SQL} when {@code searchSql} is set, otherwise {@code CLASS} when {@code searchClass}
+     * is set. A migration for configurations saved before {@code type} existed.
+     */
     void fillCleanupTypeColumn();
 
     CleanupSettings getCleanupSettings(@Nonnull UUID id);
 
+    /**
+     * Finds every table with {@code tableName}'s own title, in one of {@code environmentsList}, whose system has
+     * the same name as {@code tableName}'s own system. {@code tableName} itself is included only if its own
+     * environment is in {@code environmentsList}.
+     */
     List<String> getTablesByTableNameAndEnvironmentsListWithSameSystemName(
             @Nonnull List<UUID> environmentsList,
             @Nonnull String tableName);

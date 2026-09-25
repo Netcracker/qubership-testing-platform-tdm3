@@ -30,6 +30,12 @@ import org.qubership.atp.tdm.model.rest.requests.UpdateRowRequest;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 
+/**
+ * Operations an ATP action calls on one test data table, addressed by project, environment, and system name
+ * rather than by ID. See the {@code atp-action-controller} documentation in {@code docs/api.md} for the exact
+ * request and response shapes, including how a missing {@code envName} or {@code systemName} resolves to the
+ * first matching table.
+ */
 public interface AtpActionService {
 
     ResponseMessage insertTestData(@Nonnull String projectName, @Nullable String envName, @Nullable String systemName,

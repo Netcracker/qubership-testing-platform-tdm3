@@ -22,17 +22,38 @@ import org.qubership.atp.tdm.model.rest.requests.EnvironmentConnectionRequest;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 
+/**
+ * Create, update, and delete the dynamic environments and systems this service stores in its own database, backing
+ * the Dynamic Environment API. {@code projectName} must already be one of the {@code PROJECTS_INFO} projects.
+ */
 public interface DynamicEnvironmentService {
 
+    /**
+     * Creates {@code envName} with {@code systemName}, or adds {@code systemName} to it if {@code envName} already
+     * exists.
+     *
+     * @throws IllegalArgumentException if {@code systemName} already exists in {@code envName}
+     */
     ResponseMessage createEnvironment(@Nonnull String projectName, @Nonnull String envName,
                                       @Nonnull String systemName,
                                       @Nonnull EnvironmentConnectionRequest connection);
 
+    /**
+     * Replaces {@code systemName}'s connection in {@code envName}, and renames the environment or the system when
+     * {@code newEnvName} or {@code newSystemName} is given.
+     *
+     * @throws org.qubership.atp.tdm.exceptions.internal.EnvironmentNotFoundException if {@code envName} or
+     *      {@code systemName} does not exist
+     */
     ResponseMessage updateEnvironment(@Nonnull String projectName, @Nonnull String envName,
                                       @Nonnull String systemName,
                                       @Nonnull EnvironmentConnectionRequest connection,
                                       @Nullable String newEnvName, @Nullable String newSystemName);
 
+    /**
+     * Deletes {@code systemName} from {@code envName}, or the whole environment when {@code systemName} is not
+     * given.
+     */
     ResponseMessage deleteEnvironment(@Nonnull String projectName, @Nonnull String envName,
                                       @Nullable String systemName);
 }
