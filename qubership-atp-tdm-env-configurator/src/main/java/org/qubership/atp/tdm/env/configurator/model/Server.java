@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 /**
  * A connection's parameters, read as the {@code <name>_login}, {@code <name>_password}, {@code <name>_key},
  * {@code <name>_passphrase}, {@code <name>_host}, {@code <name>_pty}, {@code <name>_timeout_connect}, and
- * {@code <name>_timeout_execute} properties of {@link Connection#getParameters()}.
+ * {@code <name>_timeout_execute} properties of {@code Connection.parameters}.
  */
 public class Server {
     private static final int MILLISECONDS = 1000;
@@ -116,8 +116,7 @@ public class Server {
         Pattern pattern = Pattern.compile("([^:^]*)(:\\d*)?(.*)?");
         Matcher matcher = pattern.matcher(getHostFull());
         matcher.find();
-        String host = matcher.group(1);
-        return host;
+        return matcher.group(1);
     }
 
     @Override
