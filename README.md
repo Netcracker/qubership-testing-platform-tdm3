@@ -123,6 +123,13 @@ the controllers do not follow them.
 For the endpoint groups, the gateway prefix, the response and error formats, the WebSocket bulk operations, and the
 Dynamic Environment API, see [docs/api.md](docs/api.md).
 
+## Architecture and troubleshooting
+
+[docs/architecture.md](docs/architecture.md) describes the design behind the backend module: how a test data table is
+stored, where projects and environments come from, and how scheduled and bulk operations run.
+[docs/troubleshooting.md](docs/troubleshooting.md) covers a failing health check, a common REST error, and the
+service's custom metrics.
+
 ## Deploy with Helm
 
 The Helm chart is in [`deployments/charts/atp3-tdm-be`](deployments/charts/atp3-tdm-be). It deploys one replica with
