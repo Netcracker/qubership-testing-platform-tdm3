@@ -49,6 +49,10 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
         this.service = service;
     }
 
+    /**
+     * Inserts the rows from {@code request.records}, creating the table if none with {@code request.titleTable}
+     * exists yet.
+     */
     @Operation(summary = "Insert rows into a table",
             description = "Inserts the rows from insert-records. When no table with this title exists, creates "
                     + "the table first.")
@@ -61,10 +65,8 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
     }
 
     /**
-     * Allow to occupy records under ATP_USER.
-     *
-     * @param request - RestApiRequest
-     * @return List of ResponseMessages
+     * For each of {@code request.occupyRowRequests}, occupies the first available row matching its search
+     * criteria and returns one column's value, as ATP_User.
      */
     @Operation(operationId = "atpOccupyTestData", summary = "Occupy rows and return one column",
             description = "For each request in occupy-row-requests, occupies the first available row that "
@@ -79,10 +81,8 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
     }
 
     /**
-     * Allow to occupy records under ATP_USER.
-     *
-     * @param request - RestApiRequest
-     * @return List of ResponseMessages
+     * Same as {@link #occupyTestData}, returning several columns as a JSON object instead of one. A column that
+     * does not exist leaves the row available.
      */
     @Operation(summary = "Occupy rows and return several columns",
             description = "For each request in occupy-full-row-requests, occupies the first available row that "
@@ -98,10 +98,10 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
     }
 
     /**
-     * Allow to release occupied records.
+     * For each of {@code request.releaseRowRequests}, releases the one occupied row matching its search criteria
+     * and returns one column's value.
      *
-     * @param request - RestApiRequest
-     * @return List of ResponseMessages
+     * @throws RuntimeException if more than one occupied row matches
      */
     @Operation(operationId = "atpReleaseTestData", summary = "Release occupied rows",
             description = "For each request in release-row-requests, releases the occupied row that matches "
@@ -116,10 +116,7 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
     }
 
     /**
-     * Allow to release occupied records.
-     *
-     * @param request - RestApiRequest
-     * @return List of ResponseMessages
+     * Releases every occupied row of {@code request.titleTable}.
      */
     @Operation(summary = "Release all occupied rows of a table")
     @AuditAction(auditAction = "ATP Action. Release test data to project {{#request.projectName}} "
@@ -130,6 +127,10 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
                 request.getSystemName(), request.getTitleTable());
     }
 
+    /**
+     * For each of {@code request.updateRowRequests}, sets the given columns to the given values in every row
+     * matching its search criteria, and returns the number of rows updated.
+     */
     @Operation(summary = "Update rows",
             description = "For each request in update-row-requests, sets the columns in record-with-data-for-update "
                     + "to the given values in every row that matches search-row-parameters-set, and returns the "
@@ -142,6 +143,10 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
                 request.getSystemName(), request.getTitleTable(), request.getUpdateRowRequests());
     }
 
+    /**
+     * For each of {@code request.getRowRequests}, returns one column's value from the first available row
+     * matching its search criteria, without occupying it.
+     */
     @Operation(operationId = "atpGetTestData", summary = "Read one column of a row",
             description = "For each request in get-row-requests, returns the value of name-column-response from "
                     + "the first available row that matches search-row-parameters-set. The row is not occupied.")
@@ -154,10 +159,7 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
     }
 
     /**
-     * Allow to return values from multiple columns.
-     *
-     * @param request Request with looking data criteria.
-     * @return Object with multiple columns value.
+     * Same as {@link #getTestData}, returning several columns as a JSON object instead of one.
      */
     @Operation(summary = "Read several columns of a row",
             description = "For each request in get-row-requests, returns the values of response-column-names from "
@@ -171,6 +173,10 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
                 request.getSystemName(), request.getTitleTable(), request.getGetRowRequests());
     }
 
+    /**
+     * For each of {@code request.addInfoToRowRequests}, appends each given value on a new line to its column's
+     * current value, in every row matching its search criteria, and returns the number of rows updated.
+     */
     @Operation(summary = "Add values to rows",
             description = "For each request in add-info-to-row-requests, appends each value in "
                     + "record-with-data-for-update on a new line to the current value of its column, in every row "
@@ -183,6 +189,10 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
                 request.getSystemName(), request.getTitleTable(), request.getAddInfoToRowRequests());
     }
 
+    /**
+     * Runs the import query of {@code request.titleTable} in the given system, or of every table with that title
+     * in the project when {@code envName} or {@code systemName} is missing.
+     */
     @Operation(summary = "Refresh tables by title",
             description = "Runs the refresh query of the table with this title in the system, or of every table "
                     + "with this title in the project when envName or systemName is missing.")
@@ -194,6 +204,10 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
                 request.getTitleTable());
     }
 
+    /**
+     * Deletes every row of {@code request.titleTable}. Unlike the other operations of this controller,
+     * {@code request.projectName} must hold the project ID, not its name.
+     */
     @Operation(summary = "Delete all rows of a table",
             description = "Unlike the other operations, projectName must hold the project ID.")
     @AuditAction(auditAction = "ATP Action. Truncate table {{#request.titleTable}} "
@@ -204,6 +218,11 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
                 request.getTitleTable());
     }
 
+    /**
+     * Runs the cleanup configured for {@code request.titleTable} and returns the number of rows removed. Unlike
+     * the other operations of this controller, {@code request.projectName} must hold the project ID, not its
+     * name.
+     */
     @Operation(summary = "Run the cleanup of a table",
             description = "Runs the cleanup configured for the table, and returns the number of removed rows. "
                     + "Unlike the other operations, projectName must hold the project ID.")
@@ -215,6 +234,10 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
                 request.getTitleTable());
     }
 
+    /**
+     * Returns the database table name of {@code request.titleTable}. Requires every field of {@code request};
+     * a missing field or an unresolved table returns HTTP 400.
+     */
     @Operation(summary = "Get the database table name of a table",
             description = "Returns the name of the database table that stores the table with this title. All four "
                     + "fields are required; a missing field or an unknown table returns HTTP 400.")

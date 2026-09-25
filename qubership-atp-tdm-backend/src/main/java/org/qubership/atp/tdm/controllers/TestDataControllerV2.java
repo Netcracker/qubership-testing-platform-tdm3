@@ -36,10 +36,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Test Data Controller V2 - Enhanced endpoints with request body support.
- * Provides improved API design with cleaner parameter handling and better compatibility.
- */
 @Slf4j
 @RequestMapping("/api/tdm/v2")
 @RestController
@@ -57,8 +53,10 @@ public class TestDataControllerV2 {
     }
 
     /**
-     * Import Sql TestData v2 - uses request body instead of request parameters.
-     * This endpoint provides better compatibility and cleaner parameter handling.
+     * Does what {@code POST /api/tdm/import/sql} does, with the parameters in {@code request} instead of query
+     * parameters. For each of {@code request.environmentsIds}, runs {@code request.query} against the database of
+     * the system named {@code request.systemName}, and adds the result to the table with {@code request.tableTitle}
+     * or creates it.
      */
     @Operation(operationId = "importSqlTestDataV2", summary = "Import rows with an SQL query",
             description = "Does what POST /api/tdm/import/sql does, with the parameters in the request body. "
