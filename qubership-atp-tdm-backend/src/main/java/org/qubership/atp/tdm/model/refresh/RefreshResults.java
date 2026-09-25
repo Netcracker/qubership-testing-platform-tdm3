@@ -18,16 +18,19 @@ package org.qubership.atp.tdm.model.refresh;
 
 import org.qubership.atp.tdm.model.CommonResults;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+@Schema(description = "Result of one refresh run, for one table.")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class RefreshResults extends CommonResults {
 
+    @Schema(description = "Number of rows the table has after the refresh.")
     private int recordsTotal;
 }

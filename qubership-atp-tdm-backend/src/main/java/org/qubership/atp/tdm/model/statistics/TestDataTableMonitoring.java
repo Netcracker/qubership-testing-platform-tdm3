@@ -26,24 +26,33 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Transient;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+@Schema(description = "General-statistics monitoring schedule of one project: a periodic email when a table's "
+        + "available-row count drops below a threshold.")
 @Data
 @EqualsAndHashCode
 @ToString
 @Entity
 public class TestDataTableMonitoring implements ScheduleConfig {
+    @Schema(description = "Project ID.")
     @Id
     @Column(name = "project_id")
     private UUID projectId;
+    @Schema(description = "Runs the check on the schedule when set.")
     @Column(name = "enabled")
     private boolean enabled;
+    @Schema(description = "Quartz cron expression, starting with the seconds field.")
     @Column(name = "cron_expression")
     private String cronExpression;
+    @Schema(description = "Sends the email for a table when its available count drops below this threshold.")
     @Column(name = "threshold")
     private int threshold;
+    @Schema(description = "Comma-separated email addresses to notify.")
     @Column(name = "recipients")
     private String recipients;
     @Transient

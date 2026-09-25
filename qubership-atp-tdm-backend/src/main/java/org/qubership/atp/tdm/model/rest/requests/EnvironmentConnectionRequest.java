@@ -18,12 +18,18 @@ package org.qubership.atp.tdm.model.rest.requests;
 
 import java.util.Map;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
 public class EnvironmentConnectionRequest {
 
+    @Schema(description = "Connection name.")
     private String name;
+    @Schema(description = "Connection type, such as \"DB\" or \"HTTP\". See the supported connection types in "
+            + "the atp-env-controller documentation.")
     private String type;
+    @Schema(description = "Connection parameters, specific to type: for example url, username, and password "
+            + "for a DB connection.")
     private Map<String, String> parameters;
 }

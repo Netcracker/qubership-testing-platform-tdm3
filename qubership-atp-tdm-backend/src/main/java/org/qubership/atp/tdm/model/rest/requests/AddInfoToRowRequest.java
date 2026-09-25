@@ -16,6 +16,11 @@
 
 package org.qubership.atp.tdm.model.rest.requests;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Values to append to the matching rows. Each value in record-with-data-for-update is "
+        + "added on a new line to the current value of its column; the column keeps its old value if it "
+        + "has one.")
 public class AddInfoToRowRequest extends ChangeRowRequest {
 
 }

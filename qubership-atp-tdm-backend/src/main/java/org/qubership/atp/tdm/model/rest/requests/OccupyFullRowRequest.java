@@ -19,12 +19,18 @@ package org.qubership.atp.tdm.model.rest.requests;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+@Schema(description = "Occupies the first available row that matches the filters, and returns the values "
+        + "of several of its columns.")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class OccupyFullRowRequest extends AbstractRowRequest {
+    @Schema(description = "Names of the columns whose values the response returns. The row stays "
+            + "available if one of them does not exist.")
     @JsonProperty("response-column-names")
     private List<String> responseColumnNames;
 }

@@ -19,14 +19,23 @@ package org.qubership.atp.tdm.model.rest.requests;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+@Schema(description = "Reads the first available row that matches the filters, without occupying it. "
+        + "POST /api/tdm/rest/get-record reads nameColumnResponse; POST /api/tdm/rest/get-records reads "
+        + "responseColumnNames; each endpoint ignores the other field.")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class GetRowRequest extends AbstractRowRequest {
+    @Schema(description = "Name of the column whose value the response returns. Read by "
+            + "POST /api/tdm/rest/get-record.")
     @JsonProperty("name-column-response")
     private String nameColumnResponse;
+    @Schema(description = "Names of the columns whose values the response returns. Read by "
+            + "POST /api/tdm/rest/get-records.")
     @JsonProperty("response-column-names")
     private List<String> responseColumnNames;
 }

@@ -16,6 +16,7 @@
 
 package org.qubership.atp.tdm.model.statistics;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class StatisticsItem extends StatisticsEnvironment {
+    @Schema(description = "Title of the table.")
     private String context;
 
     public StatisticsItem(String environment, String system, String context) {

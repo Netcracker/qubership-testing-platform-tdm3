@@ -18,20 +18,26 @@ package org.qubership.atp.tdm.model.cleanup;
 
 import org.qubership.atp.tdm.model.CommonResults;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+@Schema(description = "Result of one cleanup run, for one table.")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
 public class CleanupResults extends CommonResults {
 
+    @Schema(description = "Database table name of the table the cleanup ran on.")
     private String tableName;
+    @Schema(description = "Set instead of the record counts when the cleanup failed.")
     private String error;
+    @Schema(description = "Number of rows in the table before the cleanup.")
     private int recordsTotal;
+    @Schema(description = "Number of rows the cleanup removed.")
     private int recordsRemoved;
 
     /**

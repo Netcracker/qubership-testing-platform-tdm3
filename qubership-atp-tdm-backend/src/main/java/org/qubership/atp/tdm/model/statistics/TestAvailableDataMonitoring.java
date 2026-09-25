@@ -25,6 +25,8 @@ import org.hibernate.proxy.HibernateProxy;
 import org.qubership.atp.tdm.utils.scheduler.ScheduleConfig;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -34,6 +36,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Schema(description = "Available-data monitoring schedule of one system's environment: a periodic email when a "
+        + "chosen column's available-row count drops below a threshold.")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -43,22 +47,30 @@ public class TestAvailableDataMonitoring implements ScheduleConfig, Serializable
 
     private static final long serialVersionUID = 3055608819732633976L;
 
+    @Schema(description = "System ID.")
     @Id
     @Column(name = "system_id")
     private UUID systemId;
+    @Schema(description = "Environment ID.")
     @Id
     @Column(name = "environment_id")
     private UUID environmentId;
+    @Schema(description = "Runs the check on the schedule when set.")
     @Column(name = "scheduled")
     private boolean scheduled;
+    @Schema(description = "Quartz cron expression, starting with the seconds field.")
     @Column(name = "schedule")
     private String schedule;
+    @Schema(description = "Comma-separated email addresses to notify.")
     @Column(name = "recipients")
     private String recipients;
+    @Schema(description = "Sends the email when the available count drops below this threshold.")
     @Column(name = "threshold")
     private int threshold;
+    @Schema(description = "Name of the monitored column, or an empty string when none is chosen yet.")
     @Column(name = "description")
     private String description;
+    @Schema(description = "Same value as description: name of the monitored column.")
     @Column(name = "active_column")
     private String activeColumn;
 
