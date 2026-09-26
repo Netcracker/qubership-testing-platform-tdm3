@@ -1,4 +1,4 @@
-FROM bellsoft/liberica-openjdk-alpine-musl:21.0.11
+FROM bellsoft/liberica-openjdk-alpine-musl:21.0.12.1
 
 LABEL maintainer="opensourcegroup@netcracker.com"
 LABEL atp.service="atp3-tdm-be"
@@ -7,6 +7,8 @@ ENV HOME_EX=/atp-tdm
 ENV TDM_DB_USER=tdmadmin
 ENV TDM_DB_PASSWORD=tdmadmin
 ENV JDBC_URL=jdbc:h2:file:./database/atptdm;
+ENV SOPS_VERSION=3.13.3
+ENV SOPS_SHA256=e5bec3346a873ae91d871550f3e698c1aad962aff462a080e40f25fde17fef6b
 
 WORKDIR $HOME_EX
 
@@ -32,7 +34,6 @@ RUN echo "https://dl-cdn.alpinelinux.org/alpine/v3.23/community/" >/etc/apk/repo
         nss_wrapper=1.1.12-r1 \
         pcre2=10.48-r0 \
         procps-ng=4.0.5-r0 \
-        sops=3.11.0-r6 \
         sysstat=12.7.8-r0 \
         tcpdump=4.99.5-r1 \
         wget=1.25.0-r2 \
@@ -40,6 +41,10 @@ RUN echo "https://dl-cdn.alpinelinux.org/alpine/v3.23/community/" >/etc/apk/repo
         zip=3.0-r13 \
         zlib=1.3.2-r0 && \
       rm -rf /var/cache/apk/*
+
+RUN curl -fsSLo /usr/bin/sops "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.amd64" && \
+    echo "${SOPS_SHA256}  /usr/bin/sops" | sha256sum -c - && \
+    chmod +x /usr/bin/sops
 
 COPY build-context/qubership-atp-tdm-distribution/target/ /tmp/
 
