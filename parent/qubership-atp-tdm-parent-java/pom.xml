@@ -16,6 +16,7 @@
         <java.version>21</java.version>
         <spring.boot.version>3.3.11</spring.boot.version>
         <spring.cloud.version>2023.0.3</spring.cloud.version>
+        <jackson-bom.version>2.18.8</jackson-bom.version>
         <logback.version>2.0.16</logback.version>
         <logstash.gelf.version>1.5.11</logstash.gelf.version>
         <owasp.encoder.version>2.5.5.0</owasp.encoder.version>
@@ -25,7 +26,7 @@
         <mockito.all.version>1.9.5</mockito.all.version>
         <swagger.version>1.5.3</swagger.version>
         <hikariCP.version>4.0.3</hikariCP.version>
-        <postgesql.version>42.3.9</postgesql.version>
+        <postgesql.version>42.7.11</postgesql.version>
         <h2.version>2.2.224</h2.version>
         <liquibase.version>4.9.1</liquibase.version>
         <svn.revision>local_build</svn.revision>
@@ -33,10 +34,10 @@
         <springfox.version>3.0.0</springfox.version>
         <xalan.version>2.7.3</xalan.version>
         <reactor-netty.version>1.0.39</reactor-netty.version>
-        <io.netty.version>4.1.127.Final</io.netty.version>
+        <io.netty.version>4.1.137.Final</io.netty.version>
         <kotlin-stdlib.version>1.8.22</kotlin-stdlib.version>
         <commons-fileupload.version>1.6.0</commons-fileupload.version>
-        <org.bouncycastle.jdk18on.version>1.78.1</org.bouncycastle.jdk18on.version>
+        <org.bouncycastle.jdk18on.version>1.85</org.bouncycastle.jdk18on.version>
         <undertow.version>2.3.21.Final</undertow.version>
 
         <atp.crypt.version>0.0.23</atp.crypt.version>
@@ -120,23 +121,10 @@
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
-                <artifactId>netty-handler</artifactId>
+                <artifactId>netty-bom</artifactId>
                 <version>${io.netty.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-codec-http2</artifactId>
-                <version>${io.netty.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-codec-http</artifactId>
-                <version>${io.netty.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-codec</artifactId>
-                <version>${io.netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
 
             <dependency>
@@ -172,6 +160,13 @@
                 <groupId>commons-beanutils</groupId>
                 <artifactId>commons-beanutils</artifactId>
                 <version>1.11.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
@@ -235,7 +230,7 @@
             <dependency>
                 <groupId>org.apache.kafka</groupId>
                 <artifactId>kafka-clients</artifactId>
-                <version>3.9.1</version>
+                <version>3.9.2</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.lz4</groupId>
@@ -322,6 +317,26 @@
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${postgesql.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents.client5</groupId>
+                <artifactId>httpclient5</artifactId>
+                <version>5.6.4</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents.core5</groupId>
+                <artifactId>httpcore5</artifactId>
+                <version>5.4.3</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents.core5</groupId>
+                <artifactId>httpcore5-h2</artifactId>
+                <version>5.4.3</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mchange</groupId>
+                <artifactId>mchange-commons-java</artifactId>
+                <version>0.6.0</version>
             </dependency>
             <dependency>
                 <groupId>com.google.guava</groupId>
