@@ -1,0 +1,4 @@
+name: tdm-test-data-assistant
+version: 1.0.0
+description: Skills that call the TDM3 (qubership-atp-tdm) REST API directly to find and reserve test data for test execution.
+author: kagw95
