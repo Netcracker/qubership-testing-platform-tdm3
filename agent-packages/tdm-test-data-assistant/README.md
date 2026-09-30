@@ -28,6 +28,24 @@ The API an automated action or agent calls to work with one table's rows. Every 
 | [tdm-cleanup-test-data-table](.apm/skills/tdm-cleanup-test-data-table/SKILL.md) | Delete every row of a table, or run its configured cleanup rule. Destructive. |
 | [tdm-resolve-table-name](.apm/skills/tdm-resolve-table-name/SKILL.md) | Look up the underlying H2 database table name behind a table title. |
 
+### `test-data-controller` (`/api/tdm/*`)
+
+The UI-facing API: broader than `atp-action-controller` (pagination, sorting, reading occupied rows, file
+import/export) but addressed mostly by **database table name** (`TDM_<hash>`, from `tdm-list-tables`) and
+**project/environment/system UUIDs**, not by title and name — check each skill's own page for its exact addressing.
+
+| Skill | Purpose |
+|---|---|
+| [tdm-list-tables](.apm/skills/tdm-list-tables/SKILL.md) | Discover which tables exist for a project or environment, and resolve a title to a database table name. |
+| [tdm-browse-test-data-table](.apm/skills/tdm-browse-test-data-table/SKILL.md) | Page, sort, or inspect rows (including occupied ones); list a column's distinct values. |
+| [tdm-occupy-test-data-rows-by-id](.apm/skills/tdm-occupy-test-data-rows-by-id/SKILL.md) | Occupy, release, or delete specific rows already identified by `ROW_ID`. |
+| [tdm-import-test-data](.apm/skills/tdm-import-test-data/SKILL.md) | Load rows from an Excel file or a SQL query, or refresh a table's rows from a new SQL query result. |
+| [tdm-manage-test-data-table](.apm/skills/tdm-manage-test-data-table/SKILL.md) | Drop a table, delete all its rows, or rename its title. Destructive. |
+| [tdm-export-test-data-table](.apm/skills/tdm-export-test-data-table/SKILL.md) | Download a table as an Excel or CSV file. |
+| [tdm-configure-column-links](.apm/skills/tdm-configure-column-links/SKILL.md) | Preview or save a column's values as clickable links in the TDM3 UI. |
+| [tdm-table-utilities](.apm/skills/tdm-table-utilities/SKILL.md) | Check a table's unoccupied-row validation flag; resolve `${...}` macros in a query. |
+| [tdm-run-legacy-migrations](.apm/skills/tdm-run-legacy-migrations/SKILL.md) | One-time legacy migrations. Two of five are confirmed broken on H2 — read before calling any of them. |
+
 ## Configuration
 
 Every skill in this package needs to know which TDM3 server, project, environment, and system to target. They all
