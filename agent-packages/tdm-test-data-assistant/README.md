@@ -46,6 +46,38 @@ import/export) but addressed mostly by **database table name** (`TDM_<hash>`, fr
 | [tdm-table-utilities](.apm/skills/tdm-table-utilities/SKILL.md) | Check a table's unoccupied-row validation flag; resolve `${...}` macros in a query. |
 | [tdm-run-legacy-migrations](.apm/skills/tdm-run-legacy-migrations/SKILL.md) | One-time legacy migrations. Two of five are confirmed broken on H2 — read before calling any of them. |
 
+### `test-data-controller-v2` (`/api/tdm/v2/*`)
+
+| Skill | Purpose |
+|---|---|
+| [tdm-import-test-data-v2](.apm/skills/tdm-import-test-data-v2/SKILL.md) | Import rows with a SQL query, with parameters in a JSON body instead of the query string. |
+
+### `atp-env-controller` (`/api/tdm/rest/create-env`)
+
+| Skill | Purpose |
+|---|---|
+| [tdm-manage-dynamic-environment](.apm/skills/tdm-manage-dynamic-environment/SKILL.md) | Create, update, or delete a dynamic environment, system, or connection — the write side of `tdm-select-context`. |
+
+### `data-cleanup-controller` (`/api/tdm/cleanup/*`)
+
+| Skill | Purpose |
+|---|---|
+| [tdm-manage-cleanup-config](.apm/skills/tdm-manage-cleanup-config/SKILL.md) | View, save, or run-now a table's cleanup rule; check a cron schedule's next run. |
+
+### `statistics-controller` (`/api/tdm/statistics/*`)
+
+| Skill | Purpose |
+|---|---|
+| [tdm-view-test-data-statistics](.apm/skills/tdm-view-test-data-statistics/SKILL.md) | Row counts (available, occupied, created, outdated) and occupation history by user. |
+| [tdm-manage-statistics-schedule](.apm/skills/tdm-manage-statistics-schedule/SKILL.md) | Set up, check, or cancel the low-available-rows and users-occupation email reports. |
+| [tdm-manage-available-data-by-column-stats](.apm/skills/tdm-manage-available-data-by-column-stats/SKILL.md) | Available rows grouped by a chosen column's value, and its email schedule. |
+
+### `environments-controller` (`/api/tdm/projects/*`, `/api/tdm/environments/*`)
+
+Covered by [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md) — including the two endpoints of this
+controller that exist but do nothing useful (a cache-refresh and a cache-reset left over from a caching layer that
+no longer exists); see that skill's own page.
+
 ## Configuration
 
 Every skill in this package needs to know which TDM3 server, project, environment, and system to target. They all
