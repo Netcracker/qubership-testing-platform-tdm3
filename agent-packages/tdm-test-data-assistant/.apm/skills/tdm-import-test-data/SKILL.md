@@ -45,7 +45,7 @@ curl -G -X POST '<TDM3_BASE_URL>/api/tdm/import/sql' \
 ```
 
 Takes plain query parameters on a `POST`, not a JSON body — `-G` makes `curl` put `--data-urlencode` values in the
-URL's query string instead of the request body while `-X POST` keeps the method.
+query string of URL instead of the request body while `-X POST` keeps the method.
 
 `environmentsIds` accepts several IDs (repeat the parameter) to import the same query into one table per
 environment in a single call. `systemName` here is a name, not an ID — unlike the rest of this skill. TDM3 saves

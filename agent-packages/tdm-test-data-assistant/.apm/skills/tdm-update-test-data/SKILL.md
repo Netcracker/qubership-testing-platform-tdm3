@@ -48,7 +48,7 @@ Every column in `record-with-data-for-update` replaces the matching row's curren
 Same request shape, posted to `POST /api/tdm/rest/add-info-to-row` with `"add-info-to-row-requests"` in place of
 `"update-row-requests"`. Each value in `record-with-data-for-update` is appended on a new line to the column's
 current value — verified: appending `"second"` to a column already holding `"first"` leaves it as `"first\r\nsecond"`.
-A column with no current value just gets the new one, with no leading blank line.
+A column with no current value just gets the new one, with no leading empty line.
 
 ## Response
 

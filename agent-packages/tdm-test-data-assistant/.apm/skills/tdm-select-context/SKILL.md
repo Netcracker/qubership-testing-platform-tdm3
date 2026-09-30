@@ -6,11 +6,11 @@ description: Use before any TDM3 data operation (find, reserve, insert) to resol
 # Select the TDM3 working context
 
 Resolves project, environment, and system, in that order — each step's list is scoped to the previous step's
-choice, so they can't be resolved independently. See [the package README](../../../README.md#configuration) for the
+choice, so they can't be resolved independently. See [the package `README.md`](../../../README.md#configuration) for the
 config file's location and the full key list; this skill is what writes `PROJECT_ID`, `PROJECT_NAME`,
 `ENV_ID_DEFAULT`, `ENV_NAME_DEFAULT`, `SYSTEM_ID_DEFAULT`, and `SYSTEM_NAME_DEFAULT` into it.
 
-Resolve `TDM3_BASE_URL` first (see the README) — every request below is `GET <TDM3_BASE_URL>/api/tdm/...`.
+Resolve `TDM3_BASE_URL` first (see the `README.md`) — every request below is `GET <TDM3_BASE_URL>/api/tdm/...`.
 
 ## 1. Project
 
@@ -20,7 +20,7 @@ actually has data. A project with real environments and systems can be missing f
 can have nothing under it. Don't infer which project to use from the size of this list; resolve it the same way as
 environment and system, below:
 
-- The user names a project in their current request → verify it: call `GET /api/tdm/projects/lazy`:
+- The user sets name of the project in their current request → verify it: call `GET /api/tdm/projects/lazy`:
 
   ```json
   [{ "id": "b0c1fd9e-19a7-4156-90e0-f04028a58720", "name": "MyProject" }]
@@ -38,7 +38,7 @@ Once resolved, write `PROJECT_ID` and `PROJECT_NAME` to the config file, replaci
 
 ## 2. Environment
 
-- The user names an environment in their current request → verify it: call
+- The user sets name of the environment in their current request → verify it: call
   `GET /api/tdm/projects/{PROJECT_ID}/environments/lazy`:
 
   ```json

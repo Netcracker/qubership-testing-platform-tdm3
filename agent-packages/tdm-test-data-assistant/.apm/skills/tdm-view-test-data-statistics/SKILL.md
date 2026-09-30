@@ -52,7 +52,7 @@ curl -X POST '<TDM3_BASE_URL>/api/tdm/statistics/data/occupied/users' \
   }'
 ```
 
-`filters` matches on table title, user name, system name, or environment name (`From`/`To` don't apply here).
+`filters` matches on table title, username, system name, or environment name (`From`/`To` don't apply here).
 Returns `{"data": [...], "records": <total>}`, paged. `dateTo` must be later than `dateFrom`; otherwise the request
 returns HTTP 400.
 
