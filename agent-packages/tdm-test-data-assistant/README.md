@@ -4,6 +4,45 @@ Skills that call the TDM3 (`qubership-atp-tdm`) REST API directly, so an agent c
 data without a separate MCP server. Each skill sends its own HTTP requests; there's no authentication layer, since
 TDM3 is reached from inside the network perimeter.
 
+## How to work with these skills
+
+Every request to this package resolves a project, an environment, and a system before it touches any data — that
+part runs once, in a fixed order. What happens after that is not a sequence: the user's actual work (finding data,
+reserving it, cleaning up, checking statistics) comes in whatever order the current testing task calls for, and any
+of it can repeat or interleave freely once the context is resolved. Switching to a different environment or system
+mid-task re-enters the same setup, not a separate path.
+
+```mermaid
+flowchart TD
+    Start(["Request comes in"]) --> HasContext{"Project, environment, and<br/>system already resolved?"}
+    HasContext -- No --> Setup["tdm-select-context:<br/>TDM3 URL -> Project -> Environment -> System"]
+    HasContext -- Yes --> Ready
+    Setup --> Ready(["Context ready"])
+
+    Ready --> Find["Find or browse data<br/>(tdm-find-test-data, tdm-list-tables, ...)"]
+    Ready --> Reserve["Reserve, release, or delete rows<br/>(tdm-reserve-test-data, tdm-occupy-test-data-rows-by-id)"]
+    Ready --> Change["Insert, update, or import data<br/>(tdm-insert-test-data, tdm-import-test-data, ...)"]
+    Ready --> Manage["Clean up or manage tables and environments<br/>(tdm-cleanup-test-data-table, tdm-manage-dynamic-environment, ...)"]
+    Ready --> Stats["View statistics and reports<br/>(tdm-view-test-data-statistics, ...)"]
+
+    Find --> Ready
+    Reserve --> Ready
+    Change --> Ready
+    Manage --> Ready
+    Stats --> Ready
+
+    Ready -- "switch project, environment, or system" --> Setup
+```
+
+Two rules follow directly from this shape:
+
+- **Nothing below "Context ready" runs before it.** A skill that needs project/environment/system addressing reads
+  it from the config file (see Configuration below) and never guesses a default — if the config file doesn't have
+  it yet, that skill runs `tdm-select-context` first rather than asking the user itself.
+- **Every action loops back to the same "Context ready" state**, not to a fixed next step. The category labels
+  above group the skills table below by task, not by calling order — see that table for the full list and each
+  skill's exact scope.
+
 ## Skills
 
 ### Context
