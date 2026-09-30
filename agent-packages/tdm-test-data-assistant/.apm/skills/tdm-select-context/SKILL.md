@@ -81,6 +81,19 @@ Verify a user-named system against this list, list it on request, or fall back t
 `SYSTEM_NAME_DEFAULT` from the config file when the user named neither a system nor asked for the list. Write the
 resolved `SYSTEM_ID_DEFAULT` and `SYSTEM_NAME_DEFAULT` back to the config file the same way as the environment.
 
+## The rest of `environments-controller`
+
+Two endpoints exist beyond the three above, and neither is useful in practice — verified live, both no-ops left
+over from a caching layer that no longer exists:
+
+- `GET /api/tdm/projects/{PROJECT_ID}/environments/lazy/refresh` returns the exact same list as plain
+  `/environments/lazy` (`[]` on an empty project, verified) — its own description says there's no cache to refresh,
+  so it just reads the database again.
+- `GET /api/tdm/envs/reset/caches` does nothing and returns the bare JSON `true` — verified live. There's no cache
+  to reset.
+
+No reason to call either from this skill; use the plain `/environments/lazy` endpoint from step 2.
+
 ## When a list comes back empty
 
 `/environments/lazy` or `/systems/lazy` can return `[]` — a project can genuinely have no environments registered,
