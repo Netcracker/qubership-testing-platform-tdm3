@@ -1,16 +1,32 @@
 # tdm-test-data-assistant
 
-Skills that call the TDM3 (`qubership-atp-tdm`) REST API directly, so an agent can find, reserve, and (later) create
-test data without a separate MCP server. Each skill sends its own HTTP requests; there's no authentication layer,
-since TDM3 is reached from inside the network perimeter.
+Skills that call the TDM3 (`qubership-atp-tdm`) REST API directly, so an agent can find, reserve, and manage test
+data without a separate MCP server. Each skill sends its own HTTP requests; there's no authentication layer, since
+TDM3 is reached from inside the network perimeter.
 
 ## Skills
+
+### Context
 
 | Skill | Purpose |
 |---|---|
 | [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md) | Resolve which project, environment, and system to work against. Run this first. |
-| [tdm-find-test-data](.apm/skills/tdm-find-test-data/SKILL.md) | Search TDM3 for available rows matching column criteria. |
+
+### `atp-action-controller` (`/api/tdm/rest/*`)
+
+The API an automated action or agent calls to work with one table's rows. Every skill below sends its own
+`projectName`/`envName`/`systemName`/`title-table` addressing (see Configuration) and reads a `ResponseMessage` —
+`{type, content, contentObject, link}` — unless its own page says otherwise.
+
+| Skill | Purpose |
+|---|---|
+| [tdm-find-test-data](.apm/skills/tdm-find-test-data/SKILL.md) | Search for available rows matching column criteria, without reserving them. |
 | [tdm-reserve-test-data](.apm/skills/tdm-reserve-test-data/SKILL.md) | Reserve (occupy) or release rows for a test run. |
+| [tdm-insert-test-data](.apm/skills/tdm-insert-test-data/SKILL.md) | Add new rows, creating the table if needed. |
+| [tdm-update-test-data](.apm/skills/tdm-update-test-data/SKILL.md) | Change column values on existing rows, or append to one without losing its current value. |
+| [tdm-refresh-test-data-table](.apm/skills/tdm-refresh-test-data-table/SKILL.md) | Re-run a table's saved import query on demand. |
+| [tdm-cleanup-test-data-table](.apm/skills/tdm-cleanup-test-data-table/SKILL.md) | Delete every row of a table, or run its configured cleanup rule. Destructive. |
+| [tdm-resolve-table-name](.apm/skills/tdm-resolve-table-name/SKILL.md) | Look up the underlying H2 database table name behind a table title. |
 
 ## Configuration
 
@@ -47,6 +63,8 @@ sessions don't ask again.
 | `ENV_ID_DEFAULT`, `ENV_NAME_DEFAULT` | The environment currently in scope. Changeable at any time. | `tdm-select-context`, on first use and whenever the user switches environments. |
 | `SYSTEM_ID_DEFAULT`, `SYSTEM_NAME_DEFAULT` | The system currently in scope, within `ENV_ID_DEFAULT`. Changeable at any time. | `tdm-select-context`, on first use and whenever the user switches systems. |
 
-`tdm-find-test-data` and `tdm-reserve-test-data` read `PROJECT_NAME`, `ENV_NAME_DEFAULT`, and `SYSTEM_NAME_DEFAULT`
-for the `projectName`, `envName`, and `systemName` fields of their request bodies. Neither skill resolves them on
-its own — run `tdm-select-context` first if they aren't set yet.
+Every `atp-action-controller` skill reads `PROJECT_NAME`, `ENV_NAME_DEFAULT`, and `SYSTEM_NAME_DEFAULT` for the
+`projectName`, `envName`, and `systemName` fields of its request body — except
+[tdm-cleanup-test-data-table](.apm/skills/tdm-cleanup-test-data-table/SKILL.md), which needs `PROJECT_ID` instead of
+`PROJECT_NAME` for its two operations; see that skill's own page. None of them resolve project, environment, or
+system on their own — run `tdm-select-context` first if the config file doesn't have them yet.
