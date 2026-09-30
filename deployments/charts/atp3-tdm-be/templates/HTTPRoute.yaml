@@ -1,0 +1,29 @@
+{{- if contains "gateway-api-default" .Values.GATEWAY_SYSTEM_TYPE }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: '{{ .Values.SERVICE_NAME }}'
+  labels:
+    app: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION }}'
+spec:
+  hostnames:
+    - '{{ include "icmtbe.env.ingressHost" . }}'
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ .Values.GATEWAY_SYSTEM_NAME }}
+      namespace: {{ .Values.GATEWAY_SYSTEM_NAMESPACE }}
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: '{{ .Values.SERVICE_NAME }}'
+          port: {{ .Values.atp3IcmtBe.serverPort }}
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+{{- end }}
