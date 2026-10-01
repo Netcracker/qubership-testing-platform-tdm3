@@ -32,6 +32,21 @@ description says the import fails without them. Creates the table if none with t
 Set `runSqlScript: true` to also run the table's saved update-by-query script (see `/update/sql` below) against the
 loaded rows afterward.
 
+Verified live: response is a one-element `List<ImportTestDataStatistic>`, the same shape `/import/sql` returns for
+several environments — `envName` is always `null` here, since this endpoint only ever targets the one
+environment/system passed in:
+
+```json
+[{ "envName": null, "error": null, "processedRows": 14 }]
+```
+
+**On Windows, building the `-F file=@...` value from a Git Bash/MSYS shell: don't append a `;type=...` (or
+`;filename=...`) modifier to a POSIX-style path (`/c/Users/...`) in the same argument.** Verified live and
+reproduced twice: that exact combination makes `curl.exe` fail to read the file (`exit 26`, no request ever sent)
+even though the file exists and is readable; either half alone — a POSIX path with no modifier, or a Windows path
+(`C:\...`) with one — works. The server accepts the file without a `;type=...` override regardless, so the
+simplest fix is to never add one: `-F "file=@<path>"`.
+
 ## Import rows with a SQL query
 
 ```bash
@@ -83,6 +98,8 @@ does. Returns a single `ImportTestDataStatistic` (no array — there's only one 
 ## Common pitfalls
 
 - Sending `/import/excel` as JSON: it's `multipart/form-data`, the only endpoint in this package that is.
+- Combining a POSIX-style path with a `;type=...` modifier in `-F file=@...` from a Windows Git Bash/MSYS shell —
+  see above; drop the modifier rather than debugging the path.
 - Omitting `environmentId`/`systemId` on `/import/excel` because they're marked optional: the import fails without
   them regardless.
 - Assuming `/import/sql`'s per-environment errors surface as an HTTP failure: they don't — read every entry's

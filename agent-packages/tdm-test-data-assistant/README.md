@@ -57,6 +57,14 @@ The API an automated action or agent calls to work with one table's rows. Every 
 `projectName`/`envName`/`systemName`/`title-table` addressing (see Configuration) and reads a `ResponseMessage` —
 `{type, content, contentObject, link}` — unless its own page says otherwise.
 
+**Every operation in this controller shares one Java request class, so Swagger/`/v3/api-docs` shows the same
+body schema — the union of all operations' fields — for every one of them, including operations that need none of
+most of those fields** (`truncate-table`, for example, shows `insert-records`, `occupy-row-requests`, and four
+other arrays it never reads). If a request body doesn't match what a skill below shows, trust the skill, not the
+full Swagger schema — the extra fields are not a hint that something is missing. Tracked as
+[#136](https://github.com/Netcracker/qubership-testing-platform-tdm3/issues/136); re-check this note (and remove
+it if the fix makes it stop applying) once that's resolved.
+
 | Skill                                                                           | Purpose                                                                                   |
 |---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
 | [tdm-find-test-data](.apm/skills/tdm-find-test-data/SKILL.md)                   | Search for available rows matching column criteria, without reserving them.               |

@@ -19,7 +19,9 @@ Same context resolution as [tdm-find-test-data](../tdm-find-test-data/SKILL.md):
 
 - `title-table` — the table to reserve or release rows in.
 - The same column filters used to find the row (see tdm-find-test-data): column name, comparison, value,
-  case-sensitivity.
+  case-sensitivity. For reserving, an empty `search-row-parameters-set` is valid — verified live — and occupies
+  the first available row unconditionally, for a user who just wants "any" row. Don't do this for releasing (see
+  Common pitfalls): an empty filter there is a way to release the wrong row, not a documented shortcut.
 - The column (or columns) whose value identifies the reserved row to the caller.
 
 ## Reserve
@@ -42,6 +44,9 @@ curl -X POST '<TDM3_BASE_URL>/api/tdm/rest/occupy-records' \
     ]
   }'
 ```
+
+Set `"search-row-parameters-set": []` to occupy the first available row with no condition — verified live, this is
+how to satisfy "reserve any available row" without inventing a filter that happens to match everything.
 
 TDM3 occupies the first available row matching the filters, as `ATP_User`, and returns
 `[{ "type": "SUCCESS", "content": "PREPAID_00123", "contentObject": null, "link": "..." }]` — `content` carries the
@@ -83,5 +88,8 @@ needed.
   (the same data as an object). There is no `message` field.
 - Filtering `release-records` on a non-unique column: it throws rather than picking one of the matches. Use the
   identifier `occupy-records` returned.
+- Releasing with an empty `search-row-parameters-set`: not verified, and `release-records` already throws on more
+  than one match for a real filter — an empty one is likely to match every occupied row. Reserve for occupy only,
+  never for release.
 - Treating `type: "ERROR"` as a network error: it means the reservation pool has no available row left, which the
   user needs to know so they can trigger test data generation instead of retrying the same request.

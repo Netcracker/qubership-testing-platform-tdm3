@@ -31,10 +31,11 @@ curl -X POST '<TDM3_BASE_URL>/api/tdm/rest/resolve-table' \
 
 ## Response
 
-On success, a single object (not a list, like [tdm-insert-test-data](../tdm-insert-test-data/SKILL.md)):
+On success, a single object (not a list, like [tdm-insert-test-data](../tdm-insert-test-data/SKILL.md)) — verified
+live:
 
 ```json
-{ "type": "SUCCESS", "content": "TDM_547cdede996b44f4be273c444d4f7287", "contentObject": null, "link": "..." }
+{ "type": "SUCCESS", "content": "TDM_d557b8bbe1e444aeabfe897291552a49", "contentObject": null, "link": "" }
 ```
 
 **This endpoint doesn't fail the same way the rest of the controller does — verified, both below:**

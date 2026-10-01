@@ -17,8 +17,10 @@ Run [tdm-select-context](../tdm-select-context/SKILL.md) first if `PROJECT_NAME`
 that, collect:
 
 - `title-table` — the table title to search.
-- One or more column filters: for each, a column name, a comparison (`Contains`, `startWith`, `Equals`, `From`, or
-  `To`, case-insensitive), the value to compare against, and whether the comparison is case-sensitive.
+- Zero or more column filters: for each, a column name, a comparison (`Contains`, `startWith`, `Equals`, `From`, or
+  `To`, case-insensitive), the value to compare against, and whether the comparison is case-sensitive. An empty
+  `search-row-parameters-set` is valid — verified live — and matches the first available row with no condition, for
+  a user who wants "any" row rather than one matching specific criteria.
 - The column (or columns) whose value the user wants back.
 
 `envName` and `systemName` are optional at the TDM3 API level (it falls back to the first table with this title in
@@ -47,7 +49,8 @@ curl -X POST '<TDM3_BASE_URL>/api/tdm/rest/get-record' \
   }'
 ```
 
-Every filter in `search-row-parameters-set` must match (they are ANDed). Use `/get-records` with
+Every filter in `search-row-parameters-set` must match (they are ANDed); `"search-row-parameters-set": []` matches
+the first available row unconditionally. Use `/get-records` with
 `"response-column-names": ["COL_A", "COL_B"]` instead of `"name-column-response"` when the caller needs more than one
 column back; the rest of the request body is the same. `get-row-requests` accepts several entries, so one call can run
 several independent searches against the same table.
