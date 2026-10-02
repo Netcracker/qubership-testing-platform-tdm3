@@ -56,6 +56,36 @@ available row matched — the pool is exhausted and new test data needs to be ge
 in transit (HTTP is 200 either way). Report that distinction to the user in plain language rather than surfacing the
 raw JSON.
 
+## Reserve every row matching a filter
+
+There's no bulk "occupy all matches" operation — `occupy-records` always occupies the first available row of each
+individual `occupy-row-requests` entry. To reserve every row matching one filter, **repeat the same
+`search-row-parameters-set` once per row wanted, as separate entries in the same `occupy-row-requests` array**:
+
+```json
+{
+  "occupy-row-requests": [
+    { "search-row-parameters-set": [{ "name-column": "Partner", "search-criterion": "Equals", "search-value": "HITECH", "caseSensitive": false }], "name-column-response": "SIM" },
+    { "search-row-parameters-set": [{ "name-column": "Partner", "search-criterion": "Equals", "search-value": "HITECH", "caseSensitive": false }], "name-column-response": "SIM" },
+    { "search-row-parameters-set": [{ "name-column": "Partner", "search-criterion": "Equals", "search-value": "HITECH", "caseSensitive": false }], "name-column-response": "SIM" }
+  ]
+}
+```
+
+Verified live: the entries are evaluated in order against the table's live state, not a shared snapshot taken
+before the call, so the second entry never re-occupies the row the first one just took — three identical entries
+against three matching rows returned three distinct SIMs, one per entry. This follows directly from "each
+`occupy-row-requests` entry occupies the first available row matching it": once entry 1 occupies a row, that row
+is no longer available for entry 2 to match.
+
+This means the caller has to know (or over-estimate) how many rows match before sending the request — there's no
+"however many there are" option. Find the count first with
+[tdm-browse-test-data-table](../tdm-browse-test-data-table/SKILL.md)'s paged read (its `records` field) or
+[tdm-find-test-data](../tdm-find-test-data/SKILL.md)'s distinct-values/row tools, then send that many entries.
+Sending one entry too many is harmless: the extra entry comes back `type: "ERROR"`,
+`content: "No test data available for requested criteria!"`, the same pool-exhausted result documented above, and
+doesn't affect the entries that did match.
+
 ## Release
 
 ```bash
