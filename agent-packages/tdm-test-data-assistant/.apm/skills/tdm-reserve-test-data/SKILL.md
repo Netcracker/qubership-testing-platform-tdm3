@@ -10,6 +10,10 @@ trip. Call `POST /api/tdm/rest/occupy-records` (one response column) or `POST /a
 (several response columns) to reserve; call `POST /api/tdm/rest/release-records` or `.../release-records/bulk` to
 release.
 
+Use these endpoints whenever the user describes the rows by selection conditions, and do not look up `ROW_ID` values
+first. Only when the user already supplies `ROW_ID` values, reserve them by ID with
+[tdm-occupy-test-data-rows-by-id](../tdm-occupy-test-data-rows-by-id/SKILL.md).
+
 ## Required inputs
 
 Same context resolution as [tdm-find-test-data](../tdm-find-test-data/SKILL.md): run
@@ -79,7 +83,8 @@ against three matching rows returned three distinct SIMs, one per entry. This fo
 is no longer available for entry 2 to match.
 
 This means the caller has to know (or over-estimate) how many rows match before sending the request — there's no
-"however many there are" option. Find the count first with
+"however many there are" option. Use the lookup only to count the matching rows, not to collect their `ROW_ID`
+values for reserving by ID. Find the count first with
 [tdm-browse-test-data-table](../tdm-browse-test-data-table/SKILL.md)'s paged read (its `records` field) or
 [tdm-find-test-data](../tdm-find-test-data/SKILL.md)'s distinct-values/row tools, then send that many entries.
 Sending one entry too many is harmless: the extra entry comes back `type: "ERROR"`,

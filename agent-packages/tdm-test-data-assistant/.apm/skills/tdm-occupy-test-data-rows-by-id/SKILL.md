@@ -5,23 +5,30 @@ description: Use to occupy, release, or delete specific TDM3 rows the caller has
 
 # Occupy, release, or delete TDM3 rows by ID
 
-Prefer [tdm-reserve-test-data](../tdm-reserve-test-data/SKILL.md) when the caller only has search criteria, not a
-row's ID — it finds and reserves in one call. Use this skill once specific `ROW_ID` values are already known (from
-[tdm-browse-test-data-table](../tdm-browse-test-data-table/SKILL.md) or a prior response), or to delete rows
-outright, which `atp-action-controller` has no operation for.
+Use this skill to occupy rows only when the `ROW_ID` values are already known, for example the user supplied them or
+an earlier response returned them. When the user describes the rows by selection conditions, use
+[tdm-reserve-test-data](../tdm-reserve-test-data/SKILL.md) instead: it finds and reserves in one call, so never run a
+search just to obtain `ROW_ID` values for this skill. Releasing and deleting rows by ID also belong here, and
+deleting is the one operation `atp-action-controller` has no equivalent for, so a lookup in
+[tdm-browse-test-data-table](../tdm-browse-test-data-table/SKILL.md) to find the rows to delete is expected.
 
 ## Required inputs
 
 - `tableName` — the database table name (from [tdm-list-tables](../tdm-list-tables/SKILL.md)), not the title.
 - One or more `ROW_ID` values (UUIDs).
+- For occupying, `occupiedBy`: the name the reservation is recorded under.
 
 ## Occupy
 
 ```bash
-curl -X PUT '<TDM3_BASE_URL>/api/tdm/occupy?tableName=<tableName>&occupiedBy=<user or caller name>' \
+curl -X PUT '<TDM3_BASE_URL>/api/tdm/occupy?tableName=<tableName>&occupiedBy=<occupiedBy>' \
   -H 'Content-Type: application/json' \
   -d '["179e6bdc-18d5-4cb4-b816-945302fb6e27"]'
 ```
+
+Set `occupiedBy` to the login name of the operating-system account the agent runs under, such as the value of
+`USERNAME` on Windows or `USER` on Linux and macOS. If the system reports no such name, use the IP address of the
+computer the agent runs on.
 
 ## Release
 
