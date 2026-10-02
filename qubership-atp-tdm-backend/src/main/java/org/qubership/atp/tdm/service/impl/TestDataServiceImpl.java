@@ -68,6 +68,7 @@ import org.qubership.atp.tdm.model.scheduler.CleanRemovingHistoryJob;
 import org.qubership.atp.tdm.model.scheduler.TableCleanerJob;
 import org.qubership.atp.tdm.model.statistics.DateStatistics;
 import org.qubership.atp.tdm.model.statistics.DateStatisticsItem;
+import org.qubership.atp.tdm.model.statistics.StatisticsInterval;
 import org.qubership.atp.tdm.model.table.TableColumnValues;
 import org.qubership.atp.tdm.model.table.TestDataFlagsTable;
 import org.qubership.atp.tdm.model.table.TestDataTable;
@@ -569,6 +570,7 @@ public class TestDataServiceImpl implements TestDataService {
         DateStatistics dateStatistics = new DateStatistics();
         List<DateStatisticsItem> listStatisticsItems = new ArrayList<>();
         dateStatistics.setDates(DataUtils.getStatisticsInterval(dateFrom, dateTo));
+        StatisticsInterval interval = DataUtils.getStatisticsIntervalType(dateFrom, dateTo);
         catalogList.forEach(catalog -> {
             TestDataTable table = testDataTableRepository.getTableByCreatedWhen(catalog.getTableName(),
                     dateFrom, dateTo);
@@ -576,7 +578,7 @@ public class TestDataServiceImpl implements TestDataService {
             DateStatisticsItem statisticsItem = new DateStatisticsItem(catalog.getTableTitle());
             List<Long> created = new ArrayList<>();
             long count;
-            switch (DataUtils.statisticsInterval) {
+            switch (interval) {
                 case YEARS:
                     do {
                         count = 0L;
@@ -671,10 +673,9 @@ public class TestDataServiceImpl implements TestDataService {
                                            @Nonnull String columnName, @Nonnull String searchValue,
                                            boolean occupied) {
         log.info("Starting search for table {} under project {} and system {}", tableTitle, projectId, systemId);
-        TestDataTableCatalog catalog =
-                catalogRepository.findByProjectIdAndSystemIdAndTableTitle(projectId, systemId, tableTitle);
+        TestDataTableCatalog catalog = findCatalogByProjectAndSystemAndTitle(projectId, systemId, tableTitle);
         if (Objects.isNull(catalog)) {
-            throw new TdmSearchTableException(tableTitle, projectId.toString(), systemId.toString());
+            throw new TdmSearchTableException(tableTitle, projectId.toString(), String.valueOf(systemId));
         }
         List<TestDataTableFilter> filters = new ArrayList<>();
         TestDataTableFilter filter = new TestDataTableFilter(columnName, SearchConditionType.EQUALS.toString(),
@@ -702,8 +703,26 @@ public class TestDataServiceImpl implements TestDataService {
                     projectId, systemId);
             return row.get();
         } else {
-            throw new TdmSearchDataByCriteriaException(tableTitle, projectId.toString(), systemId.toString());
+            throw new TdmSearchDataByCriteriaException(tableTitle, projectId.toString(), String.valueOf(systemId));
         }
+    }
+
+    /**
+     * Finds the catalog entry for a project, table title, and, optionally, system.
+     *
+     * <p>{@code findByProjectIdAndSystemIdAndTableTitle} requires a system ID and never matches a catalog entry
+     * when passed {@code null}, because a test data table always has a system. When {@code systemId} is
+     * {@code null}, this returns the first catalog entry with the given project and title instead, across every
+     * system.</p>
+     */
+    private TestDataTableCatalog findCatalogByProjectAndSystemAndTitle(@Nonnull UUID projectId,
+                                                                       @Nullable UUID systemId,
+                                                                       @Nonnull String tableTitle) {
+        if (Objects.isNull(systemId)) {
+            return catalogRepository.findAllByProjectIdAndTableTitle(projectId, tableTitle)
+                    .stream().findFirst().orElse(null);
+        }
+        return catalogRepository.findByProjectIdAndSystemIdAndTableTitle(projectId, systemId, tableTitle);
     }
 
     @Override

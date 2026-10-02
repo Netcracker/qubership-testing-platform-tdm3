@@ -47,7 +47,6 @@ public class DataUtils {
     private static final int WEEK_LENGTH = 7;
     private static final String WEEK_PLACEHOLDER = "w";
     private static final String DAY_PLACEHOLDER = "d";
-    public static StatisticsInterval statisticsInterval;
 
     /**
      * Preparing cleanup by date string.
@@ -75,44 +74,70 @@ public class DataUtils {
      *
      * @param dateFrom - beginning time.
      * @param dateTo   - ending time.
-     * @return - parsed dates list.
+     * @return - parsed dates list, one label per period of {@link #getStatisticsIntervalType} for these dates.
      */
     public static List<String> getStatisticsInterval(@Nonnull LocalDate dateFrom, @Nonnull LocalDate dateTo) {
         List<String> dates = new ArrayList<>();
-        double days = ChronoUnit.DAYS.between(dateFrom, dateTo);
-        long weeks = (long) Math.ceil(days / WEEK_LENGTH);
         Period period = Period.between(dateFrom, dateTo);
-        if (period.getYears() == 0) {
-            if (period.getMonths() == 0 && period.getDays() < UI_SUITABLE_PERIODS) {
+        switch (getStatisticsIntervalType(dateFrom, dateTo)) {
+            case DAYS:
                 for (int i = 0; i <= period.getDays(); ++i) {
                     dates.add(dateFrom.plusDays(i).format(DateTimeFormatter.ofPattern(
                             DateFormatters.UI_DATE_FORMATTER_DAYS)));
                 }
-                statisticsInterval = StatisticsInterval.DAYS;
-            } else if (weeks < UI_SUITABLE_PERIODS) {
-                for (int i = 1; i <= weeks; ++i) {
+                break;
+            case WEEKS:
+                for (int i = 1; i <= weeksBetween(dateFrom, dateTo); ++i) {
                     dates.add(dateFrom.plusWeeks(i - 1).format(DateTimeFormatter.ofPattern(
                             DateFormatters.UI_DATE_FORMATTER_DAYS))
                             + " - "
                             + dateFrom.plusWeeks(i).minusDays(1)
                             .format(DateTimeFormatter.ofPattern(DateFormatters.UI_DATE_FORMATTER_DAYS)));
                 }
-                statisticsInterval = StatisticsInterval.WEEKS;
-            } else {
+                break;
+            case MONTHS:
                 for (int i = 0; i <= period.getMonths(); ++i) {
                     dates.add(dateFrom.plusMonths(i).format(DateTimeFormatter.ofPattern(
                             DateFormatters.UI_DATE_FORMATTER_MONTHS)));
                 }
-                statisticsInterval = StatisticsInterval.MONTHS;
-            }
-        } else {
-            for (int i = 0; i <= period.getYears(); ++i) {
-                dates.add(dateFrom.plusYears(i).format(DateTimeFormatter.ofPattern(
-                        DateFormatters.UI_DATE_FORMATTER_YEARS)) + " year");
-            }
-            statisticsInterval = StatisticsInterval.YEARS;
+                break;
+            case YEARS:
+            default:
+                for (int i = 0; i <= period.getYears(); ++i) {
+                    dates.add(dateFrom.plusYears(i).format(DateTimeFormatter.ofPattern(
+                            DateFormatters.UI_DATE_FORMATTER_YEARS)) + " year");
+                }
+                break;
         }
         return dates;
+    }
+
+    /**
+     * Returns the length of the periods that statistics between these dates are split into: days for less than
+     * 8 days, weeks for less than 8 weeks, months within a year, and years otherwise.
+     *
+     * @param dateFrom - beginning time.
+     * @param dateTo   - ending time.
+     * @return - period length.
+     */
+    public static StatisticsInterval getStatisticsIntervalType(@Nonnull LocalDate dateFrom,
+                                                               @Nonnull LocalDate dateTo) {
+        Period period = Period.between(dateFrom, dateTo);
+        if (period.getYears() != 0) {
+            return StatisticsInterval.YEARS;
+        }
+        if (period.getMonths() == 0 && period.getDays() < UI_SUITABLE_PERIODS) {
+            return StatisticsInterval.DAYS;
+        }
+        if (weeksBetween(dateFrom, dateTo) < UI_SUITABLE_PERIODS) {
+            return StatisticsInterval.WEEKS;
+        }
+        return StatisticsInterval.MONTHS;
+    }
+
+    private static long weeksBetween(@Nonnull LocalDate dateFrom, @Nonnull LocalDate dateTo) {
+        double days = ChronoUnit.DAYS.between(dateFrom, dateTo);
+        return (long) Math.ceil(days / WEEK_LENGTH);
     }
 
     /**
