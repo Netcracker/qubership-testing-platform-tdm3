@@ -2804,7 +2804,7 @@
             }
           },
           {
-            "description" : "System ID.",
+            "description" : "System ID. When omitted, searches the tables of all systems.",
             "in" : "query",
             "name" : "systemId",
             "required" : false,
