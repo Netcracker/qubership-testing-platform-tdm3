@@ -68,6 +68,7 @@ import org.qubership.atp.tdm.model.scheduler.CleanRemovingHistoryJob;
 import org.qubership.atp.tdm.model.scheduler.TableCleanerJob;
 import org.qubership.atp.tdm.model.statistics.DateStatistics;
 import org.qubership.atp.tdm.model.statistics.DateStatisticsItem;
+import org.qubership.atp.tdm.model.statistics.StatisticsInterval;
 import org.qubership.atp.tdm.model.table.TableColumnValues;
 import org.qubership.atp.tdm.model.table.TestDataFlagsTable;
 import org.qubership.atp.tdm.model.table.TestDataTable;
@@ -569,6 +570,7 @@ public class TestDataServiceImpl implements TestDataService {
         DateStatistics dateStatistics = new DateStatistics();
         List<DateStatisticsItem> listStatisticsItems = new ArrayList<>();
         dateStatistics.setDates(DataUtils.getStatisticsInterval(dateFrom, dateTo));
+        StatisticsInterval interval = DataUtils.getStatisticsIntervalType(dateFrom, dateTo);
         catalogList.forEach(catalog -> {
             TestDataTable table = testDataTableRepository.getTableByCreatedWhen(catalog.getTableName(),
                     dateFrom, dateTo);
@@ -576,7 +578,7 @@ public class TestDataServiceImpl implements TestDataService {
             DateStatisticsItem statisticsItem = new DateStatisticsItem(catalog.getTableTitle());
             List<Long> created = new ArrayList<>();
             long count;
-            switch (DataUtils.statisticsInterval) {
+            switch (interval) {
                 case YEARS:
                     do {
                         count = 0L;
