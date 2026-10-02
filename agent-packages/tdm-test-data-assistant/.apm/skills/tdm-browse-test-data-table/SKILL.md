@@ -76,16 +76,9 @@ result.
 curl "<TDM3_BASE_URL>/api/tdm/table/row?projectId=<PROJECT_ID>&systemId=<SYSTEM_ID_DEFAULT>&tableTitle=<title>&columnName=CUSTOMER_ID&searchValue=CUST_A&occupied=false"
 ```
 
-**Always send `systemId`, even though it's optional in the request schema.** Verified live and confirmed in
-`TestDataServiceImpl.getTableRow`: omitting it does not search across every system — the lookup passes a `null`
-`systemId` into a `findByProjectIdAndSystemIdAndTableTitle` query, which Spring Data JPA turns into `systemId IS
-NULL`. For an ordinary table (one actually associated with a system, which is every table created the normal way)
-that never matches, and the service's own "not found" branch then crashes with a raw `500`
-(`Cannot invoke "java.util.UUID.toString()" because "systemId" is null`) instead of a clean error — filed as
-[#138](https://github.com/Netcracker/qubership-testing-platform-tdm3/issues/138). The single case where omitting
-it doesn't crash is a table whose catalog entry itself has a `null` systemId (for example one inserted via
-`POST /api/tdm/rest/insert-records` without `environmentId`/`systemId` — see
-[tdm-insert-test-data](../tdm-insert-test-data/SKILL.md)'s pitfall on that) — not something to rely on.
+**Always send the current `systemId`.** Resolve the system with [tdm-select-context](../tdm-select-context/SKILL.md)
+first, as for every other request, and pass `SYSTEM_ID_DEFAULT`. Omit the parameter only when the user explicitly asks
+for it in this request, for example "search without a system"; the omission applies to that request only.
 
 Verified live — returns a flat map, not the grid shape, and includes bookkeeping columns
 `get-record`/`get-records` don't expose:
@@ -125,7 +118,8 @@ per table.
 - Addressing this controller's endpoints by `title-table` the way `atp-action-controller` does: most of them need
   the database `tableName` instead. `/table/row` is the one exception in this skill, taking `projectId` +
   `tableTitle`.
-- Omitting `/table/row`'s `systemId` on an ordinary table: a raw `500`, not a graceful "not found" — see above.
+- Omitting `/table/row`'s `systemId` on your own initiative: the lookup then takes the first table with that title in
+  any system, which may not be the current one.
 - Reaching for `/table/row` at all when `atp-action-controller`'s `get-record` fits: it does for most single-column,
   single-filter, available-rows lookups — default to that skill first (see its own opening line) rather than this
   one out of habit.
