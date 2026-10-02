@@ -174,7 +174,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         List<ResponseMessage> responseMessages = atpActionService.occupyTestData(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequest));
+                "ATP_User", Collections.singletonList(occupyRowRequest));
 
         ResponseMessage responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
         Assertions.assertEquals(ResponseType.SUCCESS, responseMessage.getType());
@@ -201,7 +201,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         List<ResponseMessage> responseMessages = atpActionService.occupyTestDataFullRow(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequest));
+                "ATP_User", Collections.singletonList(occupyRowRequest));
 
         ResponseMessage responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
         Assertions.assertEquals(ResponseType.SUCCESS, responseMessage.getType());
@@ -231,7 +231,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         List<ResponseMessage> responseMessages = atpActionService.occupyTestData(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequest));
+                "ATP_User", Collections.singletonList(occupyRowRequest));
 
         ResponseMessage responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
 
@@ -258,7 +258,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         List<ResponseMessage> responseMessages = atpActionService.occupyTestDataFullRow(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequest));
+                "ATP_User", Collections.singletonList(occupyRowRequest));
 
         ResponseMessage responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
         Assertions.assertEquals(ResponseType.SUCCESS, responseMessage.getType());
@@ -316,7 +316,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         List<ResponseMessage> responseMessages = atpActionService.occupyTestData(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequest));
+                "ATP_User", Collections.singletonList(occupyRowRequest));
 
         ResponseMessage responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
 
@@ -340,7 +340,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         List<ResponseMessage> responseMessages = atpActionService.occupyTestDataFullRow(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequest));
+                "ATP_User", Collections.singletonList(occupyRowRequest));
 
         ResponseMessage responseMessage =
                 responseMessages.stream().findFirst().orElse(new ResponseMessage());
@@ -365,7 +365,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         List<ResponseMessage> responseMessages = atpActionService.occupyTestDataFullRow(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequest));
+                "ATP_User", Collections.singletonList(occupyRowRequest));
 
         ResponseMessage responseMessage =
                 responseMessages.stream().findFirst().orElse(new ResponseMessage());
@@ -389,7 +389,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         List<ResponseMessage> responseMessages = atpActionService.occupyTestData(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequest));
+                "ATP_User", Collections.singletonList(occupyRowRequest));
 
         ResponseMessage responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
 
@@ -404,7 +404,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
     public void atpOccupyTestData_wrongTable_tableWasNotFoundErrorMessage() {
         String tableTitle = "Wrong Table Title";
         List<ResponseMessage> responseMessages = atpActionService.occupyTestData(lazyProject.getName(),
-                lazyEnvironment.getName(), system.getName(), tableTitle, Collections.emptyList());
+                lazyEnvironment.getName(), system.getName(), tableTitle, "ATP_User", Collections.emptyList());
 
         ResponseMessage responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
         Assertions.assertEquals(ResponseType.ERROR, responseMessage.getType());
@@ -416,7 +416,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
     public void atpOccupyTestDataFullRow_wrongTable_tableWasNotFoundErrorMessage() {
         String tableTitle = "Wrong Table Title";
         List<ResponseMessage> responseMessages = atpActionService.occupyTestDataFullRow(lazyProject.getName(),
-                lazyEnvironment.getName(), system.getName(), tableTitle, Collections.emptyList());
+                lazyEnvironment.getName(), system.getName(), tableTitle, "ATP_User", Collections.emptyList());
 
         ResponseMessage responseMessage =
                 responseMessages.stream().findFirst().orElse(new ResponseMessage());
@@ -440,7 +440,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         List<ResponseMessage> responseMessages = atpActionService.occupyTestData(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequest));
+                "ATP_User", Collections.singletonList(occupyRowRequest));
 
         ResponseMessage responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
         Assertions.assertEquals(ResponseType.SUCCESS, responseMessage.getType());
@@ -476,7 +476,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         List<ResponseMessage> responseMessages = atpActionService.occupyTestData(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequest));
+                "ATP_User", Collections.singletonList(occupyRowRequest));
 
         ResponseMessage responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
         Assertions.assertEquals(ResponseType.SUCCESS, responseMessage.getType());
@@ -511,7 +511,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         List<ResponseMessage> responseMessages = atpActionService.occupyTestData(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequestFirst));
+                "ATP_User", Collections.singletonList(occupyRowRequestFirst));
         ResponseMessage responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
         Assertions.assertEquals(ResponseType.SUCCESS, responseMessage.getType());
 
@@ -519,7 +519,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         responseMessages = atpActionService.occupyTestData(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequestSecond));
+                "ATP_User", Collections.singletonList(occupyRowRequestSecond));
         responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
         Assertions.assertEquals(ResponseType.SUCCESS, responseMessage.getType());
 
@@ -552,7 +552,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         List<ResponseMessage> responseMessages = atpActionService.occupyTestData(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequest));
+                "ATP_User", Collections.singletonList(occupyRowRequest));
 
         ResponseMessage responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
         Assertions.assertEquals(ResponseType.SUCCESS, responseMessage.getType());
@@ -586,7 +586,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         List<ResponseMessage> responseMessages = atpActionService.occupyTestData(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequest));
+                "ATP_User", Collections.singletonList(occupyRowRequest));
 
         ResponseMessage responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
         Assertions.assertEquals(ResponseType.SUCCESS, responseMessage.getType());
@@ -1072,7 +1072,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         String systemName = Objects.nonNull(systemId) ? system.getName() : null;
         List<ResponseMessage> responseMessages = atpActionService.occupyTestData(lazyProject.getName(),
-                lazyEnvironment.getName(), systemName, catalog.getTableTitle(),
+                lazyEnvironment.getName(), systemName, catalog.getTableTitle(), "ATP_User",
                 Collections.singletonList(occupyRowRequest));
 
         ResponseMessage responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
@@ -1106,7 +1106,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
         String systemName = Objects.nonNull(systemId) ? system.getName() : null;
         List<ResponseMessage> responseMessages = atpActionService.occupyTestDataFullRow(lazyProject.getName(),
                 lazyEnvironment.getName(), systemName, catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequest));
+                "ATP_User", Collections.singletonList(occupyRowRequest));
 
         ResponseMessage responseMessage =
                 responseMessages.stream().findFirst().orElse(new ResponseMessage());
@@ -1199,7 +1199,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         List<ResponseMessage> responseMessages = atpActionService.occupyTestData(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequest));
+                "ATP_User", Collections.singletonList(occupyRowRequest));
 
 
         ResponseMessage responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
@@ -1233,7 +1233,7 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
         List<ResponseMessage> responseMessages = atpActionService.occupyTestData(lazyProject.getName(),
                 lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
-                Collections.singletonList(occupyRowRequest));
+                "ATP_User", Collections.singletonList(occupyRowRequest));
 
         ResponseMessage responseMessage = responseMessages.stream().findFirst().orElse(new ResponseMessage());
         Assertions.assertEquals(ResponseType.SUCCESS, responseMessage.getType());

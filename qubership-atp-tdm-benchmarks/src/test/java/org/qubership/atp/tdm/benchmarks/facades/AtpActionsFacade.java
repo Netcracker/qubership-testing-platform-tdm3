@@ -50,8 +50,10 @@ public class AtpActionsFacade extends GeneralFacade {
 
     public List<ResponseMessage> occupyTestData(@Nonnull String projectName, @Nullable String envName,
                                                 @Nullable String systemName, @Nonnull String tableTitle,
+                                                @Nonnull String occupiedBy,
                                                 List<OccupyRowRequest> occupyRowRequests) {
-        return atpActionService.occupyTestData(projectName, envName, systemName, tableTitle, occupyRowRequests);
+        return atpActionService.occupyTestData(projectName, envName, systemName, tableTitle, occupiedBy,
+                occupyRowRequests);
     }
 
     public List<ResponseMessage> updateTestData(@Nonnull String projectName, @Nullable String envName,
