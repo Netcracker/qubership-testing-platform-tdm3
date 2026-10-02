@@ -16,6 +16,10 @@
 
 package org.qubership.atp.tdm.model.rest.requests;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Values to write to the matching rows. Each value in record-with-data-for-update "
+        + "replaces the current value of its column.")
 public class UpdateRowRequest extends ChangeRowRequest {
 
 }

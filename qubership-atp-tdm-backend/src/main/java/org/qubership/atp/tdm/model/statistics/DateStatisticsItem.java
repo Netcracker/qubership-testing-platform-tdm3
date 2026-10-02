@@ -21,14 +21,20 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+@Schema(description = "Number of rows of one table created in each part of the requested period.")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class DateStatisticsItem extends StatisticsItem {
 
+    @Schema(description = "Number of rows created in each part of the period, one value per label of "
+            + "DateStatistics.dates, in the same order.")
     private List<Long> created;
+    @Schema(description = "Set instead of created on a row grouped across systems: one entry per system, with "
+            + "created set.")
     private List<DateStatisticsItem> details;
 
     /**

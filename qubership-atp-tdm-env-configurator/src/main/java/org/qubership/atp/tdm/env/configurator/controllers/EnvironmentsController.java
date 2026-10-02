@@ -49,6 +49,9 @@ public class EnvironmentsController /* implements EnvironmentsControllerApi */ {
         this.service = service;
     }
 
+    /**
+     * Returns the ID and name of each project in {@code PROJECTS_INFO}.
+     */
     @Operation(summary = "List projects", description = "Returns the ID and name of each project in PROJECTS_INFO.")
     @AuditAction(auditAction = "Get lazy projects")
     @GetMapping("/projects/lazy")
@@ -56,6 +59,9 @@ public class EnvironmentsController /* implements EnvironmentsControllerApi */ {
         return service.getLazyProjects();
     }
 
+    /**
+     * Returns each environment of {@code projectId} with the IDs of its systems.
+     */
     @Operation(summary = "List the environments of a project",
             description = "Returns each environment of the project with the IDs of its systems.")
     @AuditAction(auditAction = "Get lazy environment by projectId {{#projectId}}")
@@ -66,6 +72,10 @@ public class EnvironmentsController /* implements EnvironmentsControllerApi */ {
         return service.getLazyEnvironments(projectId);
     }
 
+    /**
+     * Returns the same list as {@code GET /api/tdm/projects/{projectId}/environments/lazy}; there is no cache to
+     * refresh, so this reads the database exactly like that operation does.
+     */
     @Operation(summary = "Reload the environments of a project",
             description = "Returns the same list as GET /api/tdm/projects/{projectId}/environments/lazy. Environments "
                     + "are read from the database on each request.")
@@ -77,6 +87,9 @@ public class EnvironmentsController /* implements EnvironmentsControllerApi */ {
         return service.getLazyEnvironmentsRefresh(projectId);
     }
 
+    /**
+     * Returns the systems of {@code environmentId}.
+     */
     @Operation(summary = "List the systems of an environment")
     @AuditAction(auditAction = "Get lazy system by environmentId {{#environmentId}}")
     @GetMapping("/environments/{environmentId}/systems/lazy")
@@ -85,6 +98,9 @@ public class EnvironmentsController /* implements EnvironmentsControllerApi */ {
         return service.getLazySystems(environmentId);
     }
 
+    /**
+     * Does nothing and returns {@code true}. There is no cache to reset.
+     */
     @Operation(summary = "Reset the environment caches",
             description = "Does nothing and returns true.")
     @AuditAction(auditAction = "Reset caches")

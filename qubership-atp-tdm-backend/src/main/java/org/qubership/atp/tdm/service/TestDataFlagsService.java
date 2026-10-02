@@ -20,8 +20,16 @@ import org.qubership.atp.tdm.model.table.TestDataFlagsTable;
 
 import jakarta.annotation.Nonnull;
 
+/**
+ * The unoccupied-row validation flag of test data tables: whether occupying more rows than are available is
+ * rejected.
+ */
 public interface TestDataFlagsService {
 
+    /**
+     * Sets the flag for {@code tableName}, or, when {@code isAll} is set, for every table of the project with the
+     * same title.
+     */
     void setValidateUnoccupiedResourcesFlag(@Nonnull String tableName, @Nonnull Boolean validateUnoccupiedResources,
                                             @Nonnull Boolean isAll);
 

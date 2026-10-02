@@ -26,6 +26,9 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Maps a model class to another by matching field names and types, through {@link ModelMapper}.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -34,24 +37,14 @@ public class DtoConvertService {
     protected final ModelMapper modelMapper;
 
     /**
-     * Convert t.
-     *
-     * @param <T>  the type parameter
-     * @param from the from
-     * @param to   the to
-     * @return the t
+     * Maps {@code from} to a new instance of {@code to}.
      */
     public <T> T convert(Object from, Class<T> to) {
         return modelMapper.map(from, to);
     }
 
     /**
-     * Convert list list.
-     *
-     * @param <T>  the type parameter
-     * @param from the from
-     * @param to   the to
-     * @return the list
+     * Maps every element of {@code from} to {@code to}, or returns an empty list if {@code from} is {@code null}.
      */
     public <T> List<T> convertList(List from, Class<T> to) {
         if (from == null) {

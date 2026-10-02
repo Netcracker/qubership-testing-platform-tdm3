@@ -18,6 +18,10 @@ package org.qubership.atp.tdm.env.configurator.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+/**
+ * A connection type a system's connection can declare, such as {@code DB} or {@code HTTP}. {@link #toString()}
+ * returns the display value {@link #fromValue} parses, which is not always the constant's name.
+ */
 public enum ConnectionType {
 
     DB("DB"),
@@ -54,6 +58,11 @@ public enum ConnectionType {
         return value;
     }
 
+    /**
+     * Returns the constant whose display value equals {@code value}, case-insensitively.
+     *
+     * @throws IllegalArgumentException if no constant has that value
+     */
     @JsonCreator
     public static ConnectionType fromValue(String value) {
         for (ConnectionType connectionType : ConnectionType.values()) {

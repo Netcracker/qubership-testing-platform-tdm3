@@ -19,13 +19,17 @@ package org.qubership.atp.tdm.model.statistics.available;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+@Schema(description = "Number of available rows of each table for each value of a chosen column.")
 @Data
 @AllArgsConstructor
 public class AvailableDataByColumnStats {
+    @Schema(description = "Name of the column the counts are grouped by.")
     private String description;
+    @Schema(description = "One entry per table.")
     private List<TableAvailableDataStats> statistics;
 
     public AvailableDataByColumnStats() {

@@ -24,30 +24,41 @@ import org.qubership.atp.tdm.utils.scheduler.ScheduleConfig;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 
+@Schema(description = "Users-occupation-report schedule of one project: a periodic email of who occupied which "
+        + "rows.")
 @Data
 @EqualsAndHashCode
 @ToString
 @Entity
 public class TestDataTableUsersMonitoring implements ScheduleConfig {
 
+    @Schema(description = "Project ID.")
     @Id
     @Column(name = "project_id")
     private UUID projectId;
+    @Schema(description = "Sends the report on the schedule when set.")
     @Column(name = "enabled")
     private boolean enabled;
+    @Schema(description = "Quartz cron expression, starting with the seconds field.")
     @Column(name = "cron_expression")
     private String cronExpression;
+    @Schema(description = "Comma-separated email addresses to notify.")
     @Column(name = "recipients")
     private String recipients;
+    @Schema(description = "Includes an HTML table of the occupations in the email body.")
     @Column(name = "html_report")
     private boolean htmlReport;
+    @Schema(description = "Attaches a CSV file of the occupations to the email.")
     @Column(name = "csv_report")
     private boolean csvReport;
+    @Schema(description = "Number of past days the report covers.")
     @Column(name = "days_count")
     private int daysCount;
 

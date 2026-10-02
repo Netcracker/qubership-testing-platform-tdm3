@@ -18,18 +18,26 @@ package org.qubership.atp.tdm.model.rest;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Schema(description = "Outcome of an operation, on success or failure alike. Returned by the ATP action "
+        + "operations and by the Dynamic Environment API.")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResponseMessage {
 
+    @Schema(description = "Whether the operation succeeded.")
     private ResponseType type;
+    @Schema(description = "A message: the result on success, or the reason for the failure.")
     private String content;
+    @Schema(description = "A structured result, set instead of or in addition to content by some "
+            + "operations.")
     private Object contentObject;
+    @Schema(description = "URL of the affected table or environment in the TDM UI, or an empty string.")
     private String link;
 
     /**

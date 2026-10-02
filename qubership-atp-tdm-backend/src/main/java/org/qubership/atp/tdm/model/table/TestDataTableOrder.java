@@ -19,6 +19,8 @@ package org.qubership.atp.tdm.model.table;
 import java.util.Objects;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,8 +30,10 @@ import lombok.NonNull;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TestDataTableOrder {
+    @Schema(description = "Name of the column to sort by.")
     private String columnName;
 
+    @Schema(description = "Sort direction: ASC or DESC.")
     @JsonDeserialize(using = OrderTypeDeserializer.class)
     private OrderType orderType;
 

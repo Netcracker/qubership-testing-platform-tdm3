@@ -21,6 +21,7 @@ import java.util.List;
 import org.qubership.atp.tdm.model.table.TestDataTableFilter;
 import org.qubership.atp.tdm.model.table.TestDataTableOrder;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -29,10 +30,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TestDataRequest {
+    @Schema(description = "Database table name of the table to read.")
     private String tableName;
+    @Schema(description = "Reads occupied rows instead of available ones.")
     private boolean occupied;
+    @Schema(description = "Number of rows to skip, for paging.")
     private Integer offset;
+    @Schema(description = "Maximum number of rows to return.")
     private Integer limit;
+    @Schema(description = "Column filters to apply.")
     private List<TestDataTableFilter> filters;
+    @Schema(description = "Column and direction to sort by.")
     private TestDataTableOrder dataTableOrder;
 }

@@ -19,12 +19,15 @@ package org.qubership.atp.tdm.model.rest.requests;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class ChangeRowRequest extends AbstractRowRequest {
+    @Schema(description = "Column names and the values to write to them, in every row that matches the filters.")
     @JsonProperty("record-with-data-for-update")
     private Map<String, String> recordWithDataForUpdate;
 }

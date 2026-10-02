@@ -18,14 +18,23 @@ package org.qubership.atp.tdm.model;
 
 import java.util.UUID;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+@Schema(description = "Request body of POST /api/tdm/update/sql: runs a query against a system and updates a "
+        + "table's rows from its result. The query and timeout are saved with the table.")
 @Data
 public class TestDataTableUpdateByQuery {
+    @Schema(description = "Database table name of the test data table.")
     private String tableName;
+    @Schema(description = "Project ID.")
     private UUID projectId;
+    @Schema(description = "Environment ID.")
     private UUID environmentId;
+    @Schema(description = "System ID whose DB connection runs the query.")
     private UUID systemId;
+    @Schema(description = "SQL query that returns the new rows.")
     private String query;
+    @Schema(description = "Query timeout, in seconds.")
     private Integer queryTimeout;
 }

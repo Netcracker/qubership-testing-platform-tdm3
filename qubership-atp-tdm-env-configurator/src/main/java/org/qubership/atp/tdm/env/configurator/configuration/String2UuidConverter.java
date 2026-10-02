@@ -21,6 +21,10 @@ import java.util.UUID;
 import org.modelmapper.spi.ConditionalConverter;
 import org.modelmapper.spi.MappingContext;
 
+/**
+ * A {@link org.modelmapper.ModelMapper} converter from a {@code String} source property to a {@code UUID}
+ * destination property, registered by {@link ModelMapperConfig}.
+ */
 public class String2UuidConverter implements ConditionalConverter<String, UUID> {
 
     @Override

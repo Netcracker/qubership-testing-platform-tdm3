@@ -57,10 +57,8 @@ public class DataCleanupController /* implements DataCleanupControllerApi */ {
     }
 
     /**
-     * Get cleanup configuration for specified dataset / table ID.
-     *
-     * @param id - cleanup config id
-     * @return cleanup configuration object
+     * Returns {@code id}'s cleanup configuration and the environments of the tables that use it;
+     * {@code tableName} is not set in the response.
      */
     @Operation(summary = "Get cleanup settings",
             description = "Returns the cleanup configuration and the environments of the tables that use it. "
@@ -77,11 +75,10 @@ public class DataCleanupController /* implements DataCleanupControllerApi */ {
     }
 
     /**
-     * Save / update data cleanup settings.
+     * Saves the configuration for {@code cleanupConfig.tableName} and the tables of the same system in
+     * {@code cleanupConfig.environmentsList}, and schedules it.
      *
-     * @param cleanupConfig CleanupSettings object to be saved
-     * @return CleanupSettings object after saving
-     * @throws Exception in case errors while settings saving.
+     * @throws Exception if the query timeout is out of range, or the table's environment cannot run SQL queries
      */
     @Operation(summary = "Save cleanup settings",
             description = "Saves the cleanup configuration for the table in tableName and for the tables of the "
@@ -99,11 +96,9 @@ public class DataCleanupController /* implements DataCleanupControllerApi */ {
     }
 
     /**
-     * Force run data cleanup.
-     *
-     * @param cleanupConfig CleanupSettings object to run cleanup
-     * @return List of CleanupResults produced by cleanup run
-     * @throws Exception in case errors while cleanup running.
+     * Runs the unsaved configuration in {@code cleanupConfig} on {@code cleanupConfig.tableName} and on the
+     * tables of the same system in {@code cleanupConfig.environmentsList}, and returns the checked and removed
+     * row counts per table.
      */
     @Operation(summary = "Run a cleanup now",
             description = "Runs the cleanup configuration from the request body, without saving it, on the table "
@@ -119,11 +114,9 @@ public class DataCleanupController /* implements DataCleanupControllerApi */ {
     }
 
     /**
-     * Get next run's date / time details.
+     * Returns the next time {@code cronExpression} fires after now.
      *
-     * @param cronExpression cron expression to calculate next run based on
-     * @return ResponseEntity of String message that contains details
-     * @throws ParseException Thrown in case if invalid cron expression was provided.
+     * @throws ParseException if {@code cronExpression} is not a valid Quartz cron expression
      */
     @Operation(operationId = "getNextCleanupRun", summary = "Get the next run time of a schedule",
             description = "Returns the next time the Quartz cron expression fires after now, as a JSON string "
@@ -137,6 +130,10 @@ public class DataCleanupController /* implements DataCleanupControllerApi */ {
         return ResponseEntity.ok(new Gson().toJson(cleanupService.getNextScheduledRun(cronExpression)));
     }
 
+    /**
+     * Sets {@code type} on every saved configuration from the field it uses. A migration for configurations
+     * saved before {@code type} existed.
+     */
     @Operation(summary = "Fill in the cleanup type of existing configurations",
             description = "Sets the type of every cleanup configuration from the field it uses: DATE when "
                     + "searchDate is set, otherwise SQL when searchSql is set, otherwise CLASS when searchClass is "

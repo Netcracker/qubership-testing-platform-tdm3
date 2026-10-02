@@ -19,6 +19,8 @@ package org.qubership.atp.tdm.model.table;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -31,9 +33,12 @@ import lombok.NoArgsConstructor;
 @Entity
 public class TestDataFlagsTable {
 
+    @Schema(description = "Database table name of the table.")
     @Id
     @Column(name = "table_name")
     private String tableName;
+    @Schema(description = "Rejects occupying more rows than are available, instead of occupying whatever is "
+            + "available.")
     @Column(name = "unoccupied_validation")
     private boolean isUnoccupiedValidation;
 

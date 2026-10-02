@@ -16,12 +16,16 @@
 
 package org.qubership.atp.tdm.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+@Schema(description = "Name and version of the service, or of one of its dependencies.")
 @Data
 @AllArgsConstructor
 public class VersionDto {
+    @Schema(description = "Component name.")
     private String name;
+    @Schema(description = "Component version.")
     private String version;
 }

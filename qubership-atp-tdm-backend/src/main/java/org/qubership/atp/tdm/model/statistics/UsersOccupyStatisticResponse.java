@@ -18,14 +18,18 @@ package org.qubership.atp.tdm.model.statistics;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Schema(description = "One page of occupation records by user.")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class UsersOccupyStatisticResponse {
+    @Schema(description = "The page of records, up to limit entries.")
     List<OccupiedDataByUsersStatistics> data;
+    @Schema(description = "Total number of records matching the request, across every page.")
     int records;
 }

@@ -23,15 +23,34 @@ import org.qubership.atp.tdm.utils.scheduler.ScheduleConfig;
 
 import jakarta.annotation.Nonnull;
 
+/**
+ * Adds, updates, and removes Quartz jobs on behalf of the cleanup, refresh, and statistics schedules.
+ */
 public interface SchedulerService {
 
+    /**
+     * Builds a cron trigger, identified by {@code identityName} and {@code group}, from {@code config}'s schedule,
+     * and passes it to {@link #reschedule(JobDetail, Trigger, boolean)} with {@code turnOn} set to
+     * {@link ScheduleConfig#isScheduled()}.
+     */
     void reschedule(@Nonnull JobDetail job, @Nonnull ScheduleConfig config, @Nonnull String group,
                     @Nonnull String identityName);
 
+    /**
+     * Same as {@link #reschedule(JobDetail, ScheduleConfig, String, String)}, identified by
+     * {@link ScheduleConfig#getId()} instead of an explicit name.
+     */
     void reschedule(@Nonnull JobDetail job, @Nonnull ScheduleConfig config, @Nonnull String group);
 
+    /**
+     * Adds or updates {@code job} with {@code trigger} in Quartz when {@code turnOn} is set, and removes it
+     * otherwise. Does nothing if the scheduler is disabled or not running.
+     */
     void reschedule(@Nonnull JobDetail job, @Nonnull Trigger trigger, boolean turnOn);
 
+    /**
+     * Removes {@code jobKey}'s job from Quartz if it exists; does nothing otherwise.
+     */
     void deleteJob(@Nonnull JobKey jobKey);
 
     boolean checkExists(@Nonnull JobKey jobKey);

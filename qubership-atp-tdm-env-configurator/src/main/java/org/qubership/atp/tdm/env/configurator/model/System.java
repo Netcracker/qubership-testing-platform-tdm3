@@ -27,6 +27,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+/**
+ * A system with its connections, held by an {@link Environment}.
+ */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Builder
@@ -38,7 +41,9 @@ public class System extends AbstractConfiguratorModel {
     private List<Connection> connections;
 
     /**
-     * Get connection by name.
+     * Returns the connection named {@code connectionName}, case-insensitively.
+     *
+     * @throws TdmEnvDbConnectionException if no connection has that name
      */
     public Connection getConnection(String connectionName) {
         return connections.stream()
@@ -47,6 +52,11 @@ public class System extends AbstractConfiguratorModel {
                 .orElseThrow(() -> new TdmEnvDbConnectionException(connectionName));
     }
 
+    /**
+     * Wraps the connection named {@code name} as a {@link Server}.
+     *
+     * @throws TdmEnvDbConnectionException if no connection has that name
+     */
     public Server getServer(String name) {
         return new Server(getConnection(name), name);
     }

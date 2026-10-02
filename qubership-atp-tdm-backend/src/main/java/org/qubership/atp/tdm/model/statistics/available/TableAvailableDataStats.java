@@ -19,14 +19,21 @@ package org.qubership.atp.tdm.model.statistics.available;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+@Schema(description = "Number of available rows of one table, broken down by the value of a chosen "
+        + "column.")
 @Data
 @AllArgsConstructor
 public class TableAvailableDataStats {
+    @Schema(description = "Database table name of the table.")
     private String tableName;
+    @Schema(description = "Title of the table.")
     private String tableTitle;
+    @Schema(description = "Number of available rows for each value found in the chosen column, keyed by that "
+            + "value.")
     private Map<String,Integer> options;
 
     public TableAvailableDataStats() {

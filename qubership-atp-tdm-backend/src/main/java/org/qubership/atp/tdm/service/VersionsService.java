@@ -18,6 +18,9 @@ package org.qubership.atp.tdm.service;
 
 import org.qubership.atp.tdm.model.VersionDto;
 
+/**
+ * The backend's own name and version.
+ */
 public interface VersionsService {
 
     VersionDto getBackendVersion();

@@ -56,10 +56,7 @@ public class DataRefreshController /* implements DataRefreshControllerApi */ {
     }
 
     /**
-     * Get refresh configuration for specified dataset / table ID.
-     *
-     * @param id - refresh config id
-     * @return refresh configuration object.
+     * Returns {@code id}'s refresh configuration.
      */
     @Operation(summary = "Get refresh settings")
     @PreAuthorize("@entityAccess.checkAccess("
@@ -74,13 +71,12 @@ public class DataRefreshController /* implements DataRefreshControllerApi */ {
     }
 
     /**
-     * Save / update data refresh settings.
+     * Saves {@code refreshConfig} and {@code queryTimeout} for {@code tableName}, and schedules the refresh. With
+     * {@code refreshConfig.allEnv} set, also applies to the tables of the project with the same title and the
+     * same import query.
      *
-     * @param tableName Name of table
-     * @param queryTimeout Query timeout value in seconds
-     * @param refreshConfig TestDataRefreshConfig object
-     * @return TestDataRefreshConfig object after saving
-     * @throws Exception in case errors while config saving.
+     * @throws Exception if {@code queryTimeout} is out of range, or {@code tableName}'s environment cannot run
+     *      SQL queries
      */
     @Operation(summary = "Save refresh settings",
             description = "Saves the refresh configuration and the query timeout for the table, and schedules "
@@ -103,13 +99,9 @@ public class DataRefreshController /* implements DataRefreshControllerApi */ {
     }
 
     /**
-     * Force run data refresh.
-     *
-     * @param tableName Name of table
-     * @param queryTimeout Query timeout value in seconds
-     * @param allEnv Flag if the action should be applied to all environments (true) or not
-     * @return List of RefreshResults after refresh running
-     * @throws Exception in case errors while refresh running.
+     * Deletes every row of {@code tableName}, including occupied ones, and reruns its import query with its
+     * saved timeout; {@code queryTimeout} is not used. With {@code allEnv} set, does the same for every other
+     * table with the same title and the same import query.
      */
     @Operation(summary = "Run a refresh now",
             description = "Deletes all rows of the table, occupied rows included, and runs the import query "
@@ -131,11 +123,9 @@ public class DataRefreshController /* implements DataRefreshControllerApi */ {
     }
 
     /**
-     * Get next run's date / time details.
+     * Returns the next time {@code cronExpression} fires after now.
      *
-     * @param cronExpression cron expression to calculate next run based on
-     * @return ResponseMessage that contains the details
-     * @throws ParseException Thrown in case if invalid cron expression was provided.
+     * @throws ParseException if {@code cronExpression} is not a valid Quartz cron expression
      */
     @Operation(operationId = "getNextRefreshRun", summary = "Get the next run time of a schedule",
             description = "Returns the next time the Quartz cron expression fires after now, as a JSON string "

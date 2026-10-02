@@ -22,14 +22,19 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+@Schema(description = "Rows one user occupied in one table, one entry per occupation date.")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class OccupiedDataByUsersStatistics extends StatisticsItem {
+        @Schema(description = "Name of the user who occupied the rows.")
         String userName;
+        @Schema(description = "Database table name of the table.")
         String tableName;
+        @Schema(description = "Number of rows occupied on each date.")
         Map<LocalDate, Long> data;
 
         /**

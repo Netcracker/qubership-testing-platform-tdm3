@@ -24,6 +24,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,13 +35,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TableColumnValues {
+    @Schema(description = "Database table name of the table.")
     @Id
     @Column(name = "table_name")
     private String tableName;
 
+    @Schema(description = "Title of the table.")
     @Column(name = "table_title")
     private String tableTitle;
 
+    @Schema(description = "Column values to count as available for this table's row in "
+            + "AvailableDataByColumnStats.")
     @Column(name = "vals")
     @Convert(converter = TableColumnValuesConverter.class)
     private List<String> values;

@@ -18,14 +18,20 @@ package org.qubership.atp.tdm.model.statistics;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Schema(description = "Number of rows created, consumed, and outdated in each part of the requested "
+        + "period, for every table.")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class OutdatedStatistics {
+    @Schema(description = "Label of each part of the period. items.created, items.consumed, and "
+            + "items.outdated each have one value per label, in the same order.")
     private List<String> dates;
+    @Schema(description = "One entry per table.")
     private List<OutdatedStatisticsItem> items;
 }

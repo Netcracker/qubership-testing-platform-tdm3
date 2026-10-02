@@ -19,17 +19,22 @@ package org.qubership.atp.tdm.model.statistics;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nonnull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Schema(description = "Number of rows created in each part of the requested period, for every table.")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class DateStatistics {
 
+    @Schema(description = "Label of each part of the period. items.created has one value per label, in the "
+            + "same order.")
     private List<String> dates;
+    @Schema(description = "One entry per table.")
     private List<DateStatisticsItem> items;
 
     /**

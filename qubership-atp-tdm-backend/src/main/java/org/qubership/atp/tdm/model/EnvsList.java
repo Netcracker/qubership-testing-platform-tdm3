@@ -19,14 +19,17 @@ package org.qubership.atp.tdm.model;
 import java.util.List;
 import java.util.UUID;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Schema(description = "A list of environment IDs.")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class EnvsList {
 
+    @Schema(description = "Environment IDs.")
     private List<UUID> items;
 }

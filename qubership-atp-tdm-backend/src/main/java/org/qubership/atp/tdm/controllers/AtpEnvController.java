@@ -51,6 +51,10 @@ public class AtpEnvController {
         this.service = service;
     }
 
+    /**
+     * Creates {@code request.envName} with {@code request.systemName} and its connection, or adds the system to
+     * an existing environment. Returns HTTP 400 when the system already exists.
+     */
     @Operation(summary = "Create an environment or add a system",
             description = "Creates the environment with the system and its connection, or adds the system to "
                     + "an existing environment. Returns HTTP 400 when the system already exists.")
@@ -62,6 +66,10 @@ public class AtpEnvController {
                 request.getSystemName(), request.getConnection());
     }
 
+    /**
+     * Replaces {@code request.systemName}'s connection, and renames the environment or the system when
+     * {@code request.newEnvName} or {@code request.newSystemName} is set.
+     */
     @Operation(summary = "Update a connection, or rename an environment or system",
             description = "Replaces the connection of the system, and renames the environment to newEnvName "
                     + "or the system to newSystemName when they are set.")
@@ -74,6 +82,10 @@ public class AtpEnvController {
                 request.getNewEnvName(), request.getNewSystemName());
     }
 
+    /**
+     * Deletes {@code request.systemDeleteName} from {@code request.envName}, or the whole environment when
+     * {@code systemDeleteName} is not set. Returns HTTP 404 when the environment does not exist.
+     */
     @Operation(summary = "Delete an environment or a system",
             description = "Deletes the system in systemDeleteName, or the whole environment when "
                     + "systemDeleteName is not set. Returns HTTP 404 when the environment does not exist.")
@@ -85,6 +97,10 @@ public class AtpEnvController {
                 request.getSystemDeleteName());
     }
 
+    /**
+     * The only failure of this controller with its own {@link ResponseMessage} body; every other one, including
+     * {@code SystemNotFoundException} on {@code PUT}, falls through to Spring Boot's default error page.
+     */
     @ExceptionHandler(EnvironmentNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseMessage handleEnvironmentNotFound(EnvironmentNotFoundException ex) {

@@ -19,19 +19,27 @@ package org.qubership.atp.tdm.model.table;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Schema(description = "One search condition on a column, used to filter the rows of a table.")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class TestDataTableFilter {
+    @Schema(description = "Name of the column to search in.")
     @JsonProperty("name-column")
     private String column;
+    @Schema(description = "\"Contains\", \"startWith\", \"Equals\", \"From\", or \"To\", case-insensitive.")
     @JsonProperty("search-criterion")
     private String searchCondition;
+    @Schema(description = "Values to compare the column against. Only the first value is read; the others are "
+            + "ignored.")
     @JsonProperty("search-values")
     private List<String> values;
+    @Schema(description = "Matches the column case-sensitively. Ignored by \"From\" and \"To\".")
     private boolean caseSensitive;
 }

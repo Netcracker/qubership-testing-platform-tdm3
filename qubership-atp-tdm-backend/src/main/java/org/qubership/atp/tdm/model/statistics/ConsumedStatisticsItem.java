@@ -21,14 +21,20 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+@Schema(description = "Number of rows of one table occupied in each part of the requested period.")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class ConsumedStatisticsItem extends StatisticsItem {
 
+    @Schema(description = "Number of rows occupied in each part of the period, one value per label of "
+            + "ConsumedStatistics.dates, in the same order.")
     private List<Long> consumed;
+    @Schema(description = "Set instead of consumed on a row grouped across systems: one entry per system, with "
+            + "consumed set.")
     private List<ConsumedStatisticsItem> details;
 
     /**

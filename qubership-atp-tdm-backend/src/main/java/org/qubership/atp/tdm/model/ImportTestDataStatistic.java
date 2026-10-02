@@ -16,19 +16,24 @@
 
 package org.qubership.atp.tdm.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+@Schema(description = "Result of an SQL import into one environment.")
 @Data
 @EqualsAndHashCode
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
 public class ImportTestDataStatistic {
+    @Schema(description = "Environment name the import ran on.")
     private String envName;
+    @Schema(description = "Set instead of processedRows when the import failed for this environment.")
     private String error;
+    @Schema(description = "Number of rows imported.")
     private Integer processedRows = 0;
 }

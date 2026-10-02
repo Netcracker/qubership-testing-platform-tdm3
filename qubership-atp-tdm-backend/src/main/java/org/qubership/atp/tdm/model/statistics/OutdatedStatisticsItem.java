@@ -21,16 +21,26 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+@Schema(description = "Number of rows of one table created, consumed, and outdated in each part of the "
+        + "requested period.")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class OutdatedStatisticsItem extends StatisticsItem {
 
+    @Schema(description = "Number of rows created in each part of the period, one value per label of "
+            + "OutdatedStatistics.dates, in the same order.")
     private List<Long> created;
+    @Schema(description = "Number of rows occupied in each part of the period, in the same order.")
     private List<Long> consumed;
+    @Schema(description = "Number of rows occupied on or after expirationDate days past the start of the period, "
+            + "in the same order.")
     private List<Long> outdated;
+    @Schema(description = "Set instead of created, consumed, and outdated on a row grouped across systems: one "
+            + "entry per system, with those three fields set.")
     private List<OutdatedStatisticsItem> details;
 
     /**

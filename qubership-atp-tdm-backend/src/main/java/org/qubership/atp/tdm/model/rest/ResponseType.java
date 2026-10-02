@@ -16,18 +16,10 @@
 
 package org.qubership.atp.tdm.model.rest;
 
+/**
+ * Whether an operation that returns a {@link ResponseMessage} succeeded.
+ */
 public enum ResponseType {
-    SUCCESS("success"),
-    ERROR("error");
-
-    private String status;
-
-    ResponseType(String status) {
-        this.status = status;
-    }
-
-    @Override
-    public String toString() {
-        return status;
-    }
+    SUCCESS,
+    ERROR
 }

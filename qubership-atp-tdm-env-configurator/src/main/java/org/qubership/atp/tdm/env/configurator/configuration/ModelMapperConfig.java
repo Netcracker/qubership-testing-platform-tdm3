@@ -26,9 +26,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class ModelMapperConfig implements WebMvcConfigurer {
 
     /**
-     * Create {@link ModelMapper} bean and set configuration.
-     *
-     * @return configured mapper
+     * The {@link ModelMapper} bean {@link org.qubership.atp.tdm.env.configurator.service.DtoConvertService} maps
+     * with.
      */
     @Bean
     public ModelMapper modelMapper() {
@@ -38,9 +37,9 @@ public class ModelMapperConfig implements WebMvcConfigurer {
     }
 
     /**
-     * Configure model mapper.
-     *
-     * @param modelMapper the model mapper
+     * Sets {@link MatchingStrategies#STRICT} instead of the default matching strategy, skips a destination
+     * property when the source property is {@code null}, and converts a {@code String} source to a {@code UUID}
+     * destination with {@link String2UuidConverter}.
      */
     public void configureModelMapper(ModelMapper modelMapper) {
         modelMapper.getConfiguration().setSkipNullEnabled(true);

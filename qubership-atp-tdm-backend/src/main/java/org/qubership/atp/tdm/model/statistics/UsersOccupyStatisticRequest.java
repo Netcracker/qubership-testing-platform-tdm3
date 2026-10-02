@@ -22,6 +22,7 @@ import java.util.UUID;
 import org.qubership.atp.tdm.model.table.TestDataTableFilter;
 import org.qubership.atp.tdm.model.table.TestDataTableOrder;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,11 +32,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UsersOccupyStatisticRequest {
 
+    @Schema(description = "Project ID.")
     private UUID projectId;
+    @Schema(description = "Number of rows to skip, for paging.")
     private Long offset;
+    @Schema(description = "Maximum number of rows to return.")
     private Long limit;
+    @Schema(description = "Filters on the table title, the user name, the system name, or the environment name. "
+            + "\"From\" and \"To\" are not applied here.")
     private List<TestDataTableFilter> filters;
+    @Schema(description = "Column and direction to sort by; sorts by occupied_by ascending when not set.")
     private TestDataTableOrder dataTableOrder;
+    @Schema(description = "First day of the period, as yyyy-MM-dd.")
     private String dateFrom;
+    @Schema(description = "Last day of the period, as yyyy-MM-dd.")
     private String dateTo;
 }

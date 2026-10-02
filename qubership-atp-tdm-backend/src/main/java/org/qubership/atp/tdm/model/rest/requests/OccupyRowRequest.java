@@ -17,12 +17,17 @@
 package org.qubership.atp.tdm.model.rest.requests;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+@Schema(description = "Occupies the first available row that matches the filters, and returns the value "
+        + "of one of its columns.")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class OccupyRowRequest extends AbstractRowRequest {
+    @Schema(description = "Name of the column whose value the response returns.")
     @JsonProperty("name-column-response")
     private String nameColumnResponse;
 }

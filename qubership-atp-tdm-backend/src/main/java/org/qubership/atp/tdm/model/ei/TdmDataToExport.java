@@ -20,14 +20,18 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Schema(description = "Selection of test data tables to export, for the ATP Export Import service.")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class TdmDataToExport implements Serializable {
+    @Schema(description = "Project ID.")
     private UUID projectId;
+    @Schema(description = "Database table names of the tables to export.")
     private List<String> tableIdsList;
 }

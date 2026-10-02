@@ -18,14 +18,17 @@ package org.qubership.atp.tdm.model;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Schema(description = "The distinct values found in one column of a table.")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class ColumnValues {
 
+    @Schema(description = "The distinct values.")
     private List<String> items;
 }
