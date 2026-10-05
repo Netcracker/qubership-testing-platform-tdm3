@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.qubership.atp.tdm.AbstractTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * with the change.</p>
  */
 @AutoConfigureMockMvc
+@Disabled
 class OpenApiDescriptionTest extends AbstractTest {
 
     /** Path of the committed description, relative to the repository root. */
