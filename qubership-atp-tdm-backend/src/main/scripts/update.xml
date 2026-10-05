@@ -240,11 +240,11 @@
 
     <changeSet id="ADD_DYNAMIC_CONNECTION_SYSTEM_TYPE_UNIQUENESS" author="atp-tdm-be">
         <preConditions onFail="MARK_RAN">
-            <not>
-                <uniqueConstraintExists tableName="dynamic_connection"
-                                        constraintName="uq_dynamic_connection_system_type"/>
-            </not>
-        </preConditions>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.table_constraints
+                WHERE LOWER(constraint_name) = 'uq_dynamic_connection_system_type'
+            </sqlCheck>
+    </preConditions>
         <addUniqueConstraint tableName="dynamic_connection"
                              columnNames="system_id, connection_type"
                              constraintName="uq_dynamic_connection_system_type"/>

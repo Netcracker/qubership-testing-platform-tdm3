@@ -35,8 +35,8 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "dynamic_connection", uniqueConstraints = {
-        @UniqueConstraint(name = "uq_dynamic_connection_system_type",
-                columnNames = {"system_id", "connection_type"})
+        @UniqueConstraint(name = "uq_dynamic_connection_system_name",
+                columnNames = {"system_id", "connection_name"})
 })
 @Getter
 @Setter
@@ -53,6 +53,9 @@ public class DynamicConnection {
     @JoinColumn(name = "system_id", nullable = false)
     private DynamicSystem system;
 
+    @Column(name = "connection_name", nullable = false)
+    private String connectionName;
+
     @Column(name = "connection_type", nullable = false)
     private String connectionType;
 
@@ -63,9 +66,11 @@ public class DynamicConnection {
     private String connectionParameters;
 
     public DynamicConnection(DynamicSystem system,
+                             String connectionName,
                              String connectionType,
                              String connectionParameters) {
         this.system = system;
+        this.connectionName = connectionName;
         this.connectionType = connectionType;
         this.connectionParameters = connectionParameters;
     }
