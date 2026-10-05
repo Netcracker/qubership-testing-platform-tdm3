@@ -22,7 +22,7 @@ from the config file or from [tdm-select-context](../tdm-select-context/SKILL.md
 Resolve the table before any operation that needs a `title-table` or a `tableName`, against the tables of the
 **current system** (the catalog request below), in this order:
 
-1. The user names the table: work with that table.
+1. The user explicitly names the table: work with that table.
 2. The user doesn't name it, but the request makes clear which table it is about (for example, "reserve a SIM card"
    is about the table of SIM cards), and the current system has a matching table, even if its title is spelled
    differently (`Sim-cards` for "SIM card"): work with that table, and name it in the reply so the user can correct

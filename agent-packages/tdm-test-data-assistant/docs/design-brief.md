@@ -1,6 +1,6 @@
 # Agent for TDM - Test Data Assistant
 
-## Goals:
+## Goals
 
 - find available test data as per criteria (provide list)
 - reserve test data for executions
@@ -42,12 +42,11 @@ The algorithm works as follows:
 
 - if the input is the name or code of an automated test that includes a method for registering test data in TDM, that test is located and executed;
 - if the input is a description of the data to be created, the corresponding automated test is identified based on that description and executed;
-- if the input is a test case name, the corresponding automated test is identified using a mapping (linking TD generation automated tests to test names) 
-and executed.
+- if the input is a test case name, the corresponding automated test is identified using a mapping (linking TD generation automated tests to test names) and executed.
 
 The output is a record in TDM.
 
-### Function 4: Discovery.
+### Function 4: Discovery
 
 A code command and a test server specification are provided as input.
 
@@ -56,5 +55,3 @@ The algorithm works as follows:
 - Construct a REST request and send a Discovery command to TDM. TDM already contains scripts for locating existing test data; it executes the command and registers the discovered objects in its database.
 
 The output is a list of the discovered test data.
-
- 

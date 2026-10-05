@@ -13,7 +13,7 @@ The most critical function is usage control. The TDM service enables tracking of
 - **Usage tracking**: Each data set's usage is recorded along with the identity of the user, enabling comprehensive visibility and conflict prevention.
 - **Data locking or decommissioning**: Upon utilization, a test data set may be designated as "used," thereby prohibiting its further application in subsequent tests.
 
-Maintenance of the registry is carried out through a spacial interface, which enables the following activities:
+Maintenance of the registry is carried out through a special interface, which enables the following activities:
 
 - **Source registration**: The TDM service supports the connection of test databases, custom databases, files, and other data sources, from which it extracts structural metadata for downstream operations.
 - **Dual-channel management (API and UI)**: The majority of contemporary TDM platforms offer both a web interface and a REST API for software-driven administration, thereby facilitating seamless integration of the data registry into the CI/CD pipeline.

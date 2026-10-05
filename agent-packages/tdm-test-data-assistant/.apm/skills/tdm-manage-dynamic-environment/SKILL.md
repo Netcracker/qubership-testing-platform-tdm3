@@ -21,7 +21,7 @@ The request body can be sent flat (as below) or nested under an `"environment"` 
 
 ## `DB`-type connection parameters
 
-For `connection.type: "DB"`, the minimal working set of `parameters` — verified live end to end, including a real
+For `connection.type: "DB"`, the minimal working set of `parameters` — verified live end-to-end, including a real
 `POST /api/tdm/import/sql` run against the resulting system — is:
 
 ```json
