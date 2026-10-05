@@ -18,14 +18,18 @@ package org.qubership.atp.tdm.controllers;
 
 import org.qubership.atp.integration.configuration.configuration.AuditAction;
 import org.qubership.atp.tdm.exceptions.internal.EnvironmentNotFoundException;
+import org.qubership.atp.tdm.exceptions.internal.SystemNotFoundException;
+import org.qubership.atp.tdm.model.rest.EnvironmentConnectionsResponse;
 import org.qubership.atp.tdm.model.rest.ResponseMessage;
 import org.qubership.atp.tdm.model.rest.ResponseType;
 import org.qubership.atp.tdm.model.rest.requests.EnvironmentManagementRequest;
 import org.qubership.atp.tdm.service.DynamicEnvironmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -52,33 +56,59 @@ public class AtpEnvController {
     }
 
     /**
-     * Creates {@code request.envName} with {@code request.systemName} and its connection, or adds the system to
+     * Returns connections for {@code request.envName}. When {@code request.systemName} is set, only that system
+     * is included. Secret parameter values are masked. {@code connection} and {@code connections} on the body
+     * are ignored.
+     */
+    @Operation(summary = "Get connections of an environment or system",
+            description = "Returns the connections stored for the environment. When systemName is set, returns "
+                    + "that system only. Sensitive parameter values are masked as ***.")
+    @AuditAction(auditAction = "ATP Action. Get connections for environment {{#request.envName}} "
+            + "in project {{#request.projectName}}")
+    @GetMapping
+    public ResponseEntity<Object> getConnections(@RequestBody EnvironmentManagementRequest request) {
+        try {
+            EnvironmentConnectionsResponse body = service.getConnections(
+                    request.getProjectName(), request.getEnvName(), request.getSystemName());
+            return ResponseEntity.ok(body);
+        } catch (SystemNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ResponseMessage(ResponseType.ERROR, ex.getMessage()));
+        }
+    }
+
+    /**
+     * Creates {@code request.envName} with {@code request.systemName} and its connections, or adds the system to
      * an existing environment. Returns HTTP 400 when the system already exists.
      */
     @Operation(summary = "Create an environment or add a system",
-            description = "Creates the environment with the system and its connection, or adds the system to "
-                    + "an existing environment. Returns HTTP 400 when the system already exists.")
+            description = "Creates the environment with the system and its connections, or adds the system to "
+                    + "an existing environment. connections is a list; a single connection object is still "
+                    + "accepted. Only DB and HTTP types are allowed. Returns HTTP 400 when the system already "
+                    + "exists.")
     @AuditAction(auditAction = "ATP Action. Create environment {{#request.envName}} "
             + "in project {{#request.projectName}}")
     @PostMapping
     public ResponseMessage createEnvironment(@RequestBody EnvironmentManagementRequest request) {
         return service.createEnvironment(request.getProjectName(), request.getEnvName(),
-                request.getSystemName(), request.getConnection());
+                request.getSystemName(), request.resolvedConnections());
     }
 
     /**
-     * Replaces {@code request.systemName}'s connection, and renames the environment or the system when
-     * {@code request.newEnvName} or {@code request.newSystemName} is set.
+     * Upserts each connection in the request by name, and renames the environment or the system when
+     * {@code request.newEnvName} or {@code request.newSystemName} is set. Connections not listed are left as they
+     * are.
      */
-    @Operation(summary = "Update a connection, or rename an environment or system",
-            description = "Replaces the connection of the system, and renames the environment to newEnvName "
-                    + "or the system to newSystemName when they are set.")
+    @Operation(summary = "Add or update connections, or rename an environment or system",
+            description = "Upserts each connection by name. Connections not included in the request are left "
+                    + "unchanged. Renames the environment to newEnvName or the system to newSystemName when "
+                    + "they are set. Only DB and HTTP types are allowed.")
     @AuditAction(auditAction = "ATP Action. Update environment {{#request.envName}} "
             + "in project {{#request.projectName}}")
     @PutMapping
     public ResponseMessage updateEnvironment(@RequestBody EnvironmentManagementRequest request) {
         return service.updateEnvironment(request.getProjectName(), request.getEnvName(),
-                request.getSystemName(), request.getConnection(),
+                request.getSystemName(), request.resolvedConnections(),
                 request.getNewEnvName(), request.getNewSystemName());
     }
 
@@ -98,12 +128,21 @@ public class AtpEnvController {
     }
 
     /**
-     * The only failure of this controller with its own {@link ResponseMessage} body; every other one, including
-     * {@code SystemNotFoundException} on {@code PUT}, falls through to Spring Boot's default error page.
+     * Environment-not-found on GET, PUT, and DELETE. {@code SystemNotFoundException} on PUT still falls through
+     * to Spring Boot's default error page; GET handles that exception itself.
      */
     @ExceptionHandler(EnvironmentNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseMessage handleEnvironmentNotFound(EnvironmentNotFoundException ex) {
+        return new ResponseMessage(ResponseType.ERROR, ex.getMessage());
+    }
+
+    /**
+     * Validation failures for this controller, including an invalid connection type and a missing connection.
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseMessage handleIllegalArgument(IllegalArgumentException ex) {
         return new ResponseMessage(ResponseType.ERROR, ex.getMessage());
     }
 }

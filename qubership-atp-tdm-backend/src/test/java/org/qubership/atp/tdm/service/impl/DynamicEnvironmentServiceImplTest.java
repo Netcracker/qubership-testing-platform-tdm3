@@ -18,6 +18,7 @@ package org.qubership.atp.tdm.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -224,7 +226,7 @@ class DynamicEnvironmentServiceImplTest {
 
     @Test
     void updateEnvironment_envAndSystemExist_updatesConnection() {
-        DynamicSystem sys = new DynamicSystem(envRecord, SYSTEM_NAME, "DB", "DB", "{}");
+        DynamicSystem sys = new DynamicSystem(envRecord, SYSTEM_NAME, "DB", "{}");
 
         when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
         when(dynamicEnvironmentRepository.findByEnvNameAndProjectId(ENV_NAME, lazyProject.getId()))
@@ -243,7 +245,7 @@ class DynamicEnvironmentServiceImplTest {
         String newEnvName = "Renamed Environment";
         String newSystemName = "Renamed System";
         envRecord.setId(UUID.randomUUID());
-        DynamicSystem sys = new DynamicSystem(envRecord, SYSTEM_NAME, "DB", "DB", "{}");
+        DynamicSystem sys = new DynamicSystem(envRecord, SYSTEM_NAME, "DB", "{}");
 
         when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
         when(dynamicEnvironmentRepository.existsByEnvNameAndProjectId(newEnvName, lazyProject.getId()))
@@ -281,5 +283,56 @@ class DynamicEnvironmentServiceImplTest {
         assertThrows(EnvironmentNotFoundException.class, () ->
                 dynamicEnvironmentService.updateEnvironment(
                         PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection, null, newSystemName));
+    }
+
+    @Test
+    void createEnvironment_gitType_throwsAndDoesNotSave() {
+        connection.setType("GIT");
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> dynamicEnvironmentService.createEnvironment(
+                        PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection));
+
+        assertTrue(ex.getMessage().contains("Allowed types: DB, HTTP."));
+        verify(dynamicSystemRepository, never()).save(any());
+    }
+
+    @Test
+    void createEnvironment_duplicateTypes_throws() {
+        EnvironmentConnectionRequest second = new EnvironmentConnectionRequest();
+        second.setName("db");
+        second.setType("DB");
+        second.setParameters(connection.getParameters());
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> dynamicEnvironmentService.createEnvironment(
+                        PROJECT_NAME, ENV_NAME, SYSTEM_NAME, List.of(connection, second)));
+
+        assertTrue(ex.getMessage().contains("Duplicate connection type"));
+        verify(dynamicSystemRepository, never()).save(any());
+    }
+
+    @Test
+    void createEnvironment_emptyConnections_throws() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> dynamicEnvironmentService.createEnvironment(
+                        PROJECT_NAME, ENV_NAME, SYSTEM_NAME, Collections.emptyList()));
+
+        assertEquals("At least one connection is required.", ex.getMessage());
+    }
+
+    @Test
+    void createEnvironment_lowercaseHttp_storesCanonicalType() {
+        when(environmentsService.getLazyProjectByName(PROJECT_NAME)).thenReturn(lazyProject);
+        when(dynamicEnvironmentRepository.findByEnvNameAndProjectId(ENV_NAME, lazyProject.getId()))
+                .thenReturn(Optional.empty());
+        when(dynamicEnvironmentRepository.save(any())).thenReturn(envRecord);
+
+        connection.setType("http");
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection);
+
+        ArgumentCaptor<DynamicSystem> captor = ArgumentCaptor.forClass(DynamicSystem.class);
+        verify(dynamicSystemRepository).save(captor.capture());
+        assertEquals("HTTP", captor.getValue().getConnections().get(0).getConnectionType());
     }
 }

@@ -24,10 +24,11 @@ import lombok.Data;
 @Data
 public class EnvironmentConnectionRequest {
 
-    @Schema(description = "Connection name.")
+    @Deprecated
+    @Schema(description = "Deprecated compatibility field. It is ignored; a connection is identified by type.")
     private String name;
-    @Schema(description = "Connection type, such as \"DB\" or \"HTTP\". See the supported connection types in "
-            + "the atp-env-controller documentation.")
+    @Schema(description = "Connection type. Only \"DB\" and \"HTTP\" are accepted, ignoring case. "
+            + "Stored as DB or HTTP.")
     private String type;
     @Schema(description = "Connection parameters, specific to type: for example url, username, and password "
             + "for a DB connection.")

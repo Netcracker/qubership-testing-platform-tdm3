@@ -16,6 +16,9 @@
 
 package org.qubership.atp.tdm.service;
 
+import java.util.List;
+
+import org.qubership.atp.tdm.model.rest.EnvironmentConnectionsResponse;
 import org.qubership.atp.tdm.model.rest.ResponseMessage;
 import org.qubership.atp.tdm.model.rest.requests.EnvironmentConnectionRequest;
 
@@ -39,7 +42,18 @@ public interface DynamicEnvironmentService {
                                       @Nonnull EnvironmentConnectionRequest connection);
 
     /**
-     * Replaces {@code systemName}'s connection in {@code envName}, and renames the environment or the system when
+     * Creates {@code envName} with {@code systemName} and every connection in {@code connections}, or adds the
+     * system when the environment already exists.
+     *
+     * @throws IllegalArgumentException if {@code systemName} already exists in {@code envName}, or a connection
+     *      is invalid
+     */
+    ResponseMessage createEnvironment(@Nonnull String projectName, @Nonnull String envName,
+                                      @Nonnull String systemName,
+                                      @Nonnull List<EnvironmentConnectionRequest> connections);
+
+    /**
+     * Upserts {@code connection} by name on {@code systemName}, and renames the environment or the system when
      * {@code newEnvName} or {@code newSystemName} is given.
      *
      * @throws org.qubership.atp.tdm.exceptions.internal.EnvironmentNotFoundException if {@code envName} or
@@ -49,6 +63,31 @@ public interface DynamicEnvironmentService {
                                       @Nonnull String systemName,
                                       @Nonnull EnvironmentConnectionRequest connection,
                                       @Nullable String newEnvName, @Nullable String newSystemName);
+
+    /**
+     * Upserts each connection in {@code connections} by name on {@code systemName}, and renames the environment
+     * or the system when {@code newEnvName} or {@code newSystemName} is given. Connections omitted from the list
+     * are left unchanged.
+     *
+     * @throws org.qubership.atp.tdm.exceptions.internal.EnvironmentNotFoundException if {@code envName} or
+     *      {@code systemName} does not exist
+     */
+    ResponseMessage updateEnvironment(@Nonnull String projectName, @Nonnull String envName,
+                                      @Nonnull String systemName,
+                                      @Nonnull List<EnvironmentConnectionRequest> connections,
+                                      @Nullable String newEnvName, @Nullable String newSystemName);
+
+    /**
+     * Returns connections for {@code envName}. When {@code systemName} is set, the result contains that system
+     * only. Secret parameter values are masked.
+     *
+     * @throws org.qubership.atp.tdm.exceptions.internal.EnvironmentNotFoundException if {@code envName} does not
+     *      exist
+     * @throws org.qubership.atp.tdm.exceptions.internal.SystemNotFoundException if {@code systemName} is set and
+     *      that system does not exist
+     */
+    EnvironmentConnectionsResponse getConnections(@Nonnull String projectName, @Nonnull String envName,
+                                                  @Nullable String systemName);
 
     /**
      * Deletes {@code systemName} from {@code envName}, or the whole environment when {@code systemName} is not

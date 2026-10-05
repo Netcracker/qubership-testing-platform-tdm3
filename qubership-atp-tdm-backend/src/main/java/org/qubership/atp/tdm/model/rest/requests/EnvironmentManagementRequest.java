@@ -16,15 +16,19 @@
 
 package org.qubership.atp.tdm.model.rest.requests;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-@Schema(description = "Request body of every atp-env-controller operation (POST, PUT, and DELETE "
+@Schema(description = "Request body of every atp-env-controller operation (GET, POST, PUT, and DELETE "
         + "/api/tdm/rest/create-env). Its fields can be sent flat, as shown here, or nested under an "
         + "\"environment\" property; both are equivalent.")
 @Data
@@ -43,8 +47,33 @@ public class EnvironmentManagementRequest {
     @Schema(description = "Read by DELETE: when set, only this system is deleted; otherwise the whole "
             + "environment is deleted.")
     private String systemDeleteName;
-    @Schema(description = "Connection details for systemName. Read by POST and PUT.")
+    @Schema(description = "One connection for systemName. Read by POST and PUT when connections is absent. "
+            + "Ignored when connections is present.")
     private EnvironmentConnectionRequest connection;
+    @Schema(description = "Connections for systemName. Read by POST and PUT. Preferred over connection when both "
+            + "are sent. Ignored by GET.")
+    private List<EnvironmentConnectionRequest> connections;
+    private boolean connectionsPresent;
+
+    @JsonSetter("connections")
+    public void setConnections(List<EnvironmentConnectionRequest> connections) {
+        this.connectionsPresent = true;
+        this.connections = connections;
+    }
+
+    /**
+     * Connections to persist. {@code connections} wins when it is present, including when it is empty.
+     * Otherwise the legacy singular {@code connection} is used as a one-element list.
+     */
+    public List<EnvironmentConnectionRequest> resolvedConnections() {
+        if (connectionsPresent) {
+            return connections;
+        }
+        if (connection != null) {
+            return Collections.singletonList(connection);
+        }
+        return Collections.emptyList();
+    }
 
     @JsonProperty("environment")
     private void unpackEnvironment(Map<String, Object> environment) {
@@ -60,9 +89,14 @@ public class EnvironmentManagementRequest {
         if (environment.containsKey("systemDeleteName")) {
             this.systemDeleteName = (String) environment.get("systemDeleteName");
         }
+        ObjectMapper mapper = new ObjectMapper();
+        if (environment.containsKey("connections")) {
+            Object connectionsObj = environment.get("connections");
+            setConnections(connectionsObj == null ? null : mapper.convertValue(connectionsObj,
+                    new TypeReference<List<EnvironmentConnectionRequest>>() {}));
+        }
         Object connectionObj = environment.get("connection");
         if (connectionObj instanceof Map) {
-            ObjectMapper mapper = new ObjectMapper();
             this.connection = mapper.convertValue(connectionObj, EnvironmentConnectionRequest.class);
         }
     }

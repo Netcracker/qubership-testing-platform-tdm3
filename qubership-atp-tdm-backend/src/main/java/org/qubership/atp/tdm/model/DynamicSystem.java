@@ -16,10 +16,15 @@
 
 package org.qubership.atp.tdm.model;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.UuidGenerator;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -27,6 +32,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -52,27 +58,51 @@ public class DynamicSystem {
     @Column(name = "system_name", nullable = false)
     private String systemName;
 
-    @Column(name = "connection_name", nullable = false)
-    private String connectionName;
+    @OneToMany(mappedBy = "system", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SUBSELECT)
+    private List<DynamicConnection> connections = new ArrayList<>();
 
-    @Column(name = "connection_type", nullable = false)
-    private String connectionType;
+    public DynamicSystem(DynamicEnvironment env, String systemName) {
+        this.env = env;
+        this.systemName = systemName;
+        this.connections = new ArrayList<>();
+    }
 
     /**
-     * JSON-serialized Map&lt;String, String&gt; of connection parameters.
+     * Creates the system with a single connection. Existing callers that still pass one connection use this.
      */
-    @Column(name = "connection_parameters", columnDefinition = "TEXT")
-    private String connectionParameters;
+    public DynamicSystem(DynamicEnvironment env,
+                         String systemName,
+                         String connectionType,
+                         String connectionParameters) {
+        this(env, systemName);
+        addConnection(connectionType, connectionParameters);
+    }
 
+    /**
+     * @deprecated The connection name is ignored. Connections are identified by their canonical type.
+     */
+    @Deprecated
     public DynamicSystem(DynamicEnvironment env,
                          String systemName,
                          String connectionName,
                          String connectionType,
                          String connectionParameters) {
-        this.env = env;
-        this.systemName = systemName;
-        this.connectionName = connectionName;
-        this.connectionType = connectionType;
-        this.connectionParameters = connectionParameters;
+        this(env, systemName, connectionType, connectionParameters);
+    }
+
+    public void addConnection(String connectionType, String connectionParameters) {
+        if (this.connections == null) {
+            this.connections = new ArrayList<>();
+        }
+        this.connections.add(new DynamicConnection(this, connectionType, connectionParameters));
+    }
+
+    /**
+     * @deprecated The connection name is ignored. Connections are identified by their canonical type.
+     */
+    @Deprecated
+    public void addConnection(String connectionName, String connectionType, String connectionParameters) {
+        addConnection(connectionType, connectionParameters);
     }
 }

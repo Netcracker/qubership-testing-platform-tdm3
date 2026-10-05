@@ -39,12 +39,15 @@ import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
 import org.qubership.atp.tdm.exceptions.internal.EnvironmentNotFoundException;
 import org.qubership.atp.tdm.model.DynamicEnvironment;
 import org.qubership.atp.tdm.model.DynamicSystem;
+import org.qubership.atp.tdm.model.rest.EnvironmentConnectionsResponse;
 import org.qubership.atp.tdm.model.rest.ResponseMessage;
 import org.qubership.atp.tdm.model.rest.ResponseType;
 import org.qubership.atp.tdm.model.rest.requests.EnvironmentConnectionRequest;
 import org.qubership.atp.tdm.repo.DynamicEnvironmentRepository;
 import org.qubership.atp.tdm.repo.DynamicSystemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * Spring-context variant of {@link DynamicEnvironmentServiceImplTest}.
@@ -67,6 +70,9 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
 
     @Autowired
     private EnvironmentsService environmentsService;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private EnvironmentConnectionRequest connection;
 
@@ -214,7 +220,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
                 .findByEnvIdAndSystemName(envRecord.getId(), SYSTEM_NAME)
                 .orElse(null);
         assertNotNull(saved);
-        assertTrue(saved.getConnectionParameters().contains("localhost"));
+        assertTrue(saved.getConnections().get(0).getConnectionParameters().contains("localhost"));
 
         LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(PROJECT_ID, envName);
         System system = environmentsService.getFullSystemByName(lazyEnvironment.getId(), SYSTEM_NAME);
@@ -279,6 +285,111 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         assertTrue(ex.getMessage().contains(existingSystemName));
     }
 
+    @Test
+    void createEnvironment_twoConnections_persistedAndReloadedUnmasked() {
+        String envName = uniqueName("dyn-env");
+        EnvironmentConnectionRequest http = httpConnection("secret-token");
+
+        dynamicEnvironmentService.createEnvironment(
+                PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection, http));
+
+        DynamicSystem saved = findSystem(envName, SYSTEM_NAME);
+        assertEquals(2, saved.getConnections().size());
+        assertEquals("HTTP", saved.getConnections().stream()
+                .filter(item -> "HTTP".equals(item.getConnectionType()))
+                .findFirst().orElseThrow().getConnectionType());
+
+        System system = environmentsService.getFullSystemByName(environmentId(envName), SYSTEM_NAME);
+        assertEquals("secret-token", system.getConnections().stream()
+                .filter(item -> "HTTP".equals(item.getConnectionType()))
+                .findFirst().orElseThrow().getParameters().get("token"));
+        assertEquals("localhost", system.getConnections().stream()
+                .filter(item -> "DB".equals(item.getConnectionType()))
+                .findFirst().orElseThrow().getParameters().get("host"));
+    }
+
+    @Test
+    void uniqueConnectionType_isEnforced() {
+        DynamicEnvironment env = dynamicEnvironmentRepository.save(
+                new DynamicEnvironment(PROJECT_ID, uniqueName("dyn-env")));
+        DynamicSystem system = new DynamicSystem(env, SYSTEM_NAME, "DB", "{\"host\":\"localhost\"}");
+        system.addConnection("DB", "{\"url\":\"https://example.com\"}");
+
+        assertThrows(DataIntegrityViolationException.class, () -> dynamicSystemRepository.saveAndFlush(system));
+    }
+
+    @Test
+    void deleteSystem_removesItsConnections() {
+        String envName = uniqueName("dyn-env");
+        dynamicEnvironmentService.createEnvironment(
+                PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection, httpConnection("secret-token")));
+
+        DynamicSystem saved = findSystem(envName, SYSTEM_NAME);
+        assertEquals(2, countConnections(saved.getId()));
+
+        dynamicEnvironmentService.deleteEnvironment(PROJECT_NAME, envName, SYSTEM_NAME);
+
+        assertEquals(0, countConnections(saved.getId()));
+    }
+
+    @Test
+    void updateEnvironment_addsConnectionAndUpdatesExisting() {
+        String envName = uniqueName("dyn-env");
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
+
+        dynamicEnvironmentService.updateEnvironment(
+                PROJECT_NAME, envName, SYSTEM_NAME, httpConnection("secret-token"), null, null);
+
+        DynamicSystem saved = findSystem(envName, SYSTEM_NAME);
+        assertEquals(2, saved.getConnections().size());
+        assertTrue(saved.getConnections().stream()
+                .filter(item -> "DB".equals(item.getConnectionType()))
+                .findFirst().orElseThrow().getConnectionParameters().contains("localhost"));
+
+        EnvironmentConnectionRequest updatedDb = buildConnection();
+        updatedDb.getParameters().put("host", "db-new.example.com");
+        updatedDb.getParameters().put("db_password", "new-secret");
+        dynamicEnvironmentService.updateEnvironment(
+                PROJECT_NAME, envName, SYSTEM_NAME, updatedDb, null, null);
+
+        DynamicSystem afterUpdate = findSystem(envName, SYSTEM_NAME);
+        assertEquals(2, afterUpdate.getConnections().size());
+        assertTrue(afterUpdate.getConnections().stream()
+                .filter(item -> "DB".equals(item.getConnectionType()))
+                .findFirst().orElseThrow().getConnectionParameters().contains("db-new.example.com"));
+        assertTrue(afterUpdate.getConnections().stream()
+                .anyMatch(item -> "HTTP".equals(item.getConnectionType())));
+
+        EnvironmentConnectionsResponse masked = dynamicEnvironmentService.getConnections(
+                PROJECT_NAME, envName, SYSTEM_NAME);
+        Map<String, String> dbParameters = masked.getSystems().get(0).getConnections().stream()
+                .filter(item -> "DB".equals(item.getType()))
+                .findFirst().orElseThrow().getParameters();
+        assertEquals("***", dbParameters.get("db_password"));
+        assertEquals("db-new.example.com", dbParameters.get("host"));
+
+        System internal = environmentsService.getFullSystemByName(environmentId(envName), SYSTEM_NAME);
+        assertEquals("new-secret", internal.getConnections().stream()
+                .filter(item -> "DB".equals(item.getName()))
+                .findFirst().orElseThrow().getParameters().get("db_password"));
+    }
+
+    @Test
+    void updateEnvironment_invalidType_doesNotChangeStoredConnection() {
+        String envName = uniqueName("dyn-env");
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
+
+        EnvironmentConnectionRequest git = buildConnection();
+        git.setType("GIT");
+        assertThrows(IllegalArgumentException.class, () -> dynamicEnvironmentService.updateEnvironment(
+                PROJECT_NAME, envName, SYSTEM_NAME, git, null, null));
+
+        DynamicSystem saved = findSystem(envName, SYSTEM_NAME);
+        assertEquals(1, saved.getConnections().size());
+        assertEquals("DB", saved.getConnections().get(0).getConnectionType());
+        assertTrue(saved.getConnections().get(0).getConnectionParameters().contains("localhost"));
+    }
+
     private EnvironmentConnectionRequest buildConnection() {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("host", "localhost");
@@ -303,5 +414,31 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
 
     private void assertDoesNotThrowSystemLookup(UUID envId, String systemName) {
         assertDoesNotThrow(() -> environmentsService.getLazySystemByName(PROJECT_ID, envId, systemName));
+    }
+
+    private EnvironmentConnectionRequest httpConnection(String token) {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("url", "https://api.example.com");
+        parameters.put("token", token);
+
+        EnvironmentConnectionRequest request = new EnvironmentConnectionRequest();
+        request.setName("HTTP");
+        request.setType("http");
+        request.setParameters(parameters);
+        return request;
+    }
+
+    private DynamicSystem findSystem(String envName, String systemName) {
+        return dynamicSystemRepository.findByEnvIdAndSystemName(environmentId(envName), systemName).orElseThrow();
+    }
+
+    private UUID environmentId(String envName) {
+        return dynamicEnvironmentRepository.findByEnvNameAndProjectId(envName, PROJECT_ID).orElseThrow().getId();
+    }
+
+    private int countConnections(UUID systemId) {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM dynamic_connection WHERE system_id = ?", Integer.class, systemId);
+        return count == null ? 0 : count;
     }
 }

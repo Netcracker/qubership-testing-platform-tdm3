@@ -192,5 +192,95 @@
                              constraintName="uq_dynamic_system_env_system"/>
     </changeSet>
 
+    <changeSet id="CREATE_TABLE_DYNAMIC_CONNECTION" author="atp-tdm-be">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="dynamic_connection"/>
+            </not>
+        </preConditions>
+        <createTable tableName="dynamic_connection">
+            <column name="id" type="uuid">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="system_id" type="uuid">
+                <constraints nullable="false"
+                             foreignKeyName="fk_dynamic_connection_system"
+                             references="dynamic_system(id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="connection_type" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="connection_parameters" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="MIGRATE_DYNAMIC_CONNECTION_CANONICAL_TYPES" author="atp-tdm-be">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <columnExists tableName="dynamic_system" columnName="connection_type"/>
+                <columnExists tableName="dynamic_system" columnName="connection_parameters"/>
+            </and>
+        </preConditions>
+        <sql splitStatements="false">
+            INSERT INTO dynamic_connection (id, system_id, connection_type, connection_parameters)
+            SELECT RANDOM_UUID(), ds.id, UPPER(ds.connection_type), COALESCE(ds.connection_parameters, '{}')
+            FROM dynamic_system ds
+            WHERE UPPER(ds.connection_type) IN ('DB', 'HTTP')
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM dynamic_connection dc
+                  WHERE dc.system_id = ds.id
+                    AND dc.connection_type = UPPER(ds.connection_type)
+              )
+        </sql>
+    </changeSet>
+
+    <changeSet id="ADD_DYNAMIC_CONNECTION_SYSTEM_TYPE_UNIQUENESS" author="atp-tdm-be">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <uniqueConstraintExists tableName="dynamic_connection"
+                                        constraintName="uq_dynamic_connection_system_type"/>
+            </not>
+        </preConditions>
+        <addUniqueConstraint tableName="dynamic_connection"
+                             columnNames="system_id, connection_type"
+                             constraintName="uq_dynamic_connection_system_type"/>
+    </changeSet>
+
+    <changeSet id="CONSTRAIN_DYNAMIC_CONNECTION_CANONICAL_TYPES" author="atp-tdm-be">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.table_constraints
+                WHERE LOWER(constraint_name) = 'ck_dynamic_connection_type'
+            </sqlCheck>
+        </preConditions>
+        <sql>ALTER TABLE dynamic_connection ADD CONSTRAINT ck_dynamic_connection_type
+            CHECK (connection_type IN ('DB', 'HTTP'))</sql>
+    </changeSet>
+
+    <changeSet id="DROP_LEGACY_DYNAMIC_SYSTEM_CONNECTION_NAME" author="atp-tdm-be">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="dynamic_system" columnName="connection_name"/>
+        </preConditions>
+        <dropColumn tableName="dynamic_system" columnName="connection_name"/>
+    </changeSet>
+
+    <changeSet id="DROP_LEGACY_DYNAMIC_SYSTEM_CONNECTION_TYPE" author="atp-tdm-be">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="dynamic_system" columnName="connection_type"/>
+        </preConditions>
+        <dropColumn tableName="dynamic_system" columnName="connection_type"/>
+    </changeSet>
+
+    <changeSet id="DROP_LEGACY_DYNAMIC_SYSTEM_CONNECTION_PARAMETERS" author="atp-tdm-be">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="dynamic_system" columnName="connection_parameters"/>
+        </preConditions>
+        <dropColumn tableName="dynamic_system" columnName="connection_parameters"/>
+    </changeSet>
+
 
 </databaseChangeLog>
