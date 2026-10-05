@@ -15,6 +15,7 @@ deleting is the one operation `atp-action-controller` has no equivalent for, so 
 ## Required inputs
 
 - `tableName` — the database table name (from [tdm-list-tables](../tdm-list-tables/SKILL.md)), not the title.
+  Decide which table it is as described in [tdm-list-tables](../tdm-list-tables/SKILL.md#which-table-the-user-means).
 - One or more `ROW_ID` values (UUIDs).
 - For occupying, `occupiedBy`: the name the reservation is recorded under.
 
@@ -27,8 +28,11 @@ curl -X PUT '<TDM3_BASE_URL>/api/tdm/occupy?tableName=<tableName>&occupiedBy=<oc
 ```
 
 Set `occupiedBy` to the login name of the operating-system account the agent runs under, such as the value of
-`USERNAME` on Windows or `USER` on Linux and macOS. If the system reports no such name, use the IP address of the
-computer the agent runs on.
+`USERNAME` on Windows or `USER` on Linux and macOS. In Git Bash on Windows `USER` is empty, so read `USERNAME`. If the
+system reports no such name, use the IP address of the computer the agent runs on.
+
+Percent-encode the value in the query string. A login name with non-ASCII characters, such as a Cyrillic name, must
+be sent encoded: `Александр` becomes `%D0%90%D0%BB%D0%B5%D0%BA%D1%81%D0%B0%D0%BD%D0%B4%D1%80`.
 
 ## Release
 

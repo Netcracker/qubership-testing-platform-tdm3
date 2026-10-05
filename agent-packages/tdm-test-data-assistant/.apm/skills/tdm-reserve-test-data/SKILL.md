@@ -10,8 +10,9 @@ trip. Call `POST /api/tdm/rest/occupy-records` (one response column) or `POST /a
 (several response columns) to reserve; call `POST /api/tdm/rest/release-records` or `.../release-records/bulk` to
 release.
 
-Use these endpoints whenever the user describes the rows by selection conditions, and do not look up `ROW_ID` values
-first. Only when the user already supplies `ROW_ID` values, reserve them by ID with
+Use these endpoints when the user describes the rows by selection conditions and their `ROW_ID` values aren't known
+yet, and do not look the IDs up first. When the `ROW_ID` values are already known, because the user supplied them or an
+earlier response returned them, reserve the rows by ID with
 [tdm-occupy-test-data-rows-by-id](../tdm-occupy-test-data-rows-by-id/SKILL.md).
 
 ## Required inputs
@@ -22,6 +23,7 @@ Same context resolution as [tdm-find-test-data](../tdm-find-test-data/SKILL.md):
 [the config file](../../../README.md#configuration) rather than asking the user directly. Beyond that:
 
 - `title-table` — the table to reserve or release rows in.
+  Decide which table it is as described in [tdm-list-tables](../tdm-list-tables/SKILL.md#which-table-the-user-means).
 - The same column filters used to find the row (see tdm-find-test-data): column name, comparison, value,
   case-sensitivity. For reserving, an empty `search-row-parameters-set` is valid — verified live — and occupies
   the first available row unconditionally, for a user who just wants "any" row. Don't do this for releasing (see

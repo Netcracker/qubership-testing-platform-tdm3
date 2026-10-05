@@ -28,7 +28,16 @@ curl -X POST '<TDM3_BASE_URL>/api/tdm/import/excel' \
 
 Multipart form data, not JSON — the one endpoint in this package shaped that way. `environmentId` and `systemId`
 are required here even though their query-parameter declaration allows omitting them: the controller's own
-description says the import fails without them. Creates the table if none with this title exists in the system yet.
+description says the import fails without them. Creates the table if none with this title exists in the system yet;
+when one does, the import loads into that table instead of creating a new one, so when the user asks for a **new**
+table, check [tdm-list-tables](../tdm-list-tables/SKILL.md) for the title first and ask the user if it is taken.
+
+The file must be `.xlsx`. TDM3 opens it as an Office Open XML package, and the service has no CSV reader for
+imports: it writes CSV only when a table is downloaded (`GET /api/tdm/download/csv`). Given a `.csv` file (or a
+legacy `.xls`), don't send it. Ask the user to save it as `.xlsx`, or offer to insert its rows with
+[tdm-insert-test-data](../tdm-insert-test-data/SKILL.md) after confirming how to treat padded values and empty
+columns.
+
 Set `runSqlScript: true` to also run the table's saved update-by-query script (see `/update/sql` below) against the
 loaded rows afterward.
 
@@ -102,5 +111,8 @@ does. Returns a single `ImportTestDataStatistic` (no array — there's only one 
   see above; drop the modifier rather than debugging the path.
 - Omitting `environmentId`/`systemId` on `/import/excel` because they're marked optional: the import fails without
   them regardless.
+- Importing a user's "new table" without checking whether the title already exists in the current system: the rows
+  then go into the existing table.
+- Sending a CSV (or `.xls`) file to `/import/excel`: only `.xlsx` is read.
 - Assuming `/import/sql`'s per-environment errors surface as an HTTP failure: they don't — read every entry's
   `error` field.

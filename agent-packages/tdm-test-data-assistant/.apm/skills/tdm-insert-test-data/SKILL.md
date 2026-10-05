@@ -15,6 +15,7 @@ Run [tdm-select-context](../tdm-select-context/SKILL.md) first if `PROJECT_NAME`
 [the config file](../../../README.md#configuration) rather than asking the user directly. Beyond that:
 
 - `title-table` — the table to insert into (or create).
+  Decide which table it is as described in [tdm-list-tables](../tdm-list-tables/SKILL.md#which-table-the-user-means).
 - One or more rows, each a map of column name to value.
 
 ## Request

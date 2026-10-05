@@ -13,16 +13,32 @@ pick.
 
 ## Required inputs
 
-Run [tdm-select-context](../tdm-select-context/SKILL.md) first if `PROJECT_ID` isn't resolved yet — every endpoint
-here takes `projectId`, `environmentId`, or `systemId` (UUIDs from the config file or from
-[tdm-select-context](../tdm-select-context/SKILL.md)'s own calls), not names.
+Run [tdm-select-context](../tdm-select-context/SKILL.md) first if `PROJECT_ID`, `ENV_ID_DEFAULT`, or
+`SYSTEM_ID_DEFAULT` isn't resolved yet — every endpoint here takes `projectId`, `environmentId`, or `systemId` (UUIDs
+from the config file or from [tdm-select-context](../tdm-select-context/SKILL.md)'s own calls), not names.
 
-## List every table of the project, with detail
+## Which table the user means
+
+Resolve the table before any operation that needs a `title-table` or a `tableName`, against the tables of the
+**current system** (the catalog request below), in this order:
+
+1. The user names the table: work with that table.
+2. The user doesn't name it, but the request makes clear which table it is about (for example, "reserve a SIM card"
+   is about the table of SIM cards), and the current system has a matching table, even if its title is spelled
+   differently (`Sim-cards` for "SIM card"): work with that table, and name it in the reply so the user can correct
+   the choice.
+3. The request makes clear which table it is about, but the current system has nothing like it: say so, and ask the
+   user to name another table or to switch the system. Don't fall back to the only table of the system, or to any
+   other table, because it happens to exist. "Delete the customer with code X" must not touch an `Orders` table.
+
+## List the tables of the current system, with detail
 
 ```bash
-curl "<TDM3_BASE_URL>/api/tdm/tables/catalog?projectId=<PROJECT_ID>"
-# optionally: &systemId=<SYSTEM_ID_DEFAULT> to scope to one system
+curl "<TDM3_BASE_URL>/api/tdm/tables/catalog?projectId=<PROJECT_ID>&systemId=<SYSTEM_ID_DEFAULT>"
 ```
+
+Always send `systemId`: this package works within the current project, environment, and system. Omit it only when the
+user explicitly asks for the tables of the whole project; the omission applies to that request only.
 
 ```json
 [{

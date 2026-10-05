@@ -16,6 +16,7 @@ Run [tdm-select-context](../tdm-select-context/SKILL.md) first if `PROJECT_NAME`
 [the config file](../../../README.md#configuration) rather than asking the user directly. Beyond that:
 
 - `title-table` — the table to refresh.
+  Decide which table it is as described in [tdm-list-tables](../tdm-list-tables/SKILL.md#which-table-the-user-means).
 
 `envName` and `systemName` are optional here: when either is missing, TDM3 refreshes every table with this title in
 the project, across every environment and system. Send the resolved defaults unless the user explicitly asked to

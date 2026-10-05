@@ -17,6 +17,7 @@ Run [tdm-select-context](../tdm-select-context/SKILL.md) first if `PROJECT_NAME`
 that, collect:
 
 - `title-table` — the table title to search.
+  Decide which table it is as described in [tdm-list-tables](../tdm-list-tables/SKILL.md#which-table-the-user-means).
 - Zero or more column filters: for each, a column name, a comparison (`Contains`, `startWith`, `Equals`, `From`, or
   `To`, case-insensitive), the value to compare against, and whether the comparison is case-sensitive. An empty
   `search-row-parameters-set` is valid — verified live — and matches the first available row with no condition, for

@@ -16,6 +16,7 @@ Run [tdm-select-context](../tdm-select-context/SKILL.md) first if `PROJECT_ID`, 
 `SYSTEM_NAME_DEFAULT` aren't resolved yet. Beyond that:
 
 - `title-table` — the table to delete rows from.
+  Decide which table it is as described in [tdm-list-tables](../tdm-list-tables/SKILL.md#which-table-the-user-means).
 
 **`projectName` here is the project ID (a UUID), not the project name** — the one exception in this whole
 controller. Every other skill in this package sends `PROJECT_NAME` from the config file; these two calls need
