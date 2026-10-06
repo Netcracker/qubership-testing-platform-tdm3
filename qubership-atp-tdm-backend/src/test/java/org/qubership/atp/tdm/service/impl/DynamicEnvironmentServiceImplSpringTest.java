@@ -88,7 +88,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         String envName = uniqueName("dyn-env");
 
         assertThrows(IllegalArgumentException.class, () -> dynamicEnvironmentService.createEnvironment(
-                "Unknown Project", envName, SYSTEM_NAME, connection));
+                "Unknown Project", envName, SYSTEM_NAME, List.of(connection)));
 
         assertEquals(0, dynamicEnvironmentRepository.count());
         assertThrows(TdmEnvConvertLazyEnvironmentByNameException.class,
@@ -99,10 +99,10 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
     void createEnvironment_envAndSystemFound_returnsDuplicateError() {
         String envName = uniqueName("dyn-env");
 
-        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection));
 
         assertThrows(IllegalArgumentException.class, () -> dynamicEnvironmentService.createEnvironment(
-                PROJECT_NAME, envName, SYSTEM_NAME, connection));
+                PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection)));
 
         assertEquals(1, countDbSystemRows(envName));
     }
@@ -112,9 +112,9 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         String envName = uniqueName("dyn-env");
         String secondSystem = "Second System";
 
-        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection));
         ResponseMessage response = dynamicEnvironmentService.createEnvironment(
-                PROJECT_NAME, envName, secondSystem, connection);
+                PROJECT_NAME, envName, secondSystem, List.of(connection));
 
         assertEquals(ResponseType.SUCCESS, response.getType());
         assertEquals(2, countDbSystemRows(envName));
@@ -131,7 +131,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         String envName = uniqueName("dyn-env");
 
         ResponseMessage response = dynamicEnvironmentService.createEnvironment(
-                PROJECT_NAME, envName, SYSTEM_NAME, connection);
+                PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection));
 
         assertEquals(ResponseType.SUCCESS, response.getType());
         assertEquals(1, countDbSystemRows(envName));
@@ -145,7 +145,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
     void deleteEnvironment_envFound_deletesAllRows() {
         String envName = uniqueName("dyn-env");
 
-        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection));
 
         ResponseMessage response = dynamicEnvironmentService.deleteEnvironment(PROJECT_NAME, envName, null);
 
@@ -159,11 +159,11 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
     void deleteEnvironment_thenRecreate_registersFreshEnvironment() {
         String envName = uniqueName("dyn-env");
 
-        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection));
         dynamicEnvironmentService.deleteEnvironment(PROJECT_NAME, envName, null);
 
         ResponseMessage response = dynamicEnvironmentService.createEnvironment(
-                PROJECT_NAME, envName, SYSTEM_NAME, connection);
+                PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection));
 
         assertEquals(ResponseType.SUCCESS, response.getType());
         assertEquals(1, countDbSystemRows(envName));
@@ -189,7 +189,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
 
         assertThrows(IllegalArgumentException.class, () ->
                 dynamicEnvironmentService.updateEnvironment(
-                        "Unknown Project", envName, SYSTEM_NAME, connection, null, null));
+                        "Unknown Project", envName, SYSTEM_NAME, List.of(connection), null, null));
     }
 
     @Test
@@ -198,7 +198,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
 
         assertThrows(EnvironmentNotFoundException.class, () ->
                 dynamicEnvironmentService.updateEnvironment(
-                        PROJECT_NAME, envName, SYSTEM_NAME, connection, null, null));
+                        PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection), null, null));
     }
 
 
@@ -206,10 +206,10 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
     void updateEnvironment_envAndSystemExist_updatesConnection() {
         String envName = uniqueName("dyn-env");
 
-        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection));
 
         ResponseMessage response = dynamicEnvironmentService.updateEnvironment(
-                PROJECT_NAME, envName, SYSTEM_NAME, connection, null, null);
+                PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection), null, null);
 
         assertEquals(ResponseType.SUCCESS, response.getType());
 
@@ -233,10 +233,10 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         String newEnvName = uniqueName("renamed-env");
         String newSystemName = "Renamed System";
 
-        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection));
 
         ResponseMessage response = dynamicEnvironmentService.updateEnvironment(
-                PROJECT_NAME, envName, SYSTEM_NAME, connection, newEnvName, newSystemName);
+                PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection), newEnvName, newSystemName);
 
         assertEquals(ResponseType.SUCCESS, response.getType());
         assertEquals(0, countDbSystemRows(envName));
@@ -261,12 +261,12 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         String envName = uniqueName("dyn-env");
         String existingEnvName = uniqueName("existing-env");
 
-        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
-        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, existingEnvName, SYSTEM_NAME, connection);
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection));
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, existingEnvName, SYSTEM_NAME, List.of(connection));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
                 dynamicEnvironmentService.updateEnvironment(
-                        PROJECT_NAME, envName, SYSTEM_NAME, connection, existingEnvName, null));
+                        PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection), existingEnvName, null));
         assertTrue(ex.getMessage().contains(existingEnvName));
     }
 
@@ -276,12 +276,12 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         String secondSystem = "Second System";
         String existingSystemName = secondSystem;
 
-        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
-        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, secondSystem, connection);
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection));
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, secondSystem, List.of(connection));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
                 dynamicEnvironmentService.updateEnvironment(
-                        PROJECT_NAME, envName, SYSTEM_NAME, connection, null, existingSystemName));
+                        PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection), null, existingSystemName));
         assertTrue(ex.getMessage().contains(existingSystemName));
     }
 
@@ -335,10 +335,10 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
     @Test
     void updateEnvironment_addsConnectionAndUpdatesExisting() {
         String envName = uniqueName("dyn-env");
-        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection));
 
         dynamicEnvironmentService.updateEnvironment(
-                PROJECT_NAME, envName, SYSTEM_NAME, httpConnection("secret-token"), null, null);
+                PROJECT_NAME, envName, SYSTEM_NAME, List.of(httpConnection("secret-token")), null, null);
 
         DynamicSystem saved = findSystem(envName, SYSTEM_NAME);
         assertEquals(2, saved.getConnections().size());
@@ -350,7 +350,7 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         updatedDb.getParameters().put("host", "db-new.example.com");
         updatedDb.getParameters().put("db_password", "new-secret");
         dynamicEnvironmentService.updateEnvironment(
-                PROJECT_NAME, envName, SYSTEM_NAME, updatedDb, null, null);
+                PROJECT_NAME, envName, SYSTEM_NAME, List.of(updatedDb), null, null);
 
         DynamicSystem afterUpdate = findSystem(envName, SYSTEM_NAME);
         assertEquals(2, afterUpdate.getConnections().size());
@@ -377,12 +377,12 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
     @Test
     void updateEnvironment_invalidType_doesNotChangeStoredConnection() {
         String envName = uniqueName("dyn-env");
-        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, connection);
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, envName, SYSTEM_NAME, List.of(connection));
 
         EnvironmentConnectionRequest git = buildConnection();
         git.setType("GIT");
         assertThrows(IllegalArgumentException.class, () -> dynamicEnvironmentService.updateEnvironment(
-                PROJECT_NAME, envName, SYSTEM_NAME, git, null, null));
+                PROJECT_NAME, envName, SYSTEM_NAME, List.of(git), null, null));
 
         DynamicSystem saved = findSystem(envName, SYSTEM_NAME);
         assertEquals(1, saved.getConnections().size());

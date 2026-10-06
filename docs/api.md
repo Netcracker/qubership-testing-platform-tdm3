@@ -171,15 +171,14 @@ Fields can be sent as a flat JSON object or nested under an `environment` proper
 | `projectName`      | yes                              | all            | Name of an existing TDM project.                                                                     |
 | `envName`          | yes                              | all            | Environment name to create, update, delete, or read.                                                 |
 | `systemName`       | yes for POST and PUT; optional for GET | POST, PUT, GET | System name within the environment. On GET, omit it to return every system in the environment. |
-| `connections`      | yes for POST and PUT*            | POST, PUT      | List of connection objects. Must contain one or two items. When present (including `null` or empty), it takes precedence over `connection`. |
-| `connection`       | legacy alternative to `connections` | POST, PUT   | A single connection object. Treated as a one-element list only when `connections` is absent. |
+| `connections`      | yes for POST and PUT*            | POST, PUT      | List of connection objects. Must contain one or two items. |
 | `newEnvName`       | no                               | PUT            | Rename the environment.                                                                              |
 | `newSystemName`    | no                               | PUT            | Rename the target system.                                                                            |
 | `systemDeleteName` | no                               | DELETE         | When set, deletes only this system; otherwise deletes the whole environment.                         |
 
-\* Either `connections` or `connection` is required on POST and PUT. `GET` ignores both.
+\* `connections` is required on POST and PUT. `GET` ignores it.
 
-**Connection object** (each item of `connections`, and the legacy `connection`):
+**Connection object** (each item of `connections`):
 
 | Field        | Required | Description                                                                                                     |
 |--------------|----------|-----------------------------------------------------------------------------------------------------------------|
@@ -218,14 +217,16 @@ curl -X POST http://localhost:8080/api/tdm/rest/create-env \
     "projectName": "MyProject",
     "envName": "myEnv",
     "systemName": "system1",
-    "connection": {
-      "name": "DB",
-      "type": "DB",
-      "parameters": {
-        "host": "localhost",
-        "port": "5432"
+    "connections": [
+      {
+        "name": "DB",
+        "type": "DB",
+        "parameters": {
+          "host": "localhost",
+          "port": "5432"
+        }
       }
-    }
+    ]
   }'
 ```
 
@@ -241,13 +242,15 @@ curl -X POST http://localhost:8080/api/tdm/rest/create-env \
     "projectName": "MyProject",
     "envName": "myEnv",
     "systemName": "system2",
-    "connection": {
-      "name": "HTTP",
-      "type": "HTTP",
-      "parameters": {
-        "url": "https://example.com"
+    "connections": [
+      {
+        "name": "HTTP",
+        "type": "HTTP",
+        "parameters": {
+          "url": "https://example.com"
+        }
       }
-    }
+    ]
   }'
 ```
 
@@ -263,14 +266,16 @@ curl -X PUT http://localhost:8080/api/tdm/rest/create-env \
     "projectName": "MyProject",
     "envName": "myEnv",
     "systemName": "system1",
-    "connection": {
-      "name": "DB",
-      "type": "DB",
-      "parameters": {
-        "host": "db.example.com",
-        "port": "5432"
+    "connections": [
+      {
+        "name": "DB",
+        "type": "DB",
+        "parameters": {
+          "host": "db.example.com",
+          "port": "5432"
+        }
       }
-    }
+    ]
   }'
 ```
 
@@ -284,20 +289,22 @@ curl -X PUT http://localhost:8080/api/tdm/rest/create-env \
     "envName": "myEnv",
     "systemName": "system1",
     "newEnvName": "renamedEnv",
-    "connection": {
-      "name": "DB",
-      "type": "DB",
-      "parameters": {
-        "host": "localhost",
-        "port": "5432"
+    "connections": [
+      {
+        "name": "DB",
+        "type": "DB",
+        "parameters": {
+          "host": "localhost",
+          "port": "5432"
+        }
       }
-    }
+    ]
   }'
 ```
 
 #### 4. Get connections
 
-`GET` uses the same name-based body as create. `connection` and `connections` on that body are ignored, so a pasted
+`GET` uses the same name-based body as create. `connections` on that body is ignored, so a pasted
 create payload still works. When `systemName` is omitted, every system in the environment is returned. Values of
 parameters whose names look like secrets (`password`, `token`, `secret`, and names that contain those words, such as
 `db_password` or `apiToken`) are returned as `***`. The stored values are not changed.
@@ -349,14 +356,16 @@ The same payload can be wrapped in an `environment` object (useful when calling 
     "projectName": "MyProject",
     "envName": "myEnv",
     "systemName": "system1",
-    "connection": {
-      "name": "DB",
-      "type": "DB",
-      "parameters": {
-        "host": "localhost",
-        "port": "5432"
+    "connections": [
+      {
+        "name": "DB",
+        "type": "DB",
+        "parameters": {
+          "host": "localhost",
+          "port": "5432"
+        }
       }
-    }
+    ]
   }
 }
 ```

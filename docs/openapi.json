@@ -3510,17 +3510,14 @@
             "description" : "Canonical connection type. Only DB and HTTP are accepted, ignoring case."
           }
         },
-        "description" : "Connection details for systemName. Read by POST and PUT."
+        "description" : "One connection of a system, identified by type. An item of connections."
       },
       "EnvironmentManagementRequest" : {
         "type" : "object",
         "properties" : {
-          "connection" : {
-            "$ref" : "#/components/schemas/EnvironmentConnectionRequest"
-          },
           "connections" : {
             "type" : "array",
-            "description" : "Canonical connections for the system. When supplied, including null or empty, this takes precedence over the deprecated connection field.",
+            "description" : "Connections for systemName (one DB and/or one HTTP). Required by POST and PUT. Ignored by GET.",
             "maxItems" : 2,
             "items" : {
               "$ref" : "#/components/schemas/EnvironmentConnectionRequest"

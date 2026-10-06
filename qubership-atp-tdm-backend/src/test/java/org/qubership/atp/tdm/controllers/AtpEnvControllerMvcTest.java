@@ -325,8 +325,8 @@ class AtpEnvControllerMvcTest extends AbstractEnvTest {
     @Test
     void createEnv_lowercaseHttp_storedAsHttp() throws Exception {
         String body = "{\"projectName\":\"" + PROJECT_NAME + "\",\"envName\":\"" + ENV_NAME
-                + "\",\"systemName\":\"" + SYSTEM_NAME + "\",\"connection\":"
-                + "{\"name\":\"HTTP\",\"type\":\"http\",\"parameters\":{\"url\":\"https://api.example.com\"}}}";
+                + "\",\"systemName\":\"" + SYSTEM_NAME + "\",\"connections\":["
+                + "{\"name\":\"HTTP\",\"type\":\"http\",\"parameters\":{\"url\":\"https://api.example.com\"}}]}";
 
         mockMvc.perform(post(API_PATH)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -334,6 +334,22 @@ class AtpEnvControllerMvcTest extends AbstractEnvTest {
                 .andExpect(status().isOk());
 
         assertEquals("HTTP", findH2Rows(ENV_NAME).get(0).getConnections().get(0).getConnectionType());
+    }
+
+    @Test
+    void createEnv_legacyConnectionField_returns400() throws Exception {
+        String body = "{\"projectName\":\"" + PROJECT_NAME + "\",\"envName\":\"" + ENV_NAME
+                + "\",\"systemName\":\"" + SYSTEM_NAME + "\",\"connection\":"
+                + "{\"name\":\"DB\",\"type\":\"DB\",\"parameters\":{\"host\":\"localhost\"}}}";
+
+        mockMvc.perform(post(API_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value("ERROR"))
+                .andExpect(jsonPath("$.content").value(containsString("connections")));
+
+        assertEquals(0, countH2Rows(ENV_NAME));
     }
 
     @Test
@@ -408,8 +424,8 @@ class AtpEnvControllerMvcTest extends AbstractEnvTest {
                 .andExpect(status().isOk());
 
         String getBody = "{\"environment\":{\"projectName\":\"" + PROJECT_NAME + "\",\"envName\":\"" + ENV_NAME
-                + "\",\"systemName\":\"" + SYSTEM_NAME + "\",\"connection\":{\"name\":\"ignored\",\"type\":\"DB\","
-                + "\"parameters\":{\"host\":\"x\"}}}}";
+                + "\",\"systemName\":\"" + SYSTEM_NAME + "\",\"connections\":[{\"name\":\"ignored\",\"type\":\"DB\","
+                + "\"parameters\":{\"host\":\"x\"}}]}}";
         mockMvc.perform(get(API_PATH)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(getBody))

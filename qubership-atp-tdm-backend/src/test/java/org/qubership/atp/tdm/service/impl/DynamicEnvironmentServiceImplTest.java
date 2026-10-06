@@ -119,7 +119,7 @@ class DynamicEnvironmentServiceImplTest {
                 .thenThrow(new IllegalArgumentException("Project [" + PROJECT_NAME + "] not found."));
 
         assertThrows(IllegalArgumentException.class, () -> dynamicEnvironmentService.createEnvironment(
-                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection));
+                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, List.of(connection)));
 
         verify(dynamicEnvironmentRepository, never()).save(any());
     }
@@ -133,7 +133,7 @@ class DynamicEnvironmentServiceImplTest {
                 .thenReturn(true);
 
         assertThrows(IllegalArgumentException.class, () -> dynamicEnvironmentService.createEnvironment(
-                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection));
+                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, List.of(connection)));
 
         verify(dynamicSystemRepository, never()).save(any());
     }
@@ -147,7 +147,7 @@ class DynamicEnvironmentServiceImplTest {
                 .thenReturn(false);
 
         ResponseMessage response = dynamicEnvironmentService.createEnvironment(
-                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection);
+                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, List.of(connection));
 
         assertEquals(ResponseType.SUCCESS, response.getType());
         verify(dynamicSystemRepository).save(any(DynamicSystem.class));
@@ -162,7 +162,7 @@ class DynamicEnvironmentServiceImplTest {
         when(dynamicEnvironmentRepository.save(any())).thenReturn(envRecord);
 
         ResponseMessage response = dynamicEnvironmentService.createEnvironment(
-                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection);
+                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, List.of(connection));
 
         assertEquals(ResponseType.SUCCESS, response.getType());
         verify(dynamicEnvironmentRepository).save(any(DynamicEnvironment.class));
@@ -212,7 +212,7 @@ class DynamicEnvironmentServiceImplTest {
 
         assertThrows(IllegalArgumentException.class, () ->
                 dynamicEnvironmentService.updateEnvironment(
-                        PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection, null, null));
+                        PROJECT_NAME, ENV_NAME, SYSTEM_NAME, List.of(connection), null, null));
     }
 
     @Test
@@ -221,7 +221,7 @@ class DynamicEnvironmentServiceImplTest {
 
         assertThrows(EnvironmentNotFoundException.class, () ->
                 dynamicEnvironmentService.updateEnvironment(
-                        PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection, null, null));
+                        PROJECT_NAME, ENV_NAME, SYSTEM_NAME, List.of(connection), null, null));
     }
 
     @Test
@@ -235,7 +235,7 @@ class DynamicEnvironmentServiceImplTest {
                 .thenReturn(Optional.of(sys));
 
         ResponseMessage response = dynamicEnvironmentService.updateEnvironment(
-                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection, null, null);
+                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, List.of(connection), null, null);
 
         assertEquals(ResponseType.SUCCESS, response.getType());
     }
@@ -258,7 +258,7 @@ class DynamicEnvironmentServiceImplTest {
                 .thenReturn(Optional.of(sys));
 
         ResponseMessage response = dynamicEnvironmentService.updateEnvironment(
-                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection, newEnvName, newSystemName);
+                PROJECT_NAME, ENV_NAME, SYSTEM_NAME, List.of(connection), newEnvName, newSystemName);
 
         assertEquals(ResponseType.SUCCESS, response.getType());
     }
@@ -271,7 +271,7 @@ class DynamicEnvironmentServiceImplTest {
 
         Exception ex = assertThrows(EnvironmentNotFoundException.class, () ->
                 dynamicEnvironmentService.updateEnvironment(
-                        PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection, newEnvName, null));
+                        PROJECT_NAME, ENV_NAME, SYSTEM_NAME, List.of(connection), newEnvName, null));
     }
 
     @Test
@@ -282,7 +282,7 @@ class DynamicEnvironmentServiceImplTest {
 
         assertThrows(EnvironmentNotFoundException.class, () ->
                 dynamicEnvironmentService.updateEnvironment(
-                        PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection, null, newSystemName));
+                        PROJECT_NAME, ENV_NAME, SYSTEM_NAME, List.of(connection), null, newSystemName));
     }
 
     @Test
@@ -291,7 +291,7 @@ class DynamicEnvironmentServiceImplTest {
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> dynamicEnvironmentService.createEnvironment(
-                        PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection));
+                        PROJECT_NAME, ENV_NAME, SYSTEM_NAME, List.of(connection)));
 
         assertTrue(ex.getMessage().contains("Allowed types: DB, HTTP."));
         verify(dynamicSystemRepository, never()).save(any());
@@ -318,7 +318,7 @@ class DynamicEnvironmentServiceImplTest {
                 () -> dynamicEnvironmentService.createEnvironment(
                         PROJECT_NAME, ENV_NAME, SYSTEM_NAME, Collections.emptyList()));
 
-        assertEquals("At least one connection is required.", ex.getMessage());
+        assertEquals("At least one connection is required in 'connections'.", ex.getMessage());
     }
 
     @Test
@@ -329,7 +329,7 @@ class DynamicEnvironmentServiceImplTest {
         when(dynamicEnvironmentRepository.save(any())).thenReturn(envRecord);
 
         connection.setType("http");
-        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, ENV_NAME, SYSTEM_NAME, connection);
+        dynamicEnvironmentService.createEnvironment(PROJECT_NAME, ENV_NAME, SYSTEM_NAME, List.of(connection));
 
         ArgumentCaptor<DynamicSystem> captor = ArgumentCaptor.forClass(DynamicSystem.class);
         verify(dynamicSystemRepository).save(captor.capture());

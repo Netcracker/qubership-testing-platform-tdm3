@@ -74,14 +74,6 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
     @Transactional
     public ResponseMessage createEnvironment(@Nonnull String projectName, @Nonnull String envName,
                                              @Nonnull String systemName,
-                                             @Nonnull EnvironmentConnectionRequest connection) {
-        return createEnvironment(projectName, envName, systemName, List.of(connection));
-    }
-
-    @Override
-    @Transactional
-    public ResponseMessage createEnvironment(@Nonnull String projectName, @Nonnull String envName,
-                                             @Nonnull String systemName,
                                              @Nonnull List<EnvironmentConnectionRequest> connections) {
         validateRequiredFields(projectName, envName, systemName);
         log.info("Creating dynamic environment [{}] with system [{}] ({} connection(s)) for project [{}].",
@@ -112,15 +104,6 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
 
         return new ResponseMessage(ResponseType.SUCCESS,
                 String.format("Environment [%s] created successfully.", envName));
-    }
-
-    @Override
-    @Transactional
-    public ResponseMessage updateEnvironment(@Nonnull String projectName, @Nonnull String envName,
-                                             @Nonnull String systemName,
-                                             @Nonnull EnvironmentConnectionRequest connection,
-                                             @Nullable String newEnvName, @Nullable String newSystemName) {
-        return updateEnvironment(projectName, envName, systemName, List.of(connection), newEnvName, newSystemName);
     }
 
     @Override
@@ -237,7 +220,7 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
 
     private void validateConnections(List<EnvironmentConnectionRequest> connections) {
         if (connections == null || connections.isEmpty()) {
-            throw new IllegalArgumentException("At least one connection is required.");
+            throw new IllegalArgumentException("At least one connection is required in 'connections'.");
         }
         Set<String> types = new HashSet<>();
         for (EnvironmentConnectionRequest connection : connections) {

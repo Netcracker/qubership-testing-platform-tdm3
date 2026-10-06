@@ -103,7 +103,7 @@ public abstract class AbstractEnvTest extends AbstractTest {
     }
 
     protected String createRequestBody(String envName, String systemName) {
-        return String.format("{\"projectName\":\"%s\",\"envName\":\"%s\",\"systemName\":\"%s\",\"connection\":%s}",
+        return String.format("{\"projectName\":\"%s\",\"envName\":\"%s\",\"systemName\":\"%s\",\"connections\":[%s]}",
                 PROJECT_NAME, envName, systemName, CONNECTION_JSON);
     }
 
@@ -126,7 +126,7 @@ public abstract class AbstractEnvTest extends AbstractTest {
         if (newSystemName != null) {
             body.append(",\"newSystemName\":\"").append(newSystemName).append("\"");
         }
-        body.append(",\"connection\":").append(CONNECTION_JSON).append("}");
+        body.append(",\"connections\":[").append(CONNECTION_JSON).append("]}");
         return body.toString();
     }
 

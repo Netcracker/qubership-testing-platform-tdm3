@@ -57,8 +57,7 @@ public class AtpEnvController {
 
     /**
      * Returns connections for {@code request.envName}. When {@code request.systemName} is set, only that system
-     * is included. Secret parameter values are masked. {@code connection} and {@code connections} on the body
-     * are ignored.
+     * is included. Secret parameter values are masked. {@code connections} on the body is ignored.
      */
     @Operation(summary = "Get connections of an environment or system",
             description = "Returns the connections stored for the environment. When systemName is set, returns "
@@ -83,15 +82,14 @@ public class AtpEnvController {
      */
     @Operation(summary = "Create an environment or add a system",
             description = "Creates the environment with the system and its connections, or adds the system to "
-                    + "an existing environment. connections is a list; a single connection object is still "
-                    + "accepted. Only DB and HTTP types are allowed. Returns HTTP 400 when the system already "
-                    + "exists.")
+                    + "an existing environment. Only DB and HTTP types are allowed. Returns HTTP 400 when the "
+                    + "system already exists.")
     @AuditAction(auditAction = "ATP Action. Create environment {{#request.envName}} "
             + "in project {{#request.projectName}}")
     @PostMapping
     public ResponseMessage createEnvironment(@RequestBody EnvironmentManagementRequest request) {
         return service.createEnvironment(request.getProjectName(), request.getEnvName(),
-                request.getSystemName(), request.resolvedConnections());
+                request.getSystemName(), request.getConnections());
     }
 
     /**
@@ -108,7 +106,7 @@ public class AtpEnvController {
     @PutMapping
     public ResponseMessage updateEnvironment(@RequestBody EnvironmentManagementRequest request) {
         return service.updateEnvironment(request.getProjectName(), request.getEnvName(),
-                request.getSystemName(), request.resolvedConnections(),
+                request.getSystemName(), request.getConnections(),
                 request.getNewEnvName(), request.getNewSystemName());
     }
 

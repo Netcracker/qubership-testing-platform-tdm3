@@ -17,7 +17,6 @@
 package org.qubership.atp.tdm.model.rest.requests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -37,29 +36,7 @@ class EnvironmentManagementRequestTest {
         EnvironmentManagementRequest request = mapper.readValue(json, EnvironmentManagementRequest.class);
 
         assertEquals("MyProject", request.getProjectName());
-        assertEquals(2, request.resolvedConnections().size());
-        assertEquals("HTTP", request.resolvedConnections().get(1).getName());
-    }
-
-    @Test
-    void resolvedConnections_prefersConnectionsOverLegacyConnection() throws Exception {
-        String json = "{\"projectName\":\"MyProject\",\"envName\":\"myEnv\",\"systemName\":\"system1\","
-                + "\"connection\":{\"name\":\"DB\",\"type\":\"DB\",\"parameters\":{\"host\":\"localhost\"}},"
-                + "\"connections\":[{\"name\":\"HTTP\",\"type\":\"HTTP\",\"parameters\":{\"url\":\"https://x\"}}]}";
-
-        EnvironmentManagementRequest request = mapper.readValue(json, EnvironmentManagementRequest.class);
-
-        assertEquals(1, request.resolvedConnections().size());
-        assertEquals("HTTP", request.resolvedConnections().get(0).getName());
-    }
-
-    @Test
-    void resolvedConnections_emptyConnectionsDoesNotFallBack() throws Exception {
-        String json = "{\"connections\":[],\"connection\":{\"name\":\"DB\",\"type\":\"DB\","
-                + "\"parameters\":{\"host\":\"localhost\"}}}";
-
-        EnvironmentManagementRequest request = mapper.readValue(json, EnvironmentManagementRequest.class);
-
-        assertTrue(request.resolvedConnections().isEmpty());
+        assertEquals(2, request.getConnections().size());
+        assertEquals("HTTP", request.getConnections().get(1).getName());
     }
 }

@@ -32,16 +32,6 @@ import jakarta.annotation.Nullable;
 public interface DynamicEnvironmentService {
 
     /**
-     * Creates {@code envName} with {@code systemName}, or adds {@code systemName} to it if {@code envName} already
-     * exists.
-     *
-     * @throws IllegalArgumentException if {@code systemName} already exists in {@code envName}
-     */
-    ResponseMessage createEnvironment(@Nonnull String projectName, @Nonnull String envName,
-                                      @Nonnull String systemName,
-                                      @Nonnull EnvironmentConnectionRequest connection);
-
-    /**
      * Creates {@code envName} with {@code systemName} and every connection in {@code connections}, or adds the
      * system when the environment already exists.
      *
@@ -51,18 +41,6 @@ public interface DynamicEnvironmentService {
     ResponseMessage createEnvironment(@Nonnull String projectName, @Nonnull String envName,
                                       @Nonnull String systemName,
                                       @Nonnull List<EnvironmentConnectionRequest> connections);
-
-    /**
-     * Upserts {@code connection} by name on {@code systemName}, and renames the environment or the system when
-     * {@code newEnvName} or {@code newSystemName} is given.
-     *
-     * @throws org.qubership.atp.tdm.exceptions.internal.EnvironmentNotFoundException if {@code envName} or
-     *      {@code systemName} does not exist
-     */
-    ResponseMessage updateEnvironment(@Nonnull String projectName, @Nonnull String envName,
-                                      @Nonnull String systemName,
-                                      @Nonnull EnvironmentConnectionRequest connection,
-                                      @Nullable String newEnvName, @Nullable String newSystemName);
 
     /**
      * Upserts each connection in {@code connections} by name on {@code systemName}, and renames the environment
