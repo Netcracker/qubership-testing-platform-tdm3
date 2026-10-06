@@ -1399,6 +1399,16 @@
             },
             "description" : "OK"
           },
+          "400" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResponseMessage"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
           "404" : {
             "content" : {
               "*/*" : {
@@ -1416,37 +1426,57 @@
         ]
       },
       "get" : {
-        "description" : "Returns masked canonical connections for an environment, or for systemName when supplied.",
+        "description" : "Returns the connections stored for the environment. When systemName is set, returns that system only. Sensitive parameter values are masked as ***.",
         "operationId" : "getConnections",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/EnvironmentManagementRequest"
-              }
+        "parameters" : [
+          {
+            "in" : "query",
+            "name" : "request",
+            "required" : true,
+            "schema" : {
+              "$ref" : "#/components/schemas/EnvironmentManagementRequest"
             }
-          },
-          "required" : true
-        },
+          }
+        ],
         "responses" : {
           "200" : {
             "content" : {
-              "application/json" : {
+              "*/*" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/EnvironmentConnectionsResponse"
+                  "type" : "object"
                 }
               }
             },
             "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResponseMessage"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResponseMessage"
+                }
+              }
+            },
+            "description" : "Not Found"
           }
         },
-        "summary" : "Get masked connections",
+        "summary" : "Get connections of an environment or system",
         "tags" : [
           "atp-env-controller"
         ]
       },
       "post" : {
-        "description" : "Creates the environment with the system and its connection, or adds the system to an existing environment. Returns HTTP 400 when the system already exists.",
+        "description" : "Creates the environment with the system and its connections, or adds the system to an existing environment. Only DB and HTTP types are allowed. Returns HTTP 400 when the system already exists.",
         "operationId" : "createEnvironment",
         "requestBody" : {
           "content" : {
@@ -1469,6 +1499,16 @@
             },
             "description" : "OK"
           },
+          "400" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResponseMessage"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
           "404" : {
             "content" : {
               "*/*" : {
@@ -1486,7 +1526,7 @@
         ]
       },
       "put" : {
-        "description" : "Replaces the connection of the system, and renames the environment to newEnvName or the system to newSystemName when they are set.",
+        "description" : "Upserts each connection by type. Connections not included in the request are left unchanged. Renames the environment to newEnvName or the system to newSystemName when they are set. Only DB and HTTP types are allowed.",
         "operationId" : "updateEnvironment",
         "requestBody" : {
           "content" : {
@@ -1509,6 +1549,16 @@
             },
             "description" : "OK"
           },
+          "400" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResponseMessage"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
           "404" : {
             "content" : {
               "*/*" : {
@@ -1520,7 +1570,7 @@
             "description" : "Not Found"
           }
         },
-        "summary" : "Update a connection, or rename an environment or system",
+        "summary" : "Add or update connections, or rename an environment or system",
         "tags" : [
           "atp-env-controller"
         ]
@@ -3501,11 +3551,10 @@
           },
           "type" : {
             "type" : "string",
-            "enum" : [ "DB", "HTTP" ],
-            "description" : "Canonical connection type. Only DB and HTTP are accepted, ignoring case."
+            "description" : "Connection type. Only \"DB\" and \"HTTP\" are accepted, ignoring case. Stored as DB or HTTP."
           }
         },
-        "description" : "One connection of a system, identified by type. An item of connections."
+        "description" : "Connections for systemName (one DB and/or one HTTP). Required by POST and PUT. Ignored by GET."
       },
       "EnvironmentManagementRequest" : {
         "type" : "object",
@@ -3513,7 +3562,6 @@
           "connections" : {
             "type" : "array",
             "description" : "Connections for systemName (one DB and/or one HTTP). Required by POST and PUT. Ignored by GET.",
-            "maxItems" : 2,
             "items" : {
               "$ref" : "#/components/schemas/EnvironmentConnectionRequest"
             }
@@ -3550,48 +3598,7 @@
             "description" : "System name within the environment. Read by POST and PUT."
           }
         },
-        "description" : "Request body of every atp-env-controller operation (POST, PUT, and DELETE /api/tdm/rest/create-env). Its fields can be sent flat, as shown here, or nested under an \"environment\" property; both are equivalent."
-      },
-      "EnvironmentConnectionsResponse" : {
-        "type" : "object",
-        "description" : "Connections of a dynamic environment. Secret parameter values are masked.",
-        "properties" : {
-          "projectName" : {
-            "type" : "string"
-          },
-          "envName" : {
-            "type" : "string"
-          },
-          "systems" : {
-            "type" : "array",
-            "items" : {
-              "type" : "object",
-              "properties" : {
-                "systemName" : {
-                  "type" : "string"
-                },
-                "connections" : {
-                  "type" : "array",
-                  "items" : {
-                    "type" : "object",
-                    "properties" : {
-                      "type" : {
-                        "type" : "string",
-                        "enum" : [ "DB", "HTTP" ]
-                      },
-                      "parameters" : {
-                        "type" : "object",
-                        "additionalProperties" : {
-                          "type" : "string"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+        "description" : "Request body of every atp-env-controller operation (GET, POST, PUT, and DELETE /api/tdm/rest/create-env). Its fields can be sent flat, as shown here, or nested under an \"environment\" property; both are equivalent."
       },
       "EnvsList" : {
         "type" : "object",
