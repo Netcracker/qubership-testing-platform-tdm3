@@ -396,7 +396,6 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         parameters.put("port", "5432");
 
         EnvironmentConnectionRequest request = new EnvironmentConnectionRequest();
-        request.setName("DB");
         request.setType("DB");
         request.setParameters(parameters);
         return request;
@@ -422,7 +421,6 @@ class DynamicEnvironmentServiceImplSpringTest extends AbstractTest {
         parameters.put("token", token);
 
         EnvironmentConnectionRequest request = new EnvironmentConnectionRequest();
-        request.setName("HTTP");
         request.setType("http");
         request.setParameters(parameters);
         return request;

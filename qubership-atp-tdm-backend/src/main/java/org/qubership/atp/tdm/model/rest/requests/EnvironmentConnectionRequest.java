@@ -18,15 +18,15 @@ package org.qubership.atp.tdm.model.rest.requests;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class EnvironmentConnectionRequest {
 
-    @Deprecated
-    @Schema(description = "Deprecated compatibility field. It is ignored; a connection is identified by type.")
-    private String name;
     @Schema(description = "Connection type. Only \"DB\" and \"HTTP\" are accepted, ignoring case. "
             + "Stored as DB or HTTP.")
     private String type;

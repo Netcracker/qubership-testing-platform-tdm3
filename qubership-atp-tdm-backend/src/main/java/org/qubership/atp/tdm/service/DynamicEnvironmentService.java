@@ -43,7 +43,7 @@ public interface DynamicEnvironmentService {
                                       @Nonnull List<EnvironmentConnectionRequest> connections);
 
     /**
-     * Upserts each connection in {@code connections} by name on {@code systemName}, and renames the environment
+     * Upserts each connection in {@code connections} by type on {@code systemName}, and renames the environment
      * or the system when {@code newEnvName} or {@code newSystemName} is given. Connections omitted from the list
      * are left unchanged.
      *

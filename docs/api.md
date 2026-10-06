@@ -182,7 +182,6 @@ Fields can be sent as a flat JSON object or nested under an `environment` proper
 
 | Field        | Required | Description                                                                                                     |
 |--------------|----------|-----------------------------------------------------------------------------------------------------------------|
-| `name`       | no       | Deprecated compatibility field. It is ignored. |
 | `type`       | yes      | `DB` or `HTTP` only (case-insensitive). Stored as `DB` or `HTTP`.                                               |
 | `parameters` | yes      | Key-value map of connection parameters (e.g. host, port, credentials). Please use lowercase! Must not be empty. |
 
@@ -219,7 +218,6 @@ curl -X POST http://localhost:8080/api/tdm/rest/create-env \
     "systemName": "system1",
     "connections": [
       {
-        "name": "DB",
         "type": "DB",
         "parameters": {
           "host": "localhost",
@@ -244,7 +242,6 @@ curl -X POST http://localhost:8080/api/tdm/rest/create-env \
     "systemName": "system2",
     "connections": [
       {
-        "name": "HTTP",
         "type": "HTTP",
         "parameters": {
           "url": "https://example.com"
@@ -268,7 +265,6 @@ curl -X PUT http://localhost:8080/api/tdm/rest/create-env \
     "systemName": "system1",
     "connections": [
       {
-        "name": "DB",
         "type": "DB",
         "parameters": {
           "host": "db.example.com",
@@ -291,7 +287,6 @@ curl -X PUT http://localhost:8080/api/tdm/rest/create-env \
     "newEnvName": "renamedEnv",
     "connections": [
       {
-        "name": "DB",
         "type": "DB",
         "parameters": {
           "host": "localhost",
@@ -358,7 +353,6 @@ The same payload can be wrapped in an `environment` object (useful when calling 
     "systemName": "system1",
     "connections": [
       {
-        "name": "DB",
         "type": "DB",
         "parameters": {
           "host": "localhost",

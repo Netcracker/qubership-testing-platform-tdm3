@@ -108,7 +108,6 @@ class DynamicEnvironmentServiceImplTest {
         parameters.put("port", "5432");
 
         connection = new EnvironmentConnectionRequest();
-        connection.setName("DB");
         connection.setType("DB");
         connection.setParameters(parameters);
     }
@@ -300,7 +299,6 @@ class DynamicEnvironmentServiceImplTest {
     @Test
     void createEnvironment_duplicateTypes_throws() {
         EnvironmentConnectionRequest second = new EnvironmentConnectionRequest();
-        second.setName("db");
         second.setType("DB");
         second.setParameters(connection.getParameters());
 

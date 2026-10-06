@@ -3491,11 +3491,6 @@
       "EnvironmentConnectionRequest" : {
         "type" : "object",
         "properties" : {
-          "name" : {
-            "type" : "string",
-            "deprecated" : true,
-            "description" : "Deprecated compatibility field. It is ignored; a connection is identified by type."
-          },
           "parameters" : {
             "type" : "object",
             "additionalProperties" : {

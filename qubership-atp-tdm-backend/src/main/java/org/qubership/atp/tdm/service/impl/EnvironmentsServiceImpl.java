@@ -55,7 +55,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
@@ -405,7 +404,7 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
     }
 
     private List<Connection> buildConnectionsForSystem(DynamicSystem sys) {
-        if (sys.getConnections() == null || sys.getConnections().isEmpty()) {
+        if (sys.getConnections().isEmpty()) {
             return Collections.emptyList();
         }
         List<Connection> connections = new ArrayList<>();
@@ -415,7 +414,7 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
             connection.setName(stored.getConnectionType());
             connection.setSystemId(sys.getId());
             connection.setConnectionType(stored.getConnectionType());
-            connection.setParameters(deserializeParameters(stored.getConnectionParameters()));
+            connection.setParameters(ConnectionParameters.deserialize(stored.getConnectionParameters()));
             connections.add(connection);
         }
         return connections;
@@ -425,18 +424,6 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
         return dynamicSystemRepository.findAllByEnvId(envId).stream()
                 .flatMap(sys -> buildConnectionsForSystem(sys).stream())
                 .collect(Collectors.toList());
-    }
-
-    private Map<String, String> deserializeParameters(String json) {
-        if (json == null || json.isEmpty()) {
-            return new HashMap<>();
-        }
-        try {
-            return OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, String>>() {});
-        } catch (Exception e) {
-            log.warn("Failed to deserialize connection parameters: {}", e.getMessage());
-            return new HashMap<>();
-        }
     }
 
     private String serializeParameters(Map<String, String> parameters) {

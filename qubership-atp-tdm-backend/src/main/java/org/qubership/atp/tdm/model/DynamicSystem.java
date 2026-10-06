@@ -34,6 +34,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -60,6 +61,7 @@ public class DynamicSystem {
 
     @OneToMany(mappedBy = "system", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Fetch(FetchMode.SUBSELECT)
+    @Getter(AccessLevel.NONE)
     private List<DynamicConnection> connections = new ArrayList<>();
 
     public DynamicSystem(DynamicEnvironment env, String systemName) {
@@ -91,11 +93,15 @@ public class DynamicSystem {
         this(env, systemName, connectionType, connectionParameters);
     }
 
-    public void addConnection(String connectionType, String connectionParameters) {
-        if (this.connections == null) {
-            this.connections = new ArrayList<>();
+    public List<DynamicConnection> getConnections() {
+        if (connections == null) {
+            connections = new ArrayList<>();
         }
-        this.connections.add(new DynamicConnection(this, connectionType, connectionParameters));
+        return connections;
+    }
+
+    public void addConnection(String connectionType, String connectionParameters) {
+        getConnections().add(new DynamicConnection(this, connectionType, connectionParameters));
     }
 
     /**

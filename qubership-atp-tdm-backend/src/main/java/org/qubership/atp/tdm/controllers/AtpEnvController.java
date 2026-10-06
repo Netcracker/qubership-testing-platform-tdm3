@@ -93,12 +93,12 @@ public class AtpEnvController {
     }
 
     /**
-     * Upserts each connection in the request by name, and renames the environment or the system when
+     * Upserts each connection in the request by type, and renames the environment or the system when
      * {@code request.newEnvName} or {@code request.newSystemName} is set. Connections not listed are left as they
      * are.
      */
     @Operation(summary = "Add or update connections, or rename an environment or system",
-            description = "Upserts each connection by name. Connections not included in the request are left "
+            description = "Upserts each connection by type. Connections not included in the request are left "
                     + "unchanged. Renames the environment to newEnvName or the system to newSystemName when "
                     + "they are set. Only DB and HTTP types are allowed.")
     @AuditAction(auditAction = "ATP Action. Update environment {{#request.envName}} "

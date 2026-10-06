@@ -29,14 +29,14 @@ class EnvironmentManagementRequestTest {
     @Test
     void unpackEnvironment_readsConnections() throws Exception {
         String json = "{\"environment\":{\"projectName\":\"MyProject\",\"envName\":\"myEnv\","
-                + "\"systemName\":\"system1\",\"connections\":[{\"name\":\"DB\",\"type\":\"DB\","
-                + "\"parameters\":{\"host\":\"localhost\"}},{\"name\":\"HTTP\",\"type\":\"HTTP\","
+                + "\"systemName\":\"system1\",\"connections\":[{\"type\":\"DB\","
+                + "\"parameters\":{\"host\":\"localhost\"}},{\"type\":\"HTTP\","
                 + "\"parameters\":{\"url\":\"https://api.example.com\"}}]}}";
 
         EnvironmentManagementRequest request = mapper.readValue(json, EnvironmentManagementRequest.class);
 
         assertEquals("MyProject", request.getProjectName());
         assertEquals(2, request.getConnections().size());
-        assertEquals("HTTP", request.getConnections().get(1).getName());
+        assertEquals("HTTP", request.getConnections().get(1).getType());
     }
 }

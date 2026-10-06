@@ -17,7 +17,6 @@
 package org.qubership.atp.tdm.service.impl;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +44,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -153,9 +151,7 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
     @Transactional(readOnly = true)
     public EnvironmentConnectionsResponse getConnections(@Nonnull String projectName, @Nonnull String envName,
                                                          @Nullable String systemName) {
-        if (StringUtils.isBlank(projectName) || StringUtils.isBlank(envName)) {
-            throw new IllegalArgumentException("projectName and envName are required.");
-        }
+        validateRequiredFields(projectName, envName);
         log.info("Reading connections for environment [{}] system [{}] in project [{}].",
                 envName, systemName, projectName);
 
@@ -213,9 +209,19 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
     }
 
     private void validateRequiredFields(String projectName, String envName, String systemName) {
-        if (StringUtils.isBlank(projectName) || StringUtils.isBlank(envName) || StringUtils.isBlank(systemName)) {
+        if (isBlank(projectName, envName) || StringUtils.isBlank(systemName)) {
             throw new IllegalArgumentException("projectName, envName, and systemName are required.");
         }
+    }
+
+    private void validateRequiredFields(String projectName, String envName) {
+        if (isBlank(projectName, envName)) {
+            throw new IllegalArgumentException("projectName and envName are required.");
+        }
+    }
+
+    private static boolean isBlank(String projectName, String envName) {
+        return StringUtils.isBlank(projectName) || StringUtils.isBlank(envName);
     }
 
     private void validateConnections(List<EnvironmentConnectionRequest> connections) {
@@ -264,9 +270,6 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
 
     private void upsertConnections(DynamicSystem system, List<EnvironmentConnectionRequest> connections,
                                    String envName) {
-        if (system.getConnections() == null) {
-            system.setConnections(new ArrayList<>());
-        }
         for (EnvironmentConnectionRequest connection : connections) {
             String parametersJson = serializeParameters(connection.getParameters(), envName);
             DynamicConnection existing = system.getConnections().stream()
@@ -283,26 +286,11 @@ public class DynamicEnvironmentServiceImpl implements DynamicEnvironmentService 
 
     private List<EnvironmentConnectionsResponse.Connection> toMaskedConnections(DynamicSystem system) {
         List<EnvironmentConnectionsResponse.Connection> result = new ArrayList<>();
-        if (system.getConnections() == null) {
-            return result;
-        }
         for (DynamicConnection stored : system.getConnections()) {
             result.add(new EnvironmentConnectionsResponse.Connection(stored.getConnectionType(),
-                    SensitiveParameterMask.mask(deserializeParameters(stored.getConnectionParameters()))));
+                    SensitiveParameterMask.mask(ConnectionParameters.deserialize(stored.getConnectionParameters()))));
         }
         return result;
-    }
-
-    private Map<String, String> deserializeParameters(String json) {
-        if (json == null || json.isEmpty()) {
-            return new HashMap<>();
-        }
-        try {
-            return OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, String>>() {});
-        } catch (Exception e) {
-            log.warn("Failed to deserialize connection parameters: {}", e.getMessage());
-            return new HashMap<>();
-        }
     }
 
     private String serializeParameters(Map<String, String> parameters, String envName) {
