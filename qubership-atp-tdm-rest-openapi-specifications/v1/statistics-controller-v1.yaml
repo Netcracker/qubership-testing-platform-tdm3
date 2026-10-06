@@ -636,7 +636,8 @@ components:
           type: string
         statistics:
           type: array
-          $ref: '#/components/schemas/TableAvailableDataStats'
+          items:
+            $ref: '#/components/schemas/TableAvailableDataStats'
     TableColumnValues:
       title: TableColumnValues
       type: object
