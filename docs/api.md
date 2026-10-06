@@ -152,11 +152,11 @@ object on success. `GET` returns the connections themselves (see [Get connection
 
 These endpoints do not report every failure the same way:
 
-| Code  | When                                                                                                | Body                                    |
-|-------|-----------------------------------------------------------------------------------------------------|-----------------------------------------|
-| `400` | A validation error: a duplicate system, an invalid connection type, a missing or invalid parameter. | `ResponseMessage` with `type: "ERROR"`. |
-| `400` | `GET` with a missing `projectName` or `envName`, or a project that does not exist.                  | `ResponseMessage` with `type: "ERROR"`. |
-| `404` | The environment does not exist (`GET`, `PUT`, `DELETE`).                                            | `ResponseMessage` with `type: "ERROR"`. |
+| Code  | When                                                                                                | Body                                                                                     |
+|-------|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| `400` | A validation error: a duplicate system, an invalid connection type, a missing or invalid parameter. | `ResponseMessage` with `type: "ERROR"`.                                                  |
+| `400` | `GET` with a missing `projectName` or `envName`, or a project that does not exist.                  | `ResponseMessage` with `type: "ERROR"`.                                                  |
+| `404` | The environment does not exist (`GET`, `PUT`, `DELETE`).                                            | `ResponseMessage` with `type: "ERROR"`.                                                  |
 | `404` | The system does not exist (`GET` when `systemName` is set, and `PUT`).                              | `GET`: `ResponseMessage` with `type: "ERROR"`. `PUT`: the [generic error body](#errors). |
 
 Validation errors and a missing environment return `ResponseMessage`. A missing system on `PUT` still uses the generic
@@ -166,15 +166,15 @@ error body. Check the shape you get against the table above, or against [Errors]
 
 Fields can be sent as a flat JSON object or nested under an `environment` property (both formats are supported):
 
-| Field              | Required                         | Used by        | Description                                                                                          |
-|--------------------|----------------------------------|----------------|------------------------------------------------------------------------------------------------------|
-| `projectName`      | yes                              | all            | Name of an existing TDM project.                                                                     |
-| `envName`          | yes                              | all            | Environment name to create, update, delete, or read.                                                 |
+| Field              | Required                               | Used by        | Description                                                                                    |
+|--------------------|----------------------------------------|----------------|------------------------------------------------------------------------------------------------|
+| `projectName`      | yes                                    | all            | Name of an existing TDM project.                                                               |
+| `envName`          | yes                                    | all            | Environment name to create, update, delete, or read.                                           |
 | `systemName`       | yes for POST and PUT; optional for GET | POST, PUT, GET | System name within the environment. On GET, omit it to return every system in the environment. |
-| `connections`      | yes for POST and PUT*            | POST, PUT      | List of connection objects. Must contain one or two items. |
-| `newEnvName`       | no                               | PUT            | Rename the environment.                                                                              |
-| `newSystemName`    | no                               | PUT            | Rename the target system.                                                                            |
-| `systemDeleteName` | no                               | DELETE         | When set, deletes only this system; otherwise deletes the whole environment.                         |
+| `connections`      | yes for POST and PUT*                  | POST, PUT      | List of connection objects. Must contain one or two items.                                     |
+| `newEnvName`       | no                                     | PUT            | Rename the environment.                                                                        |
+| `newSystemName`    | no                                     | PUT            | Rename the target system.                                                                      |
+| `systemDeleteName` | no                                     | DELETE         | When set, deletes only this system; otherwise deletes the whole environment.                   |
 
 \* `connections` is required on POST and PUT. `GET` ignores it.
 
@@ -191,11 +191,11 @@ that are not in the request stay as they are.
 
 ### Endpoints
 
-| Method   | Path                       | Description                                                                                  |
-|----------|----------------------------|----------------------------------------------------------------------------------------------|
-| `GET`    | `/api/tdm/rest/create-env` | Return connections for an environment, or for one system. Secret values are masked.         |
-| `POST`   | `/api/tdm/rest/create-env` | Create a new environment with a system, or add a system to an existing environment.         |
-| `PUT`    | `/api/tdm/rest/create-env` | Add or update canonical connections by type, and optionally rename the environment or system. |
+| Method   | Path                       | Description                                                                                    |
+|----------|----------------------------|------------------------------------------------------------------------------------------------|
+| `GET`    | `/api/tdm/rest/create-env` | Return connections for an environment, or for one system. Secret values are masked.            |
+| `POST`   | `/api/tdm/rest/create-env` | Create a new environment with a system, or add a system to an existing environment.            |
+| `PUT`    | `/api/tdm/rest/create-env` | Add or update canonical connections by type, and optionally rename the environment or system.  |
 | `DELETE` | `/api/tdm/rest/create-env` | Delete an entire environment, or a single system within it. Connections are deleted with them. |
 
 ### Supported connection types
