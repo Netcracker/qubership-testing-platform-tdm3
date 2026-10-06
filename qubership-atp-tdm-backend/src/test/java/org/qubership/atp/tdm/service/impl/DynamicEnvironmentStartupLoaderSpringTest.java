@@ -67,7 +67,6 @@ class DynamicEnvironmentStartupLoaderSpringTest extends AbstractTest {
         UUID dynProjectId = UUID.randomUUID();
         String dynEnvName = "dynamic-startup-test-env-" + dynProjectId;
         String dynSystemName = "dynamic-system";
-        String dynConnectionName = "DB";
         String dynConnectionType = "DB";
 
         Map<String, String> parameters = new HashMap<>();
@@ -79,7 +78,7 @@ class DynamicEnvironmentStartupLoaderSpringTest extends AbstractTest {
         DynamicEnvironment env = dynamicEnvironmentRepository.save(
                 new DynamicEnvironment(dynProjectId, dynEnvName));
         dynamicSystemRepository.save(
-                new DynamicSystem(env, dynSystemName, dynConnectionName, dynConnectionType, parametersJson)
+                new DynamicSystem(env, dynSystemName, dynConnectionType, parametersJson)
         );
 
         LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(dynProjectId, dynEnvName);
@@ -113,16 +112,16 @@ class DynamicEnvironmentStartupLoaderSpringTest extends AbstractTest {
                 new DynamicEnvironment(dynProjectId, dynEnvName));
         dynamicSystemRepository.save(new DynamicSystem(
 
-                env1, systemName1, dynConnectionName, dynConnectionType, parametersJson));
+                env1, systemName1, dynConnectionType, parametersJson));
         dynamicSystemRepository.save(new DynamicSystem(
-                env1, systemName2, dynConnectionName, dynConnectionType, parametersJson));
+                env1, systemName2, dynConnectionType, parametersJson));
 
         DynamicEnvironment env2 = dynamicEnvironmentRepository.save(
                 new DynamicEnvironment(dynProjectId, dynEnvName2));
         dynamicSystemRepository.save(new DynamicSystem(
-                env2, systemName3, dynConnectionName, dynConnectionType, parametersJson));
+                env2, systemName3, dynConnectionType, parametersJson));
         dynamicSystemRepository.save(new DynamicSystem(
-                env2, systemName4, dynConnectionName, dynConnectionType, parametersJson));
+                env2, systemName4, dynConnectionType, parametersJson));
 
         assertEnvironmentHasSystems(dynProjectId, dynEnvName, systemName1, systemName2);
         assertEnvironmentHasSystems(dynProjectId, dynEnvName2, systemName3, systemName4);
@@ -137,7 +136,7 @@ class DynamicEnvironmentStartupLoaderSpringTest extends AbstractTest {
         DynamicEnvironment env = dynamicEnvironmentRepository.save(
                 new DynamicEnvironment(dynProjectId, dynEnvName));
         dynamicSystemRepository.save(new DynamicSystem(
-                env, "some-system", "DB", "DB", "not-valid-json{{"));
+                env, "some-system", "DB", "not-valid-json{{"));
 
         LazyEnvironment lazyEnvironment = environmentsService.getLazyEnvironmentByName(dynProjectId, dynEnvName);
         assertEquals(dynEnvName, lazyEnvironment.getName());

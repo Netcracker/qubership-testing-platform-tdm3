@@ -19,7 +19,6 @@ package org.qubership.atp.tdm.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.HashMap;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -67,7 +66,7 @@ class EnvironmentsServiceImplSystemLookupTest extends AbstractTest {
                 new DynamicEnvironment(projectId, ENV_NAME));
         environmentId = env.getId();
         dynamicSystemRepository.save(
-                new DynamicSystem(env, SYSTEM_NAME_LOWER, "DB", "DB", "{\"host\":\"localhost\"}"));
+                new DynamicSystem(env, SYSTEM_NAME_LOWER, "DB", "{\"host\":\"localhost\"}"));
     }
 
     // ── getLazySystemByName ───────────────────────────────────────────────────
@@ -118,7 +117,7 @@ class EnvironmentsServiceImplSystemLookupTest extends AbstractTest {
         DynamicEnvironment httpEnv = dynamicEnvironmentRepository.save(
                 new DynamicEnvironment(projectId, "httpEnv"));
         dynamicSystemRepository.save(
-                new DynamicSystem(httpEnv, "httpSystem", "HTTP", "HTTP", "{}"));
+                new DynamicSystem(httpEnv, "httpSystem", "HTTP", "{}"));
 
         assertThrows(TdmEnvDbConnectionException.class,
                 () -> environmentsService.getFullSystemByName(httpEnv.getId(), "httpSystem"));

@@ -81,18 +81,6 @@ public class DynamicSystem {
         addConnection(connectionType, connectionParameters);
     }
 
-    /**
-     * @deprecated The connection name is ignored. Connections are identified by their canonical type.
-     */
-    @Deprecated
-    public DynamicSystem(DynamicEnvironment env,
-                         String systemName,
-                         String connectionName,
-                         String connectionType,
-                         String connectionParameters) {
-        this(env, systemName, connectionType, connectionParameters);
-    }
-
     public List<DynamicConnection> getConnections() {
         if (connections == null) {
             connections = new ArrayList<>();
@@ -102,13 +90,5 @@ public class DynamicSystem {
 
     public void addConnection(String connectionType, String connectionParameters) {
         getConnections().add(new DynamicConnection(this, connectionType, connectionParameters));
-    }
-
-    /**
-     * @deprecated The connection name is ignored. Connections are identified by their canonical type.
-     */
-    @Deprecated
-    public void addConnection(String connectionName, String connectionType, String connectionParameters) {
-        addConnection(connectionType, connectionParameters);
     }
 }
