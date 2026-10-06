@@ -423,12 +423,10 @@ class AtpEnvControllerMvcTest extends AbstractEnvTest {
                         .content(body))
                 .andExpect(status().isOk());
 
-        String getBody = "{\"environment\":{\"projectName\":\"" + PROJECT_NAME + "\",\"envName\":\"" + ENV_NAME
-                + "\",\"systemName\":\"" + SYSTEM_NAME + "\",\"connections\":[{\"name\":\"ignored\",\"type\":\"DB\","
-                + "\"parameters\":{\"host\":\"x\"}}]}}";
         mockMvc.perform(get(API_PATH)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(getBody))
+                        .param("projectName", PROJECT_NAME)
+                        .param("envName", ENV_NAME)
+                        .param("systemName", SYSTEM_NAME))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.projectName").value(PROJECT_NAME))
                 .andExpect(jsonPath("$.systems.length()").value(1))
@@ -455,10 +453,9 @@ class AtpEnvControllerMvcTest extends AbstractEnvTest {
                         .content(createRequestBody(ENV_NAME, SYSTEM_NAME_2)))
                 .andExpect(status().isOk());
 
-        String getBody = "{\"projectName\":\"" + PROJECT_NAME + "\",\"envName\":\"" + ENV_NAME + "\"}";
         mockMvc.perform(get(API_PATH)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(getBody))
+                        .param("projectName", PROJECT_NAME)
+                        .param("envName", ENV_NAME))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.systems.length()").value(2));
     }
@@ -466,8 +463,8 @@ class AtpEnvControllerMvcTest extends AbstractEnvTest {
     @Test
     void getConnections_unknownEnvOrSystem_returns404() throws Exception {
         mockMvc.perform(get(API_PATH)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"projectName\":\"" + PROJECT_NAME + "\",\"envName\":\"missing\"}"))
+                        .param("projectName", PROJECT_NAME)
+                        .param("envName", "missing"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.type").value("ERROR"));
 
@@ -477,9 +474,9 @@ class AtpEnvControllerMvcTest extends AbstractEnvTest {
                 .andExpect(status().isOk());
 
         mockMvc.perform(get(API_PATH)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"projectName\":\"" + PROJECT_NAME + "\",\"envName\":\"" + ENV_NAME
-                                + "\",\"systemName\":\"missing\"}"))
+                        .param("projectName", PROJECT_NAME)
+                        .param("envName", ENV_NAME)
+                        .param("systemName", "missing"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.type").value("ERROR"));
     }

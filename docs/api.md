@@ -299,21 +299,15 @@ curl -X PUT http://localhost:8080/api/tdm/rest/create-env \
 
 #### 4. Get connections
 
-`GET` uses the same name-based body as create. `connections` on that body is ignored, so a pasted
-create payload still works. When `systemName` is omitted, every system in the environment is returned. Values of
+`GET` takes query parameters `projectName`, `envName`, and optionally `systemName`. When `systemName` is omitted, every system in the environment is returned. Values of
 parameters whose names look like secrets (`password`, `token`, `secret`, and names that contain those words, such as
 `db_password` or `apiToken`) are returned as `***`. The stored values are not changed.
 
 ```bash
-curl -X GET http://localhost:8080/api/tdm/rest/create-env \
-  -H "Content-Type: application/json" \
-  -d '{
-    "environment": {
-      "projectName": "MyProject",
-      "envName": "myEnv",
-      "systemName": "system1"
-    }
-  }'
+curl -G http://localhost:8080/api/tdm/rest/create-env \
+  --data-urlencode "projectName=MyProject" \
+  --data-urlencode "envName=myEnv" \
+  --data-urlencode "systemName=system1"
 ```
 
 #### 5. Delete an environment or system

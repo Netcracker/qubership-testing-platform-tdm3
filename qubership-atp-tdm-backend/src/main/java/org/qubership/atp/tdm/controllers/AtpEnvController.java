@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -56,19 +57,21 @@ public class AtpEnvController {
     }
 
     /**
-     * Returns connections for {@code request.envName}. When {@code request.systemName} is set, only that system
-     * is included. Secret parameter values are masked. {@code connections} on the body is ignored.
+     * Returns connections for {@code envName}. When {@code systemName} is set, only that system
+     * is included. Secret parameter values are masked.
      */
     @Operation(summary = "Get connections of an environment or system",
             description = "Returns the connections stored for the environment. When systemName is set, returns "
                     + "that system only. Sensitive parameter values are masked as ***.")
-    @AuditAction(auditAction = "ATP Action. Get connections for environment {{#request.envName}} "
-            + "in project {{#request.projectName}}")
+    @AuditAction(auditAction = "ATP Action. Get connections for environment {{#envName}} "
+            + "in project {{#projectName}}")
     @GetMapping
-    public ResponseEntity<Object> getConnections(@RequestBody EnvironmentManagementRequest request) {
+    public ResponseEntity<Object> getConnections(@RequestParam("projectName") String projectName,
+                                                 @RequestParam("envName") String envName,
+                                                 @RequestParam(value = "systemName", required = false)
+                                                 String systemName) {
         try {
-            EnvironmentConnectionsResponse body = service.getConnections(
-                    request.getProjectName(), request.getEnvName(), request.getSystemName());
+            EnvironmentConnectionsResponse body = service.getConnections(projectName, envName, systemName);
             return ResponseEntity.ok(body);
         } catch (SystemNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

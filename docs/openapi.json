@@ -1431,10 +1431,26 @@
         "parameters" : [
           {
             "in" : "query",
-            "name" : "request",
+            "name" : "projectName",
             "required" : true,
             "schema" : {
-              "$ref" : "#/components/schemas/EnvironmentManagementRequest"
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "envName",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "name" : "systemName",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
             }
           }
         ],
