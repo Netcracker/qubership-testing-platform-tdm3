@@ -137,3 +137,6 @@ common cause than a genuinely empty TDM3.
   instead — picking the wrong project or environment can reserve or insert test data against the wrong server.
 - Selecting a system before an environment is resolved, or an environment before a project is resolved: each list
   endpoint takes the previous level's ID as a path parameter, so the steps can't run out of order.
+- Reading a lookup that got no answer as "no match": when `curl` shows `HTTP 000` (exit code 7), TDM3 isn't running at
+  `TDM3_BASE_URL`. Tell the user the server is unreachable, leave the config file as it was, and don't try another
+  address.

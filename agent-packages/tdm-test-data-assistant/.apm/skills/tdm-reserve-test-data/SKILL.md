@@ -130,3 +130,10 @@ needed.
   never for release.
 - Treating `type: "ERROR"` as a network error: it means the reservation pool has no available row left, which the
   user needs to know so they can trigger test data generation instead of retrying the same request.
+- Reading a request that got no answer as "no data": when `curl` shows `HTTP 000` (exit code 7), TDM3 isn't running
+  at `TDM3_BASE_URL`. Tell the user the server is unreachable and that nothing was reserved. Don't try another address.
+- Retrying after an unknown column: a filter or response column the table doesn't have makes the search fail with a
+  raw HTTP 500 (`TDM-2005`, `bad SQL grammar` in the trace) instead of a `ResponseMessage`, verified live. Column names
+  match exactly, including case: `status` doesn't match `Status`. Nothing is reserved. Name the rejected column, show
+  the table's column names (the header of [tdm-browse-test-data-table](../tdm-browse-test-data-table/SKILL.md)'s paged
+  read), and let the user choose; don't resend with a corrected name of your own.
