@@ -44,11 +44,21 @@ Once resolved, write `PROJECT_ID` and `PROJECT_NAME` to the config file, replaci
   ```json
   [{
     "id": "5f2c1e2a-1234-4a5b-8c9d-abcdef012345",
-    "name": "STAGE",
     "projectId": "b0c1fd9e-19a7-4156-90e0-f04028a58720",
-    "systems": ["BillingDB", "CustomerDB"]
+    "name": "STAGE",
+    "clusterName": null,
+    "description": null,
+    "created": null,
+    "createdBy": null,
+    "modified": null,
+    "modifiedBy": null,
+    "systems": ["9a8b7c6d-4321-4b5a-9c8d-fedcba987654", "3c4d5e6f-8765-4a1b-b2c3-0123456789ab"]
   }]
   ```
+
+  Verified live. `systems` holds the **IDs** of the environment's systems, not their names, so don't show it to the
+  user as a list of systems; the names come from the call in step 3. Fields other than `id`, `projectId`, `name`, and
+  `systems` were `null` in every live response.
 
   Match the name case-insensitively. No match → tell the user the name isn't a known environment of this project,
   and show the list instead of guessing.
@@ -72,10 +82,19 @@ Same algorithm as environment, scoped to the resolved `ENV_ID_DEFAULT`: `GET
 [{
   "id": "9a8b7c6d-4321-4b5a-9c8d-fedcba987654",
   "name": "BillingDB",
-  "environmentIds": ["5f2c1e2a-1234-4a5b-8c9d-abcdef012345"],
-  "connections": ["JDBC"]
+  "description": null,
+  "created": null,
+  "createdBy": null,
+  "modified": null,
+  "modifiedBy": null,
+  "environmentIds": null,
+  "connections": ["9a8b7c6d-4321-4b5a-9c8d-fedcba987654"]
 }]
 ```
+
+Verified live. `environmentIds` was `null` in every live response, so don't rely on it to tell which environment a
+system belongs to; the request path already does that. `connections` holds connection **IDs** (UUIDs), not
+connection types such as `JDBC` or `HTTP`. Use only `id` and `name` from this response.
 
 Verify a user-named system against this list, list it on request, or fall back to `SYSTEM_ID_DEFAULT` /
 `SYSTEM_NAME_DEFAULT` from the config file when the user named neither a system nor asked for the list. Write the
