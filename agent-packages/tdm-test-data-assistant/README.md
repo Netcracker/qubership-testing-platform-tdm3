@@ -129,6 +129,17 @@ Covered by [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md) — inc
 controller that exist but do nothing useful (a cache-refresh and a cache-reset left over from a caching layer that
 no longer exists); see that skill's own page.
 
+## Commands
+
+Two skills are meant to be typed by name, as slash commands, with explicit arguments. They are skills without a paired
+instruction, so they work in every agent that installs the package. Each one is a thin front end that runs the skill
+named below; an ordinary plain-language request still goes straight to that skill.
+
+| Command                                                      | Runs                                                              | Example                                          |
+|--------------------------------------------------------------|-------------------------------------------------------------------|--------------------------------------------------|
+| [`/tdm-context`](.apm/skills/tdm-context/SKILL.md)           | [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md)     | `/tdm-context system=PostgresDB`                 |
+| [`/tdm-reserve`](.apm/skills/tdm-reserve/SKILL.md)           | [tdm-reserve-test-data](.apm/skills/tdm-reserve-test-data/SKILL.md) | `/tdm-reserve table=Orders return=ord_num cust_code=C00025 all` |
+
 ## Configuration
 
 Every skill in this package needs to know which TDM3 server, project, environment, and system to target. They all

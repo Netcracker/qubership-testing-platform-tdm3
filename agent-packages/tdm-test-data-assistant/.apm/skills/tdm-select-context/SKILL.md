@@ -100,6 +100,13 @@ Verify a user-named system against this list, list it on request, or fall back t
 `SYSTEM_NAME_DEFAULT` from the config file when the user named neither a system nor asked for the list. Write the
 resolved `SYSTEM_ID_DEFAULT` and `SYSTEM_NAME_DEFAULT` back to the config file the same way as the environment.
 
+## Switching a level
+
+A choice is valid only under the level above it. After the project changes, the environment and system in the config
+file no longer belong to it. After the environment changes, the system no longer does. Remove the stale values from
+the config file, then resolve each level below: verify a name the user gave, list on request, or ask. Don't carry the
+old name over, even when the new parent has an entry with the same name.
+
 ## The rest of `environments-controller`
 
 Two endpoints exist beyond the three above, and neither is useful in practice — verified live, both no-ops left
