@@ -33,6 +33,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.qubership.atp.tdm.AbstractTestDataTest;
 import org.qubership.atp.tdm.env.configurator.model.LazyEnvironment;
+import org.qubership.atp.tdm.model.TestDataOccupyStatistic;
 import org.qubership.atp.tdm.model.TestDataTableCatalog;
 import org.qubership.atp.tdm.model.cleanup.TestDataCleanupConfig;
 import org.qubership.atp.tdm.model.rest.ApiDataFilter;
@@ -47,6 +48,7 @@ import org.qubership.atp.tdm.model.rest.requests.ReleaseRowRequest;
 import org.qubership.atp.tdm.model.rest.requests.UpdateRowRequest;
 import org.qubership.atp.tdm.model.table.TestDataTable;
 import org.qubership.atp.tdm.model.table.TestDataTableFilter;
+import org.qubership.atp.tdm.repo.OccupyStatisticRepository;
 import org.qubership.atp.tdm.service.AtpActionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -55,6 +57,8 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
 
     @Autowired
     protected AtpActionService atpActionService;
+    @Autowired
+    protected OccupyStatisticRepository occupyStatisticRepository;
 
     @BeforeEach
     public void setUp() {
@@ -187,6 +191,65 @@ public class AtpActionServiceTest extends AbstractTestDataTest {
         Assertions.assertEquals(expectedResponseMessage, responseMessage.getContent());
         Assertions.assertEquals(String.format(link, projectId, lazyEnvironment.getId(), systemId),
                 responseMessage.getLink());
+    }
+
+    @Test
+    public void atpOccupyTestData_rowOccupied_occupationRecordedInStatisticsUnderOccupiedBy() {
+        String tableName = "tdm_api_test_occupy_statistic";
+        TestDataTableCatalog catalog = createTestDataTableCatalog(projectId, systemId, environmentId,
+                "TDM API Test Occupy Statistic", tableName);
+        createTestDataTable(catalog.getTableName());
+        OccupyRowRequest occupyRowRequest = buildOccupyRowRequest("Assignment",
+                "sim", "Contains", "12607200401410");
+
+        List<ResponseMessage> responseMessages = atpActionService.occupyTestData(lazyProject.getName(),
+                lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
+                "StatisticUser", Collections.singletonList(occupyRowRequest));
+
+        List<TestDataOccupyStatistic> statistics = findOccupyStatistic(tableName);
+        occupyStatisticRepository.deleteAll(statistics);
+        deleteTestDataTableIfExists(tableName);
+        catalogRepository.deleteByTableName(tableName);
+
+        Assertions.assertEquals(ResponseType.SUCCESS, responseMessages.get(0).getType());
+        Assertions.assertEquals(1, statistics.size());
+        Assertions.assertEquals("StatisticUser", statistics.get(0).getOccupiedBy());
+        Assertions.assertEquals(catalog.getTableTitle(), statistics.get(0).getTableTitle());
+    }
+
+    @Test
+    public void atpOccupyTestDataFullRow_rowOccupied_occupationRecordedInStatisticsUnderOccupiedBy() {
+        String tableName = "tdm_api_test_occupy_full_row_statistic";
+        TestDataTableCatalog catalog = createTestDataTableCatalog(projectId, systemId, environmentId,
+                "TDM API Test Occupy Full Row Statistic", tableName);
+        createTestDataTable(catalog.getTableName());
+        OccupyFullRowRequest occupyRowRequest = buildOccupyFullRowRequest(Collections.singletonList("Assignment"),
+                "sim", "Contains", "12607200401410");
+
+        List<ResponseMessage> responseMessages = atpActionService.occupyTestDataFullRow(lazyProject.getName(),
+                lazyEnvironment.getName(), system.getName(), catalog.getTableTitle(),
+                "StatisticUser", Collections.singletonList(occupyRowRequest));
+
+        List<TestDataOccupyStatistic> statistics = findOccupyStatistic(tableName);
+        occupyStatisticRepository.deleteAll(statistics);
+        deleteTestDataTableIfExists(tableName);
+        catalogRepository.deleteByTableName(tableName);
+
+        Assertions.assertEquals(ResponseType.SUCCESS, responseMessages.get(0).getType());
+        Assertions.assertEquals(1, statistics.size());
+        Assertions.assertEquals("StatisticUser", statistics.get(0).getOccupiedBy());
+        Assertions.assertEquals(catalog.getTableTitle(), statistics.get(0).getTableTitle());
+    }
+
+    private List<TestDataOccupyStatistic> findOccupyStatistic(String tableName) {
+        List<TestDataOccupyStatistic> statistics = new ArrayList<>();
+        for (TestDataOccupyStatistic statistic
+                : occupyStatisticRepository.findAllByProjectIdAndSystemId(projectId, systemId)) {
+            if (tableName.equals(statistic.getTableName())) {
+                statistics.add(statistic);
+            }
+        }
+        return statistics;
     }
 
     @Test
