@@ -131,14 +131,19 @@ no longer exists); see that skill's own page.
 
 ## Commands
 
-Two skills are meant to be typed by name, as slash commands, with explicit arguments. They are skills without a paired
-instruction, so they work in every agent that installs the package. Each one is a thin front end that runs the skill
-named below; an ordinary plain-language request still goes straight to that skill.
+Six skills are meant to be typed by name, as slash commands, with explicit arguments. They are user-invoked skills, not
+prompts, so they work in every agent that installs the package. Each one is a thin front end that runs the skill
+named below; an ordinary plain-language request still goes straight to that skill. Arguments are named, so their order
+doesn't matter; the examples use one order: `table=`, `return=`, the `Column=value` filters, then flags such as `all`.
 
-| Command                                                      | Runs                                                              | Example                                          |
-|--------------------------------------------------------------|-------------------------------------------------------------------|--------------------------------------------------|
-| [`/tdm-context`](.apm/skills/tdm-context/SKILL.md)           | [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md)     | `/tdm-context system=PostgresDB`                 |
-| [`/tdm-reserve`](.apm/skills/tdm-reserve/SKILL.md)           | [tdm-reserve-test-data](.apm/skills/tdm-reserve-test-data/SKILL.md) | `/tdm-reserve table=Orders return=ord_num cust_code=C00025 all` |
+| Command                                            | Runs                                                                | Example                                                         |
+|----------------------------------------------------|---------------------------------------------------------------------|-----------------------------------------------------------------|
+| [`/tdm-context`](.apm/skills/tdm-context/SKILL.md) | [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md)       | `/tdm-context system=PostgresDB`                                |
+| [`/tdm-tables`](.apm/skills/tdm-tables/SKILL.md)   | [tdm-list-tables](.apm/skills/tdm-list-tables/SKILL.md)             | `/tdm-tables`                                                   |
+| [`/tdm-find`](.apm/skills/tdm-find/SKILL.md)       | [tdm-browse-test-data-table](.apm/skills/tdm-browse-test-data-table/SKILL.md) | `/tdm-find table=Orders return=ord_num,ord_amount cust_code=C00025` |
+| [`/tdm-reserve`](.apm/skills/tdm-reserve/SKILL.md) | [tdm-reserve-test-data](.apm/skills/tdm-reserve-test-data/SKILL.md) | `/tdm-reserve table=Orders return=ord_num cust_code=C00025 all` |
+| [`/tdm-release`](.apm/skills/tdm-release/SKILL.md) | [tdm-reserve-test-data](.apm/skills/tdm-reserve-test-data/SKILL.md) | `/tdm-release table=Orders return=ord_num cust_code=C00025 all` |
+| [`/tdm-load`](.apm/skills/tdm-load/SKILL.md)       | [tdm-import-test-data](.apm/skills/tdm-import-test-data/SKILL.md)   | `/tdm-load table=Agents file="C:\data\agents.xlsx" new`         |
 
 ## Instruction
 
