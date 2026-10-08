@@ -131,7 +131,7 @@ no longer exists); see that skill's own page.
 
 ## Commands
 
-Six skills are meant to be typed by name, as slash commands, with explicit arguments. They are user-invoked skills, not
+Nine skills are meant to be typed by name, as slash commands, with explicit arguments. They are user-invoked skills, not
 prompts, so they work in every agent that installs the package. Each one is a thin front end that runs the skill
 named below; an ordinary plain-language request still goes straight to that skill. Arguments are named, so their order
 doesn't matter; the examples use one order: `table=`, `return=`, the `Column=value` filters, then flags such as `all`.
@@ -143,6 +143,9 @@ doesn't matter; the examples use one order: `table=`, `return=`, the `Column=val
 | [`/tdm-find`](.apm/skills/tdm-find/SKILL.md)       | [tdm-browse-test-data-table](.apm/skills/tdm-browse-test-data-table/SKILL.md) | `/tdm-find table=Orders return=ord_num,ord_amount cust_code=C00025` |
 | [`/tdm-reserve`](.apm/skills/tdm-reserve/SKILL.md) | [tdm-reserve-test-data](.apm/skills/tdm-reserve-test-data/SKILL.md) | `/tdm-reserve table=Orders return=ord_num cust_code=C00025 all` |
 | [`/tdm-release`](.apm/skills/tdm-release/SKILL.md) | [tdm-reserve-test-data](.apm/skills/tdm-reserve-test-data/SKILL.md) | `/tdm-release table=Orders return=ord_num cust_code=C00025 all` |
+| [`/tdm-insert`](.apm/skills/tdm-insert/SKILL.md)   | [tdm-insert-test-data](.apm/skills/tdm-insert-test-data/SKILL.md)   | `/tdm-insert table=Agents agent_code=A013 agent_name=Ivan`      |
+| [`/tdm-update`](.apm/skills/tdm-update/SKILL.md)   | [tdm-update-test-data](.apm/skills/tdm-update-test-data/SKILL.md)   | `/tdm-update table=Agents where agent_code=A013 set country=IT` |
+| [`/tdm-delete`](.apm/skills/tdm-delete/SKILL.md)   | [tdm-occupy-test-data-rows-by-id](.apm/skills/tdm-occupy-test-data-rows-by-id/SKILL.md) | `/tdm-delete table=Agents agent_code=A013` |
 | [`/tdm-load`](.apm/skills/tdm-load/SKILL.md)       | [tdm-import-test-data](.apm/skills/tdm-import-test-data/SKILL.md)   | `/tdm-load table=Agents file="C:\data\agents.xlsx" new`         |
 
 ## Instruction
