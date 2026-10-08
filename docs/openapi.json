@@ -1600,8 +1600,19 @@
     },
     "/api/tdm/rest/occupy-records" : {
       "post" : {
-        "description" : "For each request in occupy-row-requests, occupies the first available row that matches search-row-parameters-set and returns the value of name-column-response. The row is marked as occupied by ATP_User.",
+        "description" : "For each request in occupy-row-requests, occupies the first available row that matches search-row-parameters-set and returns the value of name-column-response. The row is marked as occupied by the user in occupiedBy, and the occupation is recorded in the statistics.",
         "operationId" : "atpOccupyTestData",
+        "parameters" : [
+          {
+            "description" : "Name of the user who occupies the rows.",
+            "in" : "query",
+            "name" : "occupiedBy",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1635,8 +1646,19 @@
     },
     "/api/tdm/rest/occupy-records-full-row" : {
       "post" : {
-        "description" : "For each request in occupy-full-row-requests, occupies the first available row that matches search-row-parameters-set and returns the values of response-column-names as a JSON object. The row stays available when one of the columns does not exist. The row is marked as occupied by ATP_User.",
+        "description" : "For each request in occupy-full-row-requests, occupies the first available row that matches search-row-parameters-set and returns the values of response-column-names as a JSON object. The row stays available when one of the columns does not exist. The row is marked as occupied by the user in occupiedBy, and the occupation is recorded in the statistics.",
         "operationId" : "occupyTestDataFullRow",
+        "parameters" : [
+          {
+            "description" : "Name of the user who occupies the rows.",
+            "in" : "query",
+            "name" : "occupiedBy",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
         "requestBody" : {
           "content" : {
             "application/json" : {
