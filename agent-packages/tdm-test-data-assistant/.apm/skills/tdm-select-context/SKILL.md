@@ -13,6 +13,12 @@ config file's location and the full key list; this skill is what writes `PROJECT
 
 Resolve `TDM3_BASE_URL` first (see the `README.md`) — every request below is `GET <TDM3_BASE_URL>/api/tdm/...`.
 
+## How to show a list
+
+Every list this skill shows (projects, environments, systems) is a table of two columns, **Name** and **ID** (the
+`name` and `id` fields). Mark the current one by appending "(current)" to its name. Don't show other fields such as
+`description`: TDM3 stores none for these objects. Show the same two columns on every call, whoever asked for the list.
+
 ## 1. Project
 
 Convention says one TDM3 install serves one project, but `GET /api/tdm/projects/lazy` only lists the projects named
@@ -29,7 +35,8 @@ environment and system, below:
 
   Match the name (or ID) against the list. No match → tell the user the name isn't in `PROJECTS_INFO`, and show the
   list instead of guessing.
-- The user asks for the list of projects → call the same endpoint and show `name` for each; let them pick.
+- The user asks for the list of projects → call the same endpoint and show it as described under "How to show a
+  list"; let them pick.
 - Neither of the above, and `PROJECT_ID` / `PROJECT_NAME` are already in the config file → use them. Skip the
   network call; they were verified when they were saved.
 - None of the above → ask the user to name a project or request the list. Never auto-pick a project just because
@@ -63,8 +70,8 @@ Once resolved, write `PROJECT_ID` and `PROJECT_NAME` to the config file, replaci
 
   Match the name case-insensitively. No match → tell the user the name isn't a known environment of this project,
   and show the list instead of guessing.
-- The user asks for the list of environments → call the same endpoint and show `name` (and `description`, if
-  present) for each; let them pick.
+- The user asks for the list of environments → call the same endpoint and show it as described under "How to show a
+  list"; let them pick.
 - Neither of the above, and `ENV_ID_DEFAULT` / `ENV_NAME_DEFAULT` are already in the config file → use them as the
   current environment. Skip the network call; they were verified when they were saved.
 - None of the above → ask the user to name an environment or request the list. Never default to "the first one in
@@ -97,9 +104,10 @@ Verified live. `environmentIds` was `null` in every live response, so don't rely
 system belongs to; the request path already does that. `connections` holds connection **IDs** (UUIDs), not
 connection types such as `JDBC` or `HTTP`. Use only `id` and `name` from this response.
 
-Verify a user-named system against this list, list it on request, or fall back to `SYSTEM_ID_DEFAULT` /
-`SYSTEM_NAME_DEFAULT` from the config file when the user named neither a system nor asked for the list. Write the
-resolved `SYSTEM_ID_DEFAULT` and `SYSTEM_NAME_DEFAULT` back to the config file the same way as the environment.
+Verify a user-named system against this list, show it on request as described under "How to show a list", or fall
+back to `SYSTEM_ID_DEFAULT` / `SYSTEM_NAME_DEFAULT` from the config file when the user named neither a system nor
+asked for the list. Write the resolved `SYSTEM_ID_DEFAULT` and `SYSTEM_NAME_DEFAULT` back to the config file the same
+way as the environment.
 
 ## Switching a level
 

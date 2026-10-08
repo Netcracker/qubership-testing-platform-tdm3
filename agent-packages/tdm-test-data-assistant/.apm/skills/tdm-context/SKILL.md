@@ -33,6 +33,8 @@ resolve them in the order project, environment, system. A `list` call only lists
   level that has no value.
 - A name that doesn't match is reported as tdm-select-context describes: say it isn't known, show the list, and leave
   that level of the config file as it was.
+- A `list` call shows the list as tdm-select-context describes under "How to show a list": two columns, Name and ID,
+  with "(current)" after the current name, and no description.
 - After a switch, print the resulting context in one line: `<project> → <environment> → <system>`. A level below the
   one that changed, and not named in the same call, is unset (see "Switching a level" in tdm-select-context): print it
   as unset and ask for it, or list it.

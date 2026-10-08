@@ -42,7 +42,9 @@ Always send `systemId`: this package works within the current project, environme
 user explicitly asks for the tables of the whole project; the omission applies to that request only.
 
 Show only the tables this request returns, which are the tables of the current system. Don't mention the tables of
-other systems, even ones seen earlier in the session, and don't send extra requests to find them.
+other systems, even ones seen earlier in the session, and don't send extra requests to find them. Show them as a table
+of two columns, **Name** (`tableTitle`) and **ID** (`tableName`, the database name), the same columns as every other
+list of this package.
 
 ```json
 [{

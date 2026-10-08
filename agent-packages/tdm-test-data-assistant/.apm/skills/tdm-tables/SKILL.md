@@ -22,8 +22,9 @@ the current system. For a plain-language request ("show the tables"), follow tdm
 - Work in the current project, environment, and system. Resolve them with
   [tdm-select-context](../tdm-select-context/SKILL.md) when they aren't set.
 - Send the catalog request that tdm-list-tables describes, with `projectId` and `systemId` from the config file.
-- Show a table with the title, the database name, and the last-usage date of each table. Show only these tables;
-  don't mention tables of other systems, and don't send extra requests to find them.
+- Show a table of two columns, **Name** (the title) and **ID** (the database name), the same columns as every other
+  list of this package. Show only these tables; don't mention tables of other systems, and don't send extra
+  requests to find them.
 - When the list is empty, say that the current system has no tables yet, name the system, and don't suggest that the
   context is wrong unless the user asks.
 - An unreachable server is handled as the "Common pitfalls" of
