@@ -30,11 +30,14 @@ Same context resolution as [tdm-find-test-data](../tdm-find-test-data/SKILL.md):
   the first available row unconditionally, for a user who just wants "any" row. Don't do this for releasing (see
   Common pitfalls): an empty filter there is a way to release the wrong row, not a documented shortcut.
 - The column (or columns) whose value identifies the reserved row to the caller.
+- For reserving, `occupiedBy`: the name the reservation is recorded under. Both reserve endpoints require it as a query
+  parameter, and a request without it fails with HTTP 400. Take it from the operating-system account and percent-encode
+  it, as [tdm-occupy-test-data-rows-by-id](../tdm-occupy-test-data-rows-by-id/SKILL.md#occupy) describes.
 
 ## Reserve
 
 ```bash
-curl -X POST '<TDM3_BASE_URL>/api/tdm/rest/occupy-records' \
+curl -X POST '<TDM3_BASE_URL>/api/tdm/rest/occupy-records?occupiedBy=<occupiedBy>' \
   -H 'Content-Type: application/json' \
   -d '{
     "projectName": "<project>",
@@ -55,7 +58,8 @@ curl -X POST '<TDM3_BASE_URL>/api/tdm/rest/occupy-records' \
 Set `"search-row-parameters-set": []` to occupy the first available row with no condition — verified live, this is
 how to satisfy "reserve any available row" without inventing a filter that happens to match everything.
 
-TDM3 occupies the first available row matching the filters, as `ATP_User`, and returns
+TDM3 occupies the first available row matching the filters, records it as occupied by `occupiedBy`, counts it in the
+occupation statistics, and returns
 `[{ "type": "SUCCESS", "content": "PREPAID_00123", "contentObject": null, "link": "..." }]` — `content` carries the
 result (`occupy-records-full-row` additionally fills `contentObject` with several columns as an object, the same way
 `/get-records` does). `type: "ERROR"` with `content: "No test data available for requested criteria!"` means no
