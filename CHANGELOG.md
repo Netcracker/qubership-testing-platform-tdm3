@@ -30,6 +30,9 @@ release commit, not by when they were written.
   as a `TestDataTableFilter`, the wrong type; it accepts `ApiDataFilter`.
 - The generated OpenAPI schema for `ResponseMessage.type` listed the enum values as lowercase `success`/`error`;
   the API actually returns uppercase `SUCCESS`/`ERROR`.
+- A username with an apostrophe, such as `O'Brien`, was stored in `OCCUPIED_BY` with the apostrophe doubled
+  (`O''Brien`) when rows were occupied through `PUT /api/tdm/occupy` or the `atp-action-controller` occupy
+  operations. The name is now stored as sent.
 
 ## [1.0.10] - 2026-09-07
 
