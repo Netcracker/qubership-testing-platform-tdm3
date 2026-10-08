@@ -119,7 +119,7 @@ public class AtpActions extends AtpActionServiceTest implements AbstractJmhTest 
         OccupyRowRequest occupyRowRequest = buildOccupyRowRequest("Assignment",
                 "SIM", "Equals", GeneralFacade.TEST_DATA_SEARCH_VALUE);
         return data.testingTarget.occupyTestData(lazyProject.getName(), lazyEnvironment.getName(),
-                system.getName(), "ATP_ACTIONS_OCCUPY", Collections.singletonList(occupyRowRequest));
+                system.getName(), "ATP_ACTIONS_OCCUPY", "TestUser", Collections.singletonList(occupyRowRequest));
     }
 
     @Benchmark

@@ -570,7 +570,7 @@ public class TestDataTableRepositoryImpl implements TestDataTableRepository {
 
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("ids", rows);
-        parameters.addValue("user", esapiEncoder.encodeForSQL(oracleCodec, occupiedBy));
+        parameters.addValue("user", occupiedBy);
 
         String sanitizedTableName = esapiEncoder.encodeForSQL(oracleCodec, tableName);
 
