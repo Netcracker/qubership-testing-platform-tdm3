@@ -2,6 +2,7 @@
 name: tdm-context
 description: Use only when the user types /tdm-context. Shows the current TDM3 project, environment, and system, or lists, verifies, and switches them from explicit arguments.
 disable-model-invocation: true
+argument-hint: "[project=<name>] [env=<name>] [system=<name>] | list projects|envs|systems | help"
 ---
 
 # /tdm-context
@@ -25,6 +26,8 @@ resolve them in the order project, environment, system. A `list` call only lists
 
 ## Behavior
 
+- When the only argument is `help`, `--help`, `-h`, or `?`, send no request. Print the usage from the "Arguments"
+  section above, the syntax line and the table of arguments, and nothing else.
 - An argument that is not one of the forms in the table above is an error. This covers an unknown word (`browse envs`)
   and anything after `list` other than `projects`, `envs`, or `systems` (`list tables`). Send no request. Say which
   argument isn't recognized, name the valid forms, and suggest the closest one (`list envs` for `browse envs`). Tables

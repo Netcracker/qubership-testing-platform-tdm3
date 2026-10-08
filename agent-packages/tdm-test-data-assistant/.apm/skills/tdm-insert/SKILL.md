@@ -2,6 +2,7 @@
 name: tdm-insert
 description: Use only when the user types /tdm-insert. Inserts one row with explicit Column=value pairs into an existing TDM3 table, or creates the table with that row when new is given.
 disable-model-invocation: true
+argument-hint: "table=<title> Column=value ... [new] | help"
 ---
 
 # /tdm-insert
@@ -27,6 +28,8 @@ or a value with spaces in double quotes: `agent_name="Ravi Kumar"`.
 
 ## Behavior
 
+- When the only argument is `help`, `--help`, `-h`, or `?`, send no request. Print the usage from the "Arguments"
+  section above, the syntax line and the table of arguments, and nothing else.
 - Never infer a missing `table=`, and ask for at least one `<Column>=<value>`.
 - When an argument can't be parsed unambiguously, send nothing. Reply with the corrected command and let the user send
   it or change it.

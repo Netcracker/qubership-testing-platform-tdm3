@@ -136,6 +136,9 @@ prompts, so they work in every agent that installs the package. Each one is a th
 named below; an ordinary plain-language request still goes straight to that skill. Arguments are named, so their order
 doesn't matter; the examples use one order: `table=`, `return=`, the `Column=value` filters, then flags such as `all`.
 
+The slash menu shows a short argument hint next to each command. Each command also answers `help`, `--help`, `-h`,
+or `?` with its syntax and the table of its arguments, without sending any request to TDM3.
+
 | Command                                            | Runs                                                                | Example                                                         |
 |----------------------------------------------------|---------------------------------------------------------------------|-----------------------------------------------------------------|
 | [`/tdm-context`](.apm/skills/tdm-context/SKILL.md) | [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md)       | `/tdm-context system=PostgresDB`                                |

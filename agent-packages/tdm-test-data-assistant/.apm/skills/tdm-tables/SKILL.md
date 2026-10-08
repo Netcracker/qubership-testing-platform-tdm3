@@ -2,6 +2,7 @@
 name: tdm-tables
 description: Use only when the user types /tdm-tables. Lists the test data tables of the current TDM3 system with their database names.
 disable-model-invocation: true
+argument-hint: "(no arguments) | help"
 ---
 
 # /tdm-tables
@@ -17,6 +18,8 @@ the current system. For a plain-language request ("show the tables"), follow tdm
 
 ## Behavior
 
+- When the only argument is `help`, `--help`, `-h`, or `?`, send no request. Print the usage from the "Arguments"
+  section above, the syntax line and the table of arguments, and nothing else.
 - Any argument is an error. Send no request, say that `/tdm-tables` takes none, and suggest the plain-language
   request "show the tables of the whole project" if that is what the user wanted.
 - Work in the current project, environment, and system. Resolve them with

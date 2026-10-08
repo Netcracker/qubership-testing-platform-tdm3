@@ -2,6 +2,7 @@
 name: tdm-load
 description: Use only when the user types /tdm-load. Loads an Excel file or the result of a SELECT query into an explicit table of the current TDM3 system.
 disable-model-invocation: true
+argument-hint: "table=<title> file=<path> | query=<SELECT> [timeout=<s>] [new] | help"
 ---
 
 # /tdm-load
@@ -29,6 +30,8 @@ Put a path or a statement in double quotes when it contains spaces: `file="C:\da
 
 ## Behavior
 
+- When the only argument is `help`, `--help`, `-h`, or `?`, send no request. Print the usage from the "Arguments"
+  section above, the syntax line and the table of arguments, and nothing else.
 - Never infer a missing `table=`, and require exactly one of `file=` and `query=`. Ask for what is missing.
 - When an argument can't be parsed unambiguously, send nothing. Reply with the corrected command and let the user send
   it or change it.

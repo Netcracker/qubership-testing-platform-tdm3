@@ -2,6 +2,7 @@
 name: tdm-delete
 description: Use only when the user types /tdm-delete. Deletes the rows of an explicit TDM3 table that match explicit Column=value filters, after showing them and getting a confirmation.
 disable-model-invocation: true
+argument-hint: "table=<title> Column=value ... [all] | help"
 ---
 
 # /tdm-delete
@@ -28,6 +29,8 @@ asks in plain language; this command never does.
 
 ## Behavior
 
+- When the only argument is `help`, `--help`, `-h`, or `?`, send no request. Print the usage from the "Arguments"
+  section above, the syntax line and the table of arguments, and nothing else.
 - Never infer a missing `table=`. Require at least one filter. With none, send nothing and say that this command needs
   a filter.
 - When an argument can't be parsed unambiguously, send nothing. Reply with the corrected command and let the user send

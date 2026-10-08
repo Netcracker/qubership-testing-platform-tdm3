@@ -2,6 +2,7 @@
 name: tdm-update
 description: Use only when the user types /tdm-update. Replaces column values on the rows of an explicit TDM3 table that match explicit where conditions.
 disable-model-invocation: true
+argument-hint: "table=<title> where Column=value ... set Column=value ... [all] | help"
 ---
 
 # /tdm-update
@@ -29,6 +30,8 @@ append to a column, the user asks in plain language.
 
 ## Behavior
 
+- When the only argument is `help`, `--help`, `-h`, or `?`, send no request. Print the usage from the "Arguments"
+  section above, the syntax line and the table of arguments, and nothing else.
 - Never infer a missing `table=`, and require at least one pair in `where` and in `set`. Ask for what is missing. A
   command without `where` would change every row, so it is never sent.
 - When an argument can't be parsed unambiguously, send nothing. Reply with the corrected command and let the user send

@@ -2,6 +2,7 @@
 name: tdm-release
 description: Use only when the user types /tdm-release. Releases reserved rows of an explicit TDM3 table that match explicit Column=value filters, or every reserved row of the table after a confirmation.
 disable-model-invocation: true
+argument-hint: "table=<title> return=<col> Column=value ... [all] | table=<title> all | help"
 ---
 
 # /tdm-release
@@ -30,6 +31,8 @@ equality only.
 
 ## Behavior
 
+- When the only argument is `help`, `--help`, `-h`, or `?`, send no request. Print the usage from the "Arguments"
+  section above, the syntax line and the table of arguments, and nothing else.
 - Never infer a missing `table=`, and never infer a missing `return=` when there is a filter. Ask for it.
 - When an argument can't be parsed unambiguously, send nothing. This covers a word with no `=`, a name with spaces
   and no quotes, and any extra token. Reply with the corrected command and let the user send it or change it.

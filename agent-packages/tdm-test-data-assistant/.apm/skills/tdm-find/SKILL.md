@@ -2,6 +2,7 @@
 name: tdm-find
 description: Use only when the user types /tdm-find. Shows the rows of an explicit TDM3 table that match explicit Column=value filters, without reserving them.
 disable-model-invocation: true
+argument-hint: "table=<title> [return=<cols>] [Column=value ...] [occupied] | help"
 ---
 
 # /tdm-find
@@ -29,6 +30,8 @@ supports equality only. For another comparison (`Contains`, a range), the user a
 
 ## Behavior
 
+- When the only argument is `help`, `--help`, `-h`, or `?`, send no request. Print the usage from the "Arguments"
+  section above, the syntax line and the table of arguments, and nothing else.
 - Never infer a missing `table=`. Ask for it.
 - When an argument can't be parsed unambiguously, send nothing. This covers a word with no `=`, a name with spaces
   and no quotes, and any extra token. Reply with the corrected command and let the user send it or change it.

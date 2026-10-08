@@ -2,6 +2,7 @@
 name: tdm-reserve
 description: Use only when the user types /tdm-reserve. Reserves test data rows in TDM3 for an explicit table, explicit Column=value filters, and an explicit column to return.
 disable-model-invocation: true
+argument-hint: "table=<title> return=<col> [Column=value ...] [all] | help"
 ---
 
 # /tdm-reserve
@@ -29,6 +30,8 @@ equality only. For another comparison (`Contains`, a range), the user asks in pl
 
 ## Behavior
 
+- When the only argument is `help`, `--help`, `-h`, or `?`, send no request. Print the usage from the "Arguments"
+  section above, the syntax line and the table of arguments, and nothing else.
 - Never infer a missing `table=` or `return=`. Ask for it. This command exists so that the user names the table
   explicitly, unlike a plain-language request.
 - When an argument can't be parsed unambiguously, send nothing. This covers a word with no `=`, a name with spaces
