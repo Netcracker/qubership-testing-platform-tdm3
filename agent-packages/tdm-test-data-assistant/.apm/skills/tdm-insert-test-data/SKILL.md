@@ -1,6 +1,7 @@
 ---
 name: tdm-insert-test-data
 description: Use when the user wants to add new rows of test data to TDM3, or wants to create a new test data table by inserting its first rows. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # Insert test data into TDM3

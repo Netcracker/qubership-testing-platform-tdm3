@@ -1,6 +1,7 @@
 ---
 name: tdm-list-tables
 description: Use to discover which test data tables exist in TDM3 for a project (or environment), and to resolve a table title the user mentions loosely to its exact title and database table name. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # List TDM3 tables

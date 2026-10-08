@@ -1,6 +1,7 @@
 ---
 name: tdm-select-context
 description: Use before any TDM3 data operation (find, reserve, insert) to resolve and confirm the project, environment, and system to work against, or when the user wants to switch environment or system. Reads defaults from the config file, verifies them against TDM3, or lists the live options for the user to pick from.
+user-invocable: false
 ---
 
 # Select the TDM3 working context

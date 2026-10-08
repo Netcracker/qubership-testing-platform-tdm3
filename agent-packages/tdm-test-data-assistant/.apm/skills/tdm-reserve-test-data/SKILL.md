@@ -1,6 +1,7 @@
 ---
 name: tdm-reserve-test-data
 description: Use when the user wants to reserve (occupy) test data in TDM3 for a test execution, so other tests don't pick up the same row, or wants to release a reservation made earlier. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # Reserve or release test data in TDM3

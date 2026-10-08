@@ -1,6 +1,7 @@
 ---
 name: tdm-manage-cleanup-config
 description: Use to view, save, or run-now a TDM3 table's automatic cleanup rule (age-based or SQL-based, on a cron schedule), or to check when a cron schedule next fires. Calls the TDM3 REST API directly. run-cleanup-table (tdm-cleanup-test-data-table) runs the already-saved rule; this skill is where that rule comes from.
+user-invocable: false
 ---
 
 # Manage a TDM3 table's cleanup configuration

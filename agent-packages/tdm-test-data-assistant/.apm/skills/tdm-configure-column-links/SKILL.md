@@ -1,6 +1,7 @@
 ---
 name: tdm-configure-column-links
 description: Use when the user wants a TDM3 table column's values shown as clickable links in the UI, or wants to preview what a link would look like before saving that setup. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # Turn a TDM3 column into links

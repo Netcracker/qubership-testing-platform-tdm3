@@ -1,6 +1,7 @@
 ---
 name: tdm-load
 description: Use only when the user types /tdm-load. Loads an Excel file or the result of a SELECT query into an explicit table of the current TDM3 system.
+disable-model-invocation: true
 ---
 
 # /tdm-load

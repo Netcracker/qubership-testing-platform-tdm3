@@ -1,6 +1,7 @@
 ---
 name: tdm-manage-dynamic-environment
 description: Use when the user wants to create, update, or delete a TDM3 dynamic environment, system, or connection — the environments and systems tdm-select-context resolves against. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # Create, update, or delete a TDM3 dynamic environment or system

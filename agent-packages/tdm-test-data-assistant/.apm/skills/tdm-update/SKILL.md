@@ -1,6 +1,7 @@
 ---
 name: tdm-update
 description: Use only when the user types /tdm-update. Replaces column values on the rows of an explicit TDM3 table that match explicit where conditions.
+disable-model-invocation: true
 ---
 
 # /tdm-update

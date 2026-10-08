@@ -1,6 +1,7 @@
 ---
 name: tdm-occupy-test-data-rows-by-id
 description: Use to occupy, release, or delete specific TDM3 rows the caller has already identified by ROW_ID (for example, from tdm-browse-test-data-table), rather than by search criteria. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # Occupy, release, or delete TDM3 rows by ID

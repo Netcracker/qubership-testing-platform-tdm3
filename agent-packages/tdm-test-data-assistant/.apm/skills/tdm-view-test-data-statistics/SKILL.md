@@ -1,6 +1,7 @@
 ---
 name: tdm-view-test-data-statistics
 description: Use when the user wants row counts (available, occupied, created, outdated) for TDM3 tables, or occupation history by user, rather than the rows themselves. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # View TDM3 test data statistics

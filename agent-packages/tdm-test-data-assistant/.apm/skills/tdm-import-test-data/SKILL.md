@@ -1,6 +1,7 @@
 ---
 name: tdm-import-test-data
 description: Use when the user wants to load test data into TDM3 from an Excel file or from a SQL query against a system's database, or update a table's rows from a fresh SQL query result. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # Import or update a TDM3 table from an external source

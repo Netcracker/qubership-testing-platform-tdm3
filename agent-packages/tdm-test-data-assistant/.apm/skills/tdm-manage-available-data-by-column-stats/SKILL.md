@@ -1,6 +1,7 @@
 ---
 name: tdm-manage-available-data-by-column-stats
 description: Use when the user wants available-row counts broken down by a column's value across a system's tables (for example, available rows per region or per customer type), or to configure that breakdown and its email schedule. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # TDM3 available-data-by-column statistics

@@ -1,6 +1,7 @@
 ---
 name: tdm-resolve-table-name
 description: Use when the user wants the underlying H2 database table name behind a TDM3 table title — for example, to query it directly through the H2 console. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # Resolve a TDM3 table's database name

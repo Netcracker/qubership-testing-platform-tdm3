@@ -1,6 +1,7 @@
 ---
 name: tdm-update-test-data
 description: Use when the user wants to change column values on existing TDM3 rows, or append a note to a column without losing its current value. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # Update test data in TDM3

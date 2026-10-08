@@ -1,6 +1,7 @@
 ---
 name: tdm-manage-test-data-table
 description: Use to drop a TDM3 table entirely, delete all its rows while keeping the table, or rename its title. Calls the TDM3 REST API directly. Dropping and truncating are permanent — confirm with the user first.
+user-invocable: false
 ---
 
 # Manage a TDM3 table's lifecycle

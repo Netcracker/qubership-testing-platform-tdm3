@@ -1,6 +1,7 @@
 ---
 name: tdm-manage-statistics-schedule
 description: Use when the user wants to set up, check, or cancel TDM3's periodic email reports — a low-available-rows warning per project, or a per-user occupation report. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # Manage TDM3's statistics email schedules

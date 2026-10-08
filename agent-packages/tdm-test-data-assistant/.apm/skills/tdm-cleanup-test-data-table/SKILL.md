@@ -1,6 +1,7 @@
 ---
 name: tdm-cleanup-test-data-table
 description: Use when the user wants to delete rows from a TDM3 table — every row at once, or by the table's configured cleanup rule. Calls the TDM3 REST API directly. Both operations are destructive and permanent.
+user-invocable: false
 ---
 
 # Delete rows of a TDM3 test data table

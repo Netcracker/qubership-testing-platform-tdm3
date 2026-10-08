@@ -1,6 +1,7 @@
 ---
 name: tdm-refresh-test-data-table
 description: Use when the user wants to re-run a TDM3 table's saved import query on demand, outside its schedule, to pick up current data from the source system. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # Refresh a TDM3 test data table

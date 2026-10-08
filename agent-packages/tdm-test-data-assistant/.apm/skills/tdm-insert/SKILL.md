@@ -1,6 +1,7 @@
 ---
 name: tdm-insert
 description: Use only when the user types /tdm-insert. Inserts one row with explicit Column=value pairs into an existing TDM3 table, or creates the table with that row when new is given.
+disable-model-invocation: true
 ---
 
 # /tdm-insert

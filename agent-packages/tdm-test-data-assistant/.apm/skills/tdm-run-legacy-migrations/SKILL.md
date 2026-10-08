@@ -1,6 +1,7 @@
 ---
 name: tdm-run-legacy-migrations
 description: Use only when the user explicitly names one of TDM3's one-time data migration endpoints and asks to run it. Never call these as part of routine test data work — two of the five are confirmed broken on TDM3's H2 database.
+user-invocable: false
 ---
 
 # TDM3 legacy migration endpoints

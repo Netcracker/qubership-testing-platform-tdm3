@@ -1,6 +1,7 @@
 ---
 name: tdm-browse-test-data-table
 description: Use to page through, sort, or inspect a TDM3 table's rows (including already-occupied ones), or to list a single column's distinct values, when tdm-find-test-data's single-row lookup isn't enough. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # Browse a TDM3 table

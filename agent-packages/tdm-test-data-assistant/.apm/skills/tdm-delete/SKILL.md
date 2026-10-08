@@ -1,6 +1,7 @@
 ---
 name: tdm-delete
 description: Use only when the user types /tdm-delete. Deletes the rows of an explicit TDM3 table that match explicit Column=value filters, after showing them and getting a confirmation.
+disable-model-invocation: true
 ---
 
 # /tdm-delete

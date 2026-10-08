@@ -1,6 +1,7 @@
 ---
 name: tdm-table-utilities
 description: Use to check whether a TDM3 table warns when it runs out of unoccupied rows, or to see what a query with ${...} table-value macros resolves to before running it elsewhere. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # TDM3 table utilities

@@ -1,6 +1,7 @@
 ---
 name: tdm-reserve
 description: Use only when the user types /tdm-reserve. Reserves test data rows in TDM3 for an explicit table, explicit Column=value filters, and an explicit column to return.
+disable-model-invocation: true
 ---
 
 # /tdm-reserve

@@ -1,6 +1,7 @@
 ---
 name: tdm-import-test-data-v2
 description: Use when the user wants to import TDM3 test data with a SQL query and prefers (or the calling agent requires) a JSON request body over query parameters. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # Import rows with a SQL query (body-based)

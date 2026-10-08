@@ -1,6 +1,7 @@
 ---
 name: tdm-tables
 description: Use only when the user types /tdm-tables. Lists the test data tables of the current TDM3 system with their database names.
+disable-model-invocation: true
 ---
 
 # /tdm-tables

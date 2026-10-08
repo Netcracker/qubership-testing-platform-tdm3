@@ -1,6 +1,7 @@
 ---
 name: tdm-find-test-data
 description: Use when the user asks to find, search, or look up existing test data in TDM3 by column criteria (for example, "find a Customer of type X with an active SIM card"). Calls the TDM3 REST API directly and returns matching rows without reserving them.
+user-invocable: false
 ---
 
 # Find test data in TDM3

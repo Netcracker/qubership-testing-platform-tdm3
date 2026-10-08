@@ -1,6 +1,7 @@
 ---
 name: tdm-export-test-data-table
 description: Use when the user wants a TDM3 table's data as a downloadable Excel or CSV file, rather than as rows in the response. Calls the TDM3 REST API directly.
+user-invocable: false
 ---
 
 # Download a TDM3 table as a file
