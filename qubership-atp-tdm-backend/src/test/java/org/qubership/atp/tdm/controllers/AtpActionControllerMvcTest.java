@@ -93,7 +93,9 @@ class AtpActionControllerMvcTest extends AbstractTestDataTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"Иван Петров", "Александр", "Müller-Łukasz", "a.b, c;d: \"e\" (f) [g] & h%_ +=#?/"})
+    @ValueSource(strings = {
+        "Иван Петров", "Александр", "Müller-Łukasz", "O'Brien", "a.b, c;d: \"e\" (f) [g] & h%_ +=#?/"
+    })
     void occupyRecords_occupiedByWithSpacesNationalCharsAndPunctuation_storedUnchanged(String occupiedBy)
             throws Exception {
         String tableName = "tdm_api_test_mvc_occupy_user_name";
@@ -114,7 +116,9 @@ class AtpActionControllerMvcTest extends AbstractTestDataTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"Иван Петров", "Александр", "Müller-Łukasz", "a.b, c;d: \"e\" (f) [g] & h%_ +=#?/"})
+    @ValueSource(strings = {
+        "Иван Петров", "Александр", "Müller-Łukasz", "O'Brien", "a.b, c;d: \"e\" (f) [g] & h%_ +=#?/"
+    })
     void occupyRecordsFullRow_occupiedByWithSpacesNationalCharsAndPunctuation_storedUnchanged(String occupiedBy)
             throws Exception {
         String tableName = "tdm_api_test_mvc_occupy_full_row_user_name";
