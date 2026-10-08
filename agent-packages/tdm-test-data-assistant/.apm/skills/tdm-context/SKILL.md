@@ -24,6 +24,10 @@ resolve them in the order project, environment, system. A `list` call only lists
 
 ## Behavior
 
+- An argument that is not one of the forms in the table above is an error. This covers an unknown word (`browse envs`)
+  and anything after `list` other than `projects`, `envs`, or `systems` (`list tables`). Send no request. Say which
+  argument isn't recognized, name the valid forms, and suggest the closest one (`list envs` for `browse envs`). Tables
+  aren't part of the context; the user lists them in plain language, which uses tdm-list-tables.
 - With no arguments, don't call TDM3. Print the three names and the server URL from the config file, and name every
   level that has no value.
 - A name that doesn't match is reported as tdm-select-context describes: say it isn't known, show the list, and leave

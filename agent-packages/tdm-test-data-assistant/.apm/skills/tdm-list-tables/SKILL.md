@@ -40,6 +40,9 @@ curl "<TDM3_BASE_URL>/api/tdm/tables/catalog?projectId=<PROJECT_ID>&systemId=<SY
 Always send `systemId`: this package works within the current project, environment, and system. Omit it only when the
 user explicitly asks for the tables of the whole project; the omission applies to that request only.
 
+Show only the tables this request returns, which are the tables of the current system. Don't mention the tables of
+other systems, even ones seen earlier in the session, and don't send extra requests to find them.
+
 ```json
 [{
   "tableName": "TDM_547cdede996b44f4be273c444d4f7287",

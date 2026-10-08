@@ -140,6 +140,13 @@ named below; an ordinary plain-language request still goes straight to that skil
 | [`/tdm-context`](.apm/skills/tdm-context/SKILL.md)           | [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md)     | `/tdm-context system=PostgresDB`                 |
 | [`/tdm-reserve`](.apm/skills/tdm-reserve/SKILL.md)           | [tdm-reserve-test-data](.apm/skills/tdm-reserve-test-data/SKILL.md) | `/tdm-reserve table=Orders return=ord_num cust_code=C00025 all` |
 
+## Instruction
+
+The package ships one always-on instruction,
+[tdm-test-data-assistant.instructions.md](.apm/instructions/tdm-test-data-assistant.instructions.md). It covers
+invisible characters (a TAB, a line break, a non-breaking space) in values the user types or pastes: the agent names
+the character in its reply, and asks for confirmation before writing such a value into a table.
+
 ## Configuration
 
 Every skill in this package needs to know which TDM3 server, project, environment, and system to target. They all
