@@ -30,7 +30,7 @@ RUN echo "https://dl-cdn.alpinelinux.org/alpine/v3.23/community/" >/etc/apk/repo
         musl-utils=1.2.5-r23 \
         net-tools=2.10-r3 \
         nss_wrapper=1.1.12-r1 \
-        pcre2=10.48-r0 \
+        pcre2=10.49-r0 \
         procps-ng=4.0.5-r0 \
         sops=3.11.0-r6 \
         sysstat=12.7.8-r0 \
