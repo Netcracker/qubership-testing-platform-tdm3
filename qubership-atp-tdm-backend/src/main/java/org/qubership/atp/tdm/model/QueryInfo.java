@@ -26,6 +26,7 @@ import org.qubership.atp.tdm.model.table.TestDataType;
 import org.qubership.atp.tdm.model.table.conditions.factories.SearchConditionFactory;
 import org.qubership.atp.tdm.model.table.conditions.factories.TestDataTypeConditionFactory;
 import org.qubership.atp.tdm.model.table.conditions.search.SearchCondition;
+import org.qubership.atp.tdm.utils.DataUtils;
 import org.qubership.atp.tdm.utils.TestDataUtils;
 
 import com.healthmarketscience.sqlbuilder.BinaryCondition;
@@ -146,6 +147,7 @@ public class QueryInfo {
                     SearchCondition searchCondition =
                             SearchConditionFactory.getCondition(filter.getSearchCondition(),
                                     filter.isCaseSensitive());
+                    DataUtils.checkColumnName(filter.getColumn());
                     CustomSql column = new CustomSql("\"" + filter.getColumn() + "\"");
                     BinaryCondition binaryCondition = searchCondition.create(column, filterValue);
                     conditions.add(ComboCondition.or(binaryCondition));
@@ -161,6 +163,7 @@ public class QueryInfo {
          * Sets ordering.
          */
         public Builder setOrder(TestDataTableOrder testDataTableOrder) {
+            DataUtils.checkColumnName(testDataTableOrder.getColumnName());
             CustomSql column = new CustomSql("\"" + testDataTableOrder.getColumnName() + "\"");
             OrderObject.Dir dir = OrderObject.Dir.ASCENDING;
             if (OrderType.DESC.equals(testDataTableOrder.getOrderType())) {
