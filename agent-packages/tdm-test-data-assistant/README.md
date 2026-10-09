@@ -158,6 +158,10 @@ The package ships one always-on instruction,
 invisible characters (a TAB, a line break, a non-breaking space) in values the user types or pastes: the agent names
 the character in its reply, and asks for confirmation before writing such a value into a table.
 
+It also tells the agent how to read a response on Windows without corrupting non-ASCII text, such as a Cyrillic user
+name, and fixes the layout of the rows it shows: `OCCUPIED_BY` and `OCCUPIED_DATE` first, and column headers either
+always in TDM3's names or always in the user's language.
+
 ## Configuration
 
 Every skill in this package needs to know which TDM3 server, project, environment, and system to target. They all

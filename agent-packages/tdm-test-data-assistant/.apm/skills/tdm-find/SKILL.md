@@ -49,8 +49,8 @@ supports equality only. For another comparison (`Contains`, a range), the user a
 - Show the rows as a table: the columns of `return=` or every data column. The read comes first, because only its
   response has the table's column names. Match each `return=` name against that header exactly; a name that isn't in
   it is reported together with the real column names, and no row is shown. With `occupied`, also show
-  `OCCUPIED_BY` and `OCCUPIED_DATE`. Strip trailing spaces from displayed values; a value padded by a `CHAR` column is
-  stored with them.
+  `OCCUPIED_BY` and `OCCUPIED_DATE` as the first two columns, on the left, as the package instruction describes. Strip
+  trailing spaces from displayed values; a value padded by a `CHAR` column is stored with them.
 - State how many rows matched (the `records` field) and, when that is more than 50, that only the first 50 are shown.
 - An unreachable server and a filter column the table doesn't have are handled as the "Common pitfalls" of
   [tdm-reserve-test-data](../tdm-reserve-test-data/SKILL.md) describe: report them, and don't retry with a guessed
