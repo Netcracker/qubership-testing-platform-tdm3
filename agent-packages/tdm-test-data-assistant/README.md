@@ -1,0 +1,204 @@
+# tdm-test-data-assistant
+
+Skills that call the TDM3 (`qubership-atp-tdm`) REST API directly, so an agent can find, reserve, and manage test
+data without a separate MCP server. Each skill sends its own HTTP requests; there's no authentication layer, since
+TDM3 is reached from inside the network perimeter.
+
+Background: [docs/design-brief.md](docs/design-brief.md) is the original goals and functions this package was
+built from; [docs/tdm-background.md](docs/tdm-background.md) is general background on test data management as a
+practice, not a description of TDM3 itself.
+
+## How to work with these skills
+
+Every request to this package resolves a project, an environment, and a system before it touches any data — that
+part runs once, in a fixed order. What happens after that is not a sequence: the user's actual work (finding data,
+reserving it, cleaning up, checking statistics) comes in whatever order the current testing task calls for, and any
+of it can repeat or interleave freely once the context is resolved. Switching to a different environment or system
+mid-task re-enters the same setup, not a separate path.
+
+```mermaid
+flowchart TD
+    Start(["Request comes in"]) --> HasContext{"Project, environment, and<br/>system already resolved?"}
+    HasContext -- No --> Setup["tdm-select-context:<br/>TDM3 URL -> Project -> Environment -> System"]
+    HasContext -- Yes --> Ready
+    Setup --> Ready(["Context ready"])
+
+    Ready --> Find["Find or browse data<br/>(tdm-find-test-data, tdm-list-tables, ...)"]
+    Ready --> Reserve["Reserve, release, or delete rows<br/>(tdm-reserve-test-data, tdm-occupy-test-data-rows-by-id)"]
+    Ready --> Change["Insert, update, or import data<br/>(tdm-insert-test-data, tdm-import-test-data, ...)"]
+    Ready --> Manage["Clean up or manage tables and environments<br/>(tdm-cleanup-test-data-table, tdm-manage-dynamic-environment, ...)"]
+    Ready --> Stats["View statistics and reports<br/>(tdm-view-test-data-statistics, ...)"]
+
+    Find --> Ready
+    Reserve --> Ready
+    Change --> Ready
+    Manage --> Ready
+    Stats --> Ready
+
+    Ready -- "switch project, environment, or system" --> Setup
+```
+
+Two rules follow directly from this shape:
+
+- **Nothing below "Context ready" runs before it.** A skill that needs project/environment/system addressing reads
+  it from the config file (see Configuration below) and never guesses a default — if the config file doesn't have
+  it yet, that skill runs `tdm-select-context` first rather than asking the user itself.
+- **Every action loops back to the same "Context ready" state**, not to a fixed next step. The category labels
+  above group the skills table below by task, not by calling order — see that table for the full list and each
+  skill's exact scope.
+
+## Skills
+
+### Context
+
+| Skill                                                         | Purpose                                                                         |
+|---------------------------------------------------------------|---------------------------------------------------------------------------------|
+| [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md) | Resolve which project, environment, and system to work against. Run this first. |
+
+### `atp-action-controller` (`/api/tdm/rest/*`)
+
+The API an automated action or agent calls to work with one table's rows. Every skill below sends its own
+`projectName`/`envName`/`systemName`/`title-table` addressing (see Configuration) and reads a `ResponseMessage` —
+`{type, content, contentObject, link}` — unless its own page says otherwise.
+
+**Every operation in this controller shares one Java request class, so Swagger/`/v3/api-docs` shows the same
+body schema — the union of all operations' fields — for every one of them, including operations that need none of
+most of those fields** (`truncate-table`, for example, shows `insert-records`, `occupy-row-requests`, and four
+other arrays it never reads). If a request body doesn't match what a skill below shows, trust the skill, not the
+full Swagger schema — the extra fields are not a hint that something is missing. Tracked as
+[#136](https://github.com/Netcracker/qubership-testing-platform-tdm3/issues/136); re-check this note (and remove
+it if the fix makes it stop applying) once that's resolved.
+
+| Skill                                                                           | Purpose                                                                                   |
+|---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
+| [tdm-find-test-data](.apm/skills/tdm-find-test-data/SKILL.md)                   | Search for available rows matching column criteria, without reserving them.               |
+| [tdm-reserve-test-data](.apm/skills/tdm-reserve-test-data/SKILL.md)             | Reserve (occupy) or release rows for a test run.                                          |
+| [tdm-insert-test-data](.apm/skills/tdm-insert-test-data/SKILL.md)               | Add new rows, creating the table if needed.                                               |
+| [tdm-update-test-data](.apm/skills/tdm-update-test-data/SKILL.md)               | Change column values on existing rows, or append to one without losing its current value. |
+| [tdm-refresh-test-data-table](.apm/skills/tdm-refresh-test-data-table/SKILL.md) | Re-run a table's saved import query on demand.                                            |
+| [tdm-cleanup-test-data-table](.apm/skills/tdm-cleanup-test-data-table/SKILL.md) | Delete every row of a table, or run its configured cleanup rule. Destructive.             |
+| [tdm-resolve-table-name](.apm/skills/tdm-resolve-table-name/SKILL.md)           | Look up the underlying H2 database table name behind a table title.                       |
+
+### `test-data-controller` (`/api/tdm/*`)
+
+The UI-facing API: broader than `atp-action-controller` (pagination, sorting, reading occupied rows, file
+import/export) but addressed mostly by **database table name** (`TDM_<hash>`, from `tdm-list-tables`) and
+**project/environment/system UUIDs**, not by title and name — check each skill's own page for its exact addressing.
+
+| Skill                                                                                   | Purpose                                                                                                 |
+|-----------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| [tdm-list-tables](.apm/skills/tdm-list-tables/SKILL.md)                                 | Discover which tables exist for a project or environment, and resolve a title to a database table name. |
+| [tdm-browse-test-data-table](.apm/skills/tdm-browse-test-data-table/SKILL.md)           | Page, sort, or inspect rows (including occupied ones); list a column's distinct values.                 |
+| [tdm-occupy-test-data-rows-by-id](.apm/skills/tdm-occupy-test-data-rows-by-id/SKILL.md) | Occupy, release, or delete specific rows already identified by `ROW_ID`.                                |
+| [tdm-import-test-data](.apm/skills/tdm-import-test-data/SKILL.md)                       | Load rows from an Excel file or a SQL query, or refresh a table's rows from a new SQL query result.     |
+| [tdm-manage-test-data-table](.apm/skills/tdm-manage-test-data-table/SKILL.md)           | Drop a table, delete all its rows, or rename its title. Destructive.                                    |
+| [tdm-export-test-data-table](.apm/skills/tdm-export-test-data-table/SKILL.md)           | Download a table as an Excel or CSV file.                                                               |
+| [tdm-configure-column-links](.apm/skills/tdm-configure-column-links/SKILL.md)           | Preview or save a column's values as clickable links in the TDM3 UI.                                    |
+| [tdm-table-utilities](.apm/skills/tdm-table-utilities/SKILL.md)                         | Check a table's unoccupied-row validation flag; resolve `${...}` macros in a query.                     |
+| [tdm-run-legacy-migrations](.apm/skills/tdm-run-legacy-migrations/SKILL.md)             | One-time legacy migrations. Two of five are confirmed broken on H2 — read before calling any of them.   |
+
+### `test-data-controller-v2` (`/api/tdm/v2/*`)
+
+| Skill                                                                   | Purpose                                                                                   |
+|-------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
+| [tdm-import-test-data-v2](.apm/skills/tdm-import-test-data-v2/SKILL.md) | Import rows with a SQL query, with parameters in a JSON body instead of the query string. |
+
+### `atp-env-controller` (`/api/tdm/rest/create-env`)
+
+| Skill                                                                                 | Purpose                                                                                                          |
+|---------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| [tdm-manage-dynamic-environment](.apm/skills/tdm-manage-dynamic-environment/SKILL.md) | Create, update, or delete a dynamic environment, system, or connection — the write side of `tdm-select-context`. |
+
+### `data-cleanup-controller` (`/api/tdm/cleanup/*`)
+
+| Skill                                                                       | Purpose                                                                          |
+|-----------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| [tdm-manage-cleanup-config](.apm/skills/tdm-manage-cleanup-config/SKILL.md) | View, save, or run-now a table's cleanup rule; check a cron schedule's next run. |
+
+### `statistics-controller` (`/api/tdm/statistics/*`)
+
+| Skill                                                                                                       | Purpose                                                                             |
+|-------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
+| [tdm-view-test-data-statistics](.apm/skills/tdm-view-test-data-statistics/SKILL.md)                         | Row counts (available, occupied, created, outdated) and occupation history by user. |
+| [tdm-manage-statistics-schedule](.apm/skills/tdm-manage-statistics-schedule/SKILL.md)                       | Set up, check, or cancel the low-available-rows and users-occupation email reports. |
+| [tdm-manage-available-data-by-column-stats](.apm/skills/tdm-manage-available-data-by-column-stats/SKILL.md) | Available rows grouped by a chosen column's value, and its email schedule.          |
+
+### `environments-controller` (`/api/tdm/projects/*`, `/api/tdm/environments/*`)
+
+Covered by [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md) — including the two endpoints of this
+controller that exist but do nothing useful (a cache-refresh and a cache-reset left over from a caching layer that
+no longer exists); see that skill's own page.
+
+## Commands
+
+Nine skills are meant to be typed by name, as slash commands, with explicit arguments. They are user-invoked skills, not
+prompts, so they work in every agent that installs the package. Each one is a thin front end that runs the skill
+named below; an ordinary plain-language request still goes straight to that skill. Arguments are named, so their order
+doesn't matter; the examples use one order: `table=`, `return=`, the `Column=value` filters, then flags such as `all`.
+
+The slash menu shows a short argument hint next to each command. Each command also answers `help`, `--help`, `-h`,
+or `?` with its syntax and the table of its arguments, without sending any request to TDM3.
+
+| Command                                            | Runs                                                                | Example                                                         |
+|----------------------------------------------------|---------------------------------------------------------------------|-----------------------------------------------------------------|
+| [`/tdm-context`](.apm/skills/tdm-context/SKILL.md) | [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md)       | `/tdm-context system=PostgresDB`                                |
+| [`/tdm-tables`](.apm/skills/tdm-tables/SKILL.md)   | [tdm-list-tables](.apm/skills/tdm-list-tables/SKILL.md)             | `/tdm-tables`                                                   |
+| [`/tdm-find`](.apm/skills/tdm-find/SKILL.md)       | [tdm-browse-test-data-table](.apm/skills/tdm-browse-test-data-table/SKILL.md) | `/tdm-find table=Orders return=ord_num,ord_amount cust_code=C00025` |
+| [`/tdm-reserve`](.apm/skills/tdm-reserve/SKILL.md) | [tdm-reserve-test-data](.apm/skills/tdm-reserve-test-data/SKILL.md) | `/tdm-reserve table=Orders return=ord_num cust_code=C00025 all` |
+| [`/tdm-release`](.apm/skills/tdm-release/SKILL.md) | [tdm-reserve-test-data](.apm/skills/tdm-reserve-test-data/SKILL.md) | `/tdm-release table=Orders return=ord_num cust_code=C00025 all` |
+| [`/tdm-insert`](.apm/skills/tdm-insert/SKILL.md)   | [tdm-insert-test-data](.apm/skills/tdm-insert-test-data/SKILL.md)   | `/tdm-insert table=Agents agent_code=A013 agent_name=Ivan`      |
+| [`/tdm-update`](.apm/skills/tdm-update/SKILL.md)   | [tdm-update-test-data](.apm/skills/tdm-update-test-data/SKILL.md)   | `/tdm-update table=Agents where agent_code=A013 set country=IT` |
+| [`/tdm-delete`](.apm/skills/tdm-delete/SKILL.md)   | [tdm-occupy-test-data-rows-by-id](.apm/skills/tdm-occupy-test-data-rows-by-id/SKILL.md) | `/tdm-delete table=Agents agent_code=A013` |
+| [`/tdm-load`](.apm/skills/tdm-load/SKILL.md)       | [tdm-import-test-data](.apm/skills/tdm-import-test-data/SKILL.md)   | `/tdm-load table=Agents file="C:\data\agents.xlsx" new`         |
+
+## Instruction
+
+The package ships one always-on instruction,
+[tdm-test-data-assistant.instructions.md](.apm/instructions/tdm-test-data-assistant.instructions.md). It covers
+invisible characters (a TAB, a line break, a non-breaking space) in values the user types or pastes: the agent names
+the character in its reply, and asks for confirmation before writing such a value into a table.
+
+It also tells the agent how to read a response on Windows without corrupting non-ASCII text, such as a Cyrillic user
+name, and fixes the layout of the rows it shows: `OCCUPIED_BY` and `OCCUPIED_DATE` first, and column headers either
+always in TDM3's names or always in the user's language.
+
+## Configuration
+
+Every skill in this package needs to know which TDM3 server, project, environment, and system to target. They all
+read the same config file, so resolve it once with `tdm-select-context` and the other skills reuse the result.
+
+**Resolution order, for every setting below: an explicit value in the user's current request wins, then the matching
+environment variable, then the config file, then ask the user.**
+
+The config file is JSON, and its keys match their environment-variable overrides by name:
+
+```json
+{
+  "TDM3_BASE_URL": "http://localhost:8080",
+  "PROJECT_ID": "b0c1fd9e-19a7-4156-90e0-f04028a58720",
+  "PROJECT_NAME": "MyProject",
+  "ENV_ID_DEFAULT": "5f2c1e2a-1234-4a5b-8c9d-abcdef012345",
+  "ENV_NAME_DEFAULT": "STAGE",
+  "SYSTEM_ID_DEFAULT": "9a8b7c6d-4321-4b5a-9c8d-fedcba987654",
+  "SYSTEM_NAME_DEFAULT": "BillingDB"
+}
+```
+
+Look for it at `.tdm-assistant/config.json` in the current repository first, then at
+`~/.tdm-assistant/config.json` for a personal default that applies across repositories. Write resolved values back
+to the repository-level file (creating `.tdm-assistant/` if needed), after confirming with the user, so later
+sessions don't ask again.
+
+| Key                                        | Meaning                                                                                                                                                                                                                                                                                                             | Set by                                                                          |
+|--------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| `TDM3_BASE_URL`                            | Base URL of the running TDM3 service.                                                                                                                                                                                                                                                                               | The user, once. Never guess a default such as `localhost:8080`.                 |
+| `PROJECT_ID`                               | TDM3 project UUID. Convention says one TDM3 install serves one project, but `GET /api/tdm/projects/lazy` only lists what the service's own `PROJECTS_INFO` setting names — a project can have real data without being listed there, so this is resolved and can be switched the same way as environment and system. | `tdm-select-context`, on first use and whenever the user switches projects.     |
+| `PROJECT_NAME`                             | The project's name, cached alongside `PROJECT_ID` so calls that need a name (not a UUID) skip a lookup.                                                                                                                                                                                                             | `tdm-select-context`, alongside `PROJECT_ID`.                                   |
+| `ENV_ID_DEFAULT`, `ENV_NAME_DEFAULT`       | The environment currently in scope. Changeable at any time.                                                                                                                                                                                                                                                         | `tdm-select-context`, on first use and whenever the user switches environments. |
+| `SYSTEM_ID_DEFAULT`, `SYSTEM_NAME_DEFAULT` | The system currently in scope, within `ENV_ID_DEFAULT`. Changeable at any time.                                                                                                                                                                                                                                     | `tdm-select-context`, on first use and whenever the user switches systems.      |
+
+Every `atp-action-controller` skill reads `PROJECT_NAME`, `ENV_NAME_DEFAULT`, and `SYSTEM_NAME_DEFAULT` for the
+`projectName`, `envName`, and `systemName` fields of its request body — except
+[tdm-cleanup-test-data-table](.apm/skills/tdm-cleanup-test-data-table/SKILL.md), which needs `PROJECT_ID` instead of
+`PROJECT_NAME` for its two operations; see that skill's own page. None of them resolve project, environment, or
+system on their own — run `tdm-select-context` first if the config file doesn't have them yet.
