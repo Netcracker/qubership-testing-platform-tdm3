@@ -38,7 +38,6 @@ import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertL
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazySystemsByEnvIdException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvConvertLazySystemsByProjectIdException;
 import org.qubership.atp.tdm.env.configurator.exceptions.internal.TdmEnvDbConnectionException;
-import org.qubership.atp.tdm.env.configurator.model.AbstractConfiguratorModel;
 import org.qubership.atp.tdm.env.configurator.model.Connection;
 import org.qubership.atp.tdm.env.configurator.model.Environment;
 import org.qubership.atp.tdm.env.configurator.model.LazyEnvironment;
@@ -47,6 +46,7 @@ import org.qubership.atp.tdm.env.configurator.model.LazySystem;
 import org.qubership.atp.tdm.env.configurator.model.Project;
 import org.qubership.atp.tdm.env.configurator.model.System;
 import org.qubership.atp.tdm.env.configurator.service.EnvironmentsService;
+import org.qubership.atp.tdm.model.DynamicConnection;
 import org.qubership.atp.tdm.model.DynamicEnvironment;
 import org.qubership.atp.tdm.model.DynamicSystem;
 import org.qubership.atp.tdm.repo.DynamicEnvironmentRepository;
@@ -55,7 +55,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
@@ -96,13 +95,17 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
             List<Environment> environments = getLazyEnvironments(projectId).stream()
                     .map(lazyEnvironment -> {
                         List<DynamicSystem> systems = dynamicSystemRepository.findAllByEnvId(lazyEnvironment.getId());
-                        List<Connection> connections = systems.stream()
-                                .flatMap(s -> buildConnectionsForSystem(s).stream())
+                        List<System> fullSystems = systems.stream()
+                                .map(dynamicSystem -> {
+                                    System system = new System();
+                                    system.setId(dynamicSystem.getId());
+                                    system.setName(dynamicSystem.getSystemName().toLowerCase());
+                                    system.setEnvironmentId(lazyEnvironment.getId());
+                                    system.setConnections(buildConnectionsForSystem(dynamicSystem));
+                                    return system;
+                                })
                                 .collect(Collectors.toList());
-                        System system = new System();
-                        system.setId(systems.isEmpty() ? null : systems.get(0).getId());
-                        system.setConnections(connections);
-                        return Environment.of(lazyEnvironment, Collections.singletonList(system));
+                        return Environment.of(lazyEnvironment, fullSystems);
                     }).collect(Collectors.toList());
             project.setEnvironments(environments);
         } catch (Exception e) {
@@ -401,32 +404,26 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
     }
 
     private List<Connection> buildConnectionsForSystem(DynamicSystem sys) {
-        Map<String, String> parameters = deserializeParameters(sys.getConnectionParameters());
-        Connection connection = new Connection();
-        connection.setId(sys.getId());
-        connection.setName(sys.getConnectionName());
-        connection.setSystemId(sys.getId());
-        connection.setConnectionType(sys.getConnectionType());
-        connection.setParameters(parameters);
-        return Collections.singletonList(connection);
+        if (sys.getConnections().isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Connection> connections = new ArrayList<>();
+        for (DynamicConnection stored : sys.getConnections()) {
+            Connection connection = new Connection();
+            connection.setId(stored.getId());
+            connection.setName(stored.getConnectionType());
+            connection.setSystemId(sys.getId());
+            connection.setConnectionType(stored.getConnectionType());
+            connection.setParameters(ConnectionParameters.deserialize(stored.getConnectionParameters()));
+            connections.add(connection);
+        }
+        return connections;
     }
 
     private List<Connection> buildConnectionsForEnv(UUID envId) {
         return dynamicSystemRepository.findAllByEnvId(envId).stream()
                 .flatMap(sys -> buildConnectionsForSystem(sys).stream())
                 .collect(Collectors.toList());
-    }
-
-    private Map<String, String> deserializeParameters(String json) {
-        if (json == null || json.isEmpty()) {
-            return new HashMap<>();
-        }
-        try {
-            return OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, String>>() {});
-        } catch (Exception e) {
-            log.warn("Failed to deserialize connection parameters: {}", e.getMessage());
-            return new HashMap<>();
-        }
     }
 
     private String serializeParameters(Map<String, String> parameters) {
@@ -440,8 +437,7 @@ public class EnvironmentsServiceImpl implements EnvironmentsService {
 
     public List<String> getListConnections(DynamicSystem sys) {
         return buildConnectionsForSystem(sys).stream()
-                            .map(AbstractConfiguratorModel::getId)
-                            .map(UUID::toString)
-                            .collect(Collectors.toList());
+                .map(Connection::getName)
+                .collect(Collectors.toList());
     }
 }

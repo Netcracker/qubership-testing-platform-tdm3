@@ -141,7 +141,8 @@ cache of them, so a change is visible immediately.
 
 **Base path:** `/api/tdm/rest/create-env`
 
-All endpoints accept `Content-Type: application/json` and return a `ResponseMessage` object on success:
+All endpoints accept `Content-Type: application/json`. `POST`, `PUT`, and `DELETE` return a `ResponseMessage`
+object on success. `GET` returns the connections themselves (see [Get connections](#4-get-connections)):
 
 ```json
 {
@@ -152,54 +153,58 @@ All endpoints accept `Content-Type: application/json` and return a `ResponseMess
 
 ### Failure responses
 
-The three endpoints do not report every failure the same way:
+These endpoints do not report every failure the same way:
 
-| Code  | When                                                                                                | Body                                    |
-|-------|-----------------------------------------------------------------------------------------------------|-----------------------------------------|
-| `400` | A validation error: a duplicate system, an invalid connection type, a missing or invalid parameter. | Plain text, the exception's message.    |
-| `404` | The environment does not exist (PUT, DELETE).                                                       | `ResponseMessage` with `type: "ERROR"`. |
-| `404` | The system does not exist (PUT only).                                                               | The [generic error body](#errors).      |
+| Code  | When                                                                                                | Body                                                                                     |
+|-------|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| `400` | A validation error: a duplicate system, an invalid connection type, a missing or invalid parameter. | `ResponseMessage` with `type: "ERROR"`.                                                  |
+| `400` | `GET` with a missing `projectName` or `envName`, or a project that does not exist.                  | `ResponseMessage` with `type: "ERROR"`.                                                  |
+| `404` | The environment does not exist (`GET`, `PUT`, `DELETE`).                                            | `ResponseMessage` with `type: "ERROR"`.                                                  |
+| `404` | The system does not exist (`GET` when `systemName` is set, and `PUT`).                              | `GET`: `ResponseMessage` with `type: "ERROR"`. `PUT`: the [generic error body](#errors). |
 
-The 404-with-`ResponseMessage` shape is not a general rule of this API: it happens because the controller declares a
-handler for that one exception. Do not assume any other failure returns a `ResponseMessage`; check the shape you get
-against the table above, or against [Errors](#errors) for anything not listed in it.
+Validation errors and a missing environment return `ResponseMessage`. A missing system on `PUT` still uses the generic
+error body. Check the shape you get against the table above, or against [Errors](#errors) for anything not listed in it.
 
 ### Request body
 
 Fields can be sent as a flat JSON object or nested under an `environment` property (both formats are supported):
 
-| Field              | Required            | Used by   | Description                                                                  |
-|--------------------|---------------------|-----------|------------------------------------------------------------------------------|
-| `projectName`      | yes                 | all       | Name of an existing TDM project.                                             |
-| `envName`          | yes                 | all       | Environment name to create, update, or delete.                               |
-| `systemName`       | yes (create/update) | POST, PUT | System name within the environment.                                          |
-| `connection`       | yes (create/update) | POST, PUT | Connection details for the system (see below).                               |
-| `newEnvName`       | no                  | PUT       | Rename the environment.                                                      |
-| `newSystemName`    | no                  | PUT       | Rename the target system.                                                    |
-| `systemDeleteName` | no                  | DELETE    | When set, deletes only this system; otherwise deletes the whole environment. |
+| Field              | Required                               | Used by        | Description                                                                                    |
+|--------------------|----------------------------------------|----------------|------------------------------------------------------------------------------------------------|
+| `projectName`      | yes                                    | all            | Name of an existing TDM project.                                                               |
+| `envName`          | yes                                    | all            | Environment name to create, update, delete, or read.                                           |
+| `systemName`       | yes for POST and PUT; optional for GET | POST, PUT, GET | System name within the environment. On GET, omit it to return every system in the environment. |
+| `connections`      | yes for POST and PUT*                  | POST, PUT      | List of connection objects. Must contain one or two items.                                     |
+| `newEnvName`       | no                                     | PUT            | Rename the environment.                                                                        |
+| `newSystemName`    | no                                     | PUT            | Rename the target system.                                                                      |
+| `systemDeleteName` | no                                     | DELETE         | When set, deletes only this system; otherwise deletes the whole environment.                   |
 
-**Connection object** (`connection`):
+\* `connections` is required on POST and PUT. `GET` ignores it.
+
+**Connection object** (each item of `connections`):
 
 | Field        | Required | Description                                                                                                     |
 |--------------|----------|-----------------------------------------------------------------------------------------------------------------|
-| `name`       | yes      | Connection display name (e.g. `"DB"`).                                                                          |
-| `type`       | yes      | Connection type (case-insensitive). See [supported types](#supported-connection-types).                         |
+| `type`       | yes      | `DB` or `HTTP` only (case-insensitive). Stored as `DB` or `HTTP`.                                               |
 | `parameters` | yes      | Key-value map of connection parameters (e.g. host, port, credentials). Please use lowercase! Must not be empty. |
+
+A system can hold at most two connections: one `DB` and one `HTTP`. Connection type is its identity, so the request
+cannot contain duplicate types. `POST` stores every connection on the new system. `PUT` upserts by type; connections
+that are not in the request stay as they are.
 
 ### Endpoints
 
-| Method   | Path                       | Description                                                                         |
-|----------|----------------------------|-------------------------------------------------------------------------------------|
-| `POST`   | `/api/tdm/rest/create-env` | Create a new environment with a system, or add a system to an existing environment. |
-| `PUT`    | `/api/tdm/rest/create-env` | Update connection parameters and optionally rename the environment or system.       |
-| `DELETE` | `/api/tdm/rest/create-env` | Delete an entire environment, or a single system within it.                         |
+| Method   | Path                       | Description                                                                                    |
+|----------|----------------------------|------------------------------------------------------------------------------------------------|
+| `GET`    | `/api/tdm/rest/create-env` | Return connections for an environment, or for one system. Secret values are masked.            |
+| `POST`   | `/api/tdm/rest/create-env` | Create a new environment with a system, or add a system to an existing environment.            |
+| `PUT`    | `/api/tdm/rest/create-env` | Add or update canonical connections by type, and optionally rename the environment or system.  |
+| `DELETE` | `/api/tdm/rest/create-env` | Delete an entire environment, or a single system within it. Connections are deleted with them. |
 
 ### Supported connection types
 
-`DB`, `DDRS`, `Diameter Synchronous`, `File over FTP`, `File over SFTP`, `File over SMB`, `GIT`, `HTTP`, `HTTP-CIP`,
-`HTTP-Consul`, `HTTP-KubernetesProject`, `HTTP-OpenShiftProject`, `HTTP-OpenShiftRout`, `JMS Asynchronous`, `LDAP`,
-`REST over HTTP`, `REST Synchronous`, `SOAP Over HTTP Synchronous`, `SOAP Over JMS`, `SS7 Transport`, `SSH`,
-`TA Engines Provider`
+`create-env` accepts **`DB` and `HTTP` only**. Other types (`GIT`, `LDAP`, `SSH`, and the rest of the connection-type
+enum) are rejected with HTTP `400`. Matching ignores case (`db`, `Http`); the stored value is `DB` or `HTTP`.
 
 ### User guide
 
@@ -214,14 +219,15 @@ curl -X POST http://localhost:8080/api/tdm/rest/create-env \
     "projectName": "MyProject",
     "envName": "myEnv",
     "systemName": "system1",
-    "connection": {
-      "name": "DB",
-      "type": "DB",
-      "parameters": {
-        "host": "localhost",
-        "port": "5432"
+    "connections": [
+      {
+        "type": "DB",
+        "parameters": {
+          "host": "localhost",
+          "port": "5432"
+        }
       }
-    }
+    ]
   }'
 ```
 
@@ -237,20 +243,21 @@ curl -X POST http://localhost:8080/api/tdm/rest/create-env \
     "projectName": "MyProject",
     "envName": "myEnv",
     "systemName": "system2",
-    "connection": {
-      "name": "HTTP",
-      "type": "HTTP",
-      "parameters": {
-        "url": "https://example.com"
+    "connections": [
+      {
+        "type": "HTTP",
+        "parameters": {
+          "url": "https://example.com"
+        }
       }
-    }
+    ]
   }'
 ```
 
 #### 3. Update connection parameters
 
-Use `PUT` to change connection settings for an existing system. You can also rename the environment or system with
-`newEnvName` / `newSystemName`.
+Use `PUT` to add a connection or change an existing one by type. Connections you do not send are left unchanged. You
+can also rename the environment or system with `newEnvName` / `newSystemName`.
 
 ```bash
 curl -X PUT http://localhost:8080/api/tdm/rest/create-env \
@@ -259,14 +266,15 @@ curl -X PUT http://localhost:8080/api/tdm/rest/create-env \
     "projectName": "MyProject",
     "envName": "myEnv",
     "systemName": "system1",
-    "connection": {
-      "name": "DB",
-      "type": "DB",
-      "parameters": {
-        "host": "db.example.com",
-        "port": "5432"
+    "connections": [
+      {
+        "type": "DB",
+        "parameters": {
+          "host": "db.example.com",
+          "port": "5432"
+        }
       }
-    }
+    ]
   }'
 ```
 
@@ -280,18 +288,32 @@ curl -X PUT http://localhost:8080/api/tdm/rest/create-env \
     "envName": "myEnv",
     "systemName": "system1",
     "newEnvName": "renamedEnv",
-    "connection": {
-      "name": "DB",
-      "type": "DB",
-      "parameters": {
-        "host": "localhost",
-        "port": "5432"
+    "connections": [
+      {
+        "type": "DB",
+        "parameters": {
+          "host": "localhost",
+          "port": "5432"
+        }
       }
-    }
+    ]
   }'
 ```
 
-#### 4. Delete an environment or system
+#### 4. Get connections
+
+`GET` takes query parameters `projectName`, `envName`, and optionally `systemName`. When `systemName` is omitted, every system in the environment is returned. Values of
+parameters whose names look like secrets (`password`, `token`, `secret`, and names that contain those words, such as
+`db_password` or `apiToken`) are returned as `***`. The stored values are not changed.
+
+```bash
+curl -G http://localhost:8080/api/tdm/rest/create-env \
+  --data-urlencode "projectName=MyProject" \
+  --data-urlencode "envName=myEnv" \
+  --data-urlencode "systemName=system1"
+```
+
+#### 5. Delete an environment or system
 
 Delete the entire environment (all systems):
 
@@ -326,14 +348,15 @@ The same payload can be wrapped in an `environment` object (useful when calling 
     "projectName": "MyProject",
     "envName": "myEnv",
     "systemName": "system1",
-    "connection": {
-      "name": "DB",
-      "type": "DB",
-      "parameters": {
-        "host": "localhost",
-        "port": "5432"
+    "connections": [
+      {
+        "type": "DB",
+        "parameters": {
+          "host": "localhost",
+          "port": "5432"
+        }
       }
-    }
+    ]
   }
 }
 ```
@@ -341,9 +364,10 @@ The same payload can be wrapped in an `environment` object (useful when calling 
 #### Typical workflow
 
 1. Ensure the target **project** exists in TDM.
-2. **Create** the environment with `POST` and the first system connection.
+2. **Create** the environment with `POST` and the system's connections (`DB`, `HTTP`, or both).
 3. **Add** more systems with additional `POST` calls if needed.
-4. **Update** connection details or rename with `PUT` when infrastructure changes.
-5. **Delete** obsolete systems or whole environments with `DELETE`.
+4. **Add or update** connections, or rename, with `PUT` when infrastructure changes.
+5. **Read** connections with `GET`. Secret parameter values come back masked.
+6. **Delete** obsolete systems or whole environments with `DELETE`.
 
 After creation, the environment is available in the TDM UI and for test data operations on that project.

@@ -16,15 +16,17 @@
 
 package org.qubership.atp.tdm.model.rest.requests;
 
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-@Schema(description = "Request body of every atp-env-controller operation (POST, PUT, and DELETE "
+@Schema(description = "Request body of every atp-env-controller operation (GET, POST, PUT, and DELETE "
         + "/api/tdm/rest/create-env). Its fields can be sent flat, as shown here, or nested under an "
         + "\"environment\" property; both are equivalent.")
 @Data
@@ -43,8 +45,9 @@ public class EnvironmentManagementRequest {
     @Schema(description = "Read by DELETE: when set, only this system is deleted; otherwise the whole "
             + "environment is deleted.")
     private String systemDeleteName;
-    @Schema(description = "Connection details for systemName. Read by POST and PUT.")
-    private EnvironmentConnectionRequest connection;
+    @Schema(description = "Connections for systemName (one DB and/or one HTTP). Required by POST and PUT. "
+            + "Ignored by GET.")
+    private List<EnvironmentConnectionRequest> connections;
 
     @JsonProperty("environment")
     private void unpackEnvironment(Map<String, Object> environment) {
@@ -60,10 +63,10 @@ public class EnvironmentManagementRequest {
         if (environment.containsKey("systemDeleteName")) {
             this.systemDeleteName = (String) environment.get("systemDeleteName");
         }
-        Object connectionObj = environment.get("connection");
-        if (connectionObj instanceof Map) {
-            ObjectMapper mapper = new ObjectMapper();
-            this.connection = mapper.convertValue(connectionObj, EnvironmentConnectionRequest.class);
+        if (environment.containsKey("connections")) {
+            Object connectionsObj = environment.get("connections");
+            this.connections = connectionsObj == null ? null : new ObjectMapper().convertValue(connectionsObj,
+                    new TypeReference<List<EnvironmentConnectionRequest>>() {});
         }
     }
 }

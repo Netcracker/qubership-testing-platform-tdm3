@@ -124,7 +124,7 @@ public class TestDataUtils {
      * Returns server.
      */
     public static Server getServer(List<Connection> connections, String type) {
-        Connection connection = connections.stream().filter(sys -> type.equalsIgnoreCase(sys.getName()))
+        Connection connection = connections.stream().filter(sys -> type.equalsIgnoreCase(sys.getConnectionType()))
                 .findFirst()
                 .orElseThrow(() -> new TdmEnvDbConnectionException(type));
         return new Server(connection, type);
@@ -134,7 +134,7 @@ public class TestDataUtils {
      * Returns connection.
      */
     public static Connection getConnection(List<Connection> connections, String type) {
-        Connection connection = connections.stream().filter(sys -> type.equalsIgnoreCase(sys.getName()))
+        Connection connection = connections.stream().filter(sys -> type.equalsIgnoreCase(sys.getConnectionType()))
                 .findFirst()
                 .orElseThrow(() -> new TdmEnvDbConnectionException(type));
         return connection;

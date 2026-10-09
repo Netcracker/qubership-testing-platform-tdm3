@@ -642,6 +642,8 @@
                 <configuration>
                     <release>${java.version}</release>
                     <parameters>true</parameters>
+                    <source>21</source>
+                    <target>21</target>
                 </configuration>
             </plugin>
             <plugin>

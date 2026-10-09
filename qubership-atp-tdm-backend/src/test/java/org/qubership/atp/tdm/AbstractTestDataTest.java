@@ -90,6 +90,7 @@ public abstract class AbstractTestDataTest extends AbstractTest {
 
     protected static final Connection httpConnection = new Connection() {{
         setName("http");
+        setConnectionType("HTTP");
         Map<String, String> parameters = new HashMap<>();
         parameters.put("url", "http://localhost:8080/");
         setParameters(parameters);
@@ -97,6 +98,7 @@ public abstract class AbstractTestDataTest extends AbstractTest {
 
     protected static final Connection dbConnection = new Connection() {{
         setName("DB");
+        setConnectionType("DB");
         Map<String, String> parameters = new HashMap<>();
         parameters.put("db_type", "postgresql");
         parameters.put("jdbc_url", "jdbc:h2:file:./database/atptdm");
@@ -127,6 +129,7 @@ public abstract class AbstractTestDataTest extends AbstractTest {
 
     protected static final Connection dbConnectionErrorCredentials = new Connection() {{
         setName("DB");
+        setConnectionType("DB");
         Map<String, String> parameters = new HashMap<>();
         parameters.put("db_type", "postgresql");
         parameters.put("jdbc_url", "jdbc:h2:file:./database/atptdm");
