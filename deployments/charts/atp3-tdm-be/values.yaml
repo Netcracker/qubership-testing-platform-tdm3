@@ -7,6 +7,10 @@ CONTENT_SECURITY_POLICY: "*"
 ACTIVE_PROFILES_SPRING: "disable-security"
 SERVICE_NAME: "atp3-tdm-be"
 SERVICE_PORT_TYPE: "ClusterIP"
+ARTIFACT_DESCRIPTOR_VERSION: ''
+GATEWAY_SYSTEM_TYPE: legacy-ingress
+GATEWAY_SYSTEM_NAME: default-external-gateway
+GATEWAY_SYSTEM_NAMESPACE: gateway-system
 # Logging
 GRAYLOG_HOST: "udp:graylog-service.example.com"
 GRAYLOG_ON: "true"
@@ -94,3 +98,4 @@ atp3tdm:
   extraEnvs: []
   storageSize: "1Gi"
   storageClassName: "csi-sc-cinderplugin"
+  serverPort: "8080"
