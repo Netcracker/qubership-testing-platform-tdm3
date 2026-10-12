@@ -129,9 +129,18 @@ Covered by [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md) — inc
 controller that exist but do nothing useful (a cache-refresh and a cache-reset left over from a caching layer that
 no longer exists); see that skill's own page.
 
+### Test data generation (GitLab pipeline)
+
+| Skill                                                                  | Purpose                                                                               |
+|------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| [tdm-generate-test-data](.apm/skills/tdm-generate-test-data/SKILL.md) | Start the project's GitLab pipeline that generates test data, and wait until it ends. |
+
+This skill does not call TDM3. The pipeline runs the project's test cases, and the test cases fill the tables of TDM3
+as their last step. See [Generating test data](#generating-test-data) for the settings it needs.
+
 ## Commands
 
-Nine skills are meant to be typed by name, as slash commands, with explicit arguments. They are user-invoked skills, not
+Ten skills are meant to be typed by name, as slash commands, with explicit arguments. They are user-invoked skills, not
 prompts, so they work in every agent that installs the package. Each one is a thin front end that runs the skill
 named below; an ordinary plain-language request still goes straight to that skill. Arguments are named, so their order
 doesn't matter; the examples use one order: `table=`, `return=`, the `Column=value` filters, then flags such as `all`.
@@ -150,6 +159,7 @@ or `?` with its syntax and the table of its arguments, without sending any reque
 | [`/tdm-update`](.apm/skills/tdm-update/SKILL.md)   | [tdm-update-test-data](.apm/skills/tdm-update-test-data/SKILL.md)   | `/tdm-update table=Agents where agent_code=A013 set country=IT` |
 | [`/tdm-delete`](.apm/skills/tdm-delete/SKILL.md)   | [tdm-occupy-test-data-rows-by-id](.apm/skills/tdm-occupy-test-data-rows-by-id/SKILL.md) | `/tdm-delete table=Agents agent_code=A013` |
 | [`/tdm-load`](.apm/skills/tdm-load/SKILL.md)       | [tdm-import-test-data](.apm/skills/tdm-import-test-data/SKILL.md)   | `/tdm-load table=Agents file="C:\data\agents.xlsx" new`         |
+| [`/tdm-generate`](.apm/skills/tdm-generate/SKILL.md) | [tdm-generate-test-data](.apm/skills/tdm-generate-test-data/SKILL.md) | `/tdm-generate test="Generate domestic customers" env=environments/dev.yaml` |
 
 ## Instruction
 
@@ -220,4 +230,41 @@ codes on that table, and drops the table at the end, also after a failure. It dr
 
 The script refuses a `TDM3_BASE_URL` that is not on `localhost`; pass `--allow-remote` to override. It does not test the
 agent: how the agent parses a command or words a reply is checked by hand.
+
+### Generating test data
+
+[tdm-generate-test-data](.apm/skills/tdm-generate-test-data/SKILL.md) needs the GitLab settings of the project's
+pipeline, in the same config file:
+
+| Key                       | Meaning                                                                                                  |
+|---------------------------|----------------------------------------------------------------------------------------------------------|
+| `GITLAB_URL`              | Base URL of the GitLab service.                                                                          |
+| `GITLAB_PROJECT_ID`       | The numeric ID of the GitLab project that holds the pipeline.                                            |
+| `GITLAB_REF`              | The branch to run the pipeline from, such as `main`.                                                     |
+| `GENERATE_VARIABLES_FILE` | The JSON file with the pipeline variables, as a path relative to the project folder or an absolute path. |
+| `GITLAB_TOKEN_ENV`        | Optional. The name of the environment variable that holds the token. The default is `GITLAB_TOKEN`.      |
+
+The variables file has one `variables` object. The skill replaces the variables the user names and sends the rest as
+written:
+
+```json
+{
+  "variables": {
+    "PIPELINE_RUNTIME_CONFIG": "environments/dev.yaml",
+    "ATP_TESTS_GIT_REPO_URL": "https://gitlab.example.com/group/tests.git",
+    "ATP_TESTS_GIT_REPO_BRANCH": "main",
+    "EXECUTION_TYPE": "test",
+    "EXECUTION_NAME": "Generate domestic customers",
+    "ENABLE_JIRA_INTEGRATION": "false",
+    "SEND_WEBEX_NOTIFICATION": "true"
+  }
+}
+```
+
+The GitLab token needs the right to read the project and to run pipelines. Keep it out of the config file and out of the
+chat, because the skills read the config file and the agent sends what it reads to the model. Set the environment
+variable, or put the token on the first line of `.tdm-assistant/gitlab-token`, which only the script reads.
+`ATP_TESTS_GIT_REPO_URL`, `EXECUTION_TYPE`, and `EXECUTION_NAME` must not be empty, and `ENABLE_JIRA_INTEGRATION` and
+`SEND_WEBEX_NOTIFICATION` must be `true` or `false`; the script checks this before it starts the pipeline. The pipeline
+normally ends within minutes, and the script stops waiting after 30 minutes; it cannot cancel a pipeline.
 

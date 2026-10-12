@@ -52,7 +52,10 @@ def find_config():
 
 
 def load_config(required=("TDM3_BASE_URL", "PROJECT_ID", "SYSTEM_ID_DEFAULT")):
-    """Return the config, or fail when it is missing or lacks one of the required keys."""
+    """Return the config, or fail when it is missing or lacks one of the required keys.
+
+    CONFIG_DIR holds the folder of the config file, the .tdm-assistant folder.
+    """
     path = find_config()
     if path is None:
         fail("config_missing", "No .tdm-assistant/config.json found. Select the project, environment and system first.")
@@ -63,7 +66,9 @@ def load_config(required=("TDM3_BASE_URL", "PROJECT_ID", "SYSTEM_ID_DEFAULT")):
     missing = [key for key in required if not config.get(key)]
     if missing:
         fail("config_incomplete", "Missing in config: " + ", ".join(missing))
-    config["TDM3_BASE_URL"] = config["TDM3_BASE_URL"].rstrip("/")
+    if config.get("TDM3_BASE_URL"):
+        config["TDM3_BASE_URL"] = config["TDM3_BASE_URL"].rstrip("/")
+    config["CONFIG_DIR"] = str(path.parent)
     return config
 
 

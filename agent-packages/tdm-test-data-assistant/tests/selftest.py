@@ -14,10 +14,14 @@ check passes and 1 otherwise. Python 3.8+, standard library only.
 import argparse
 import getpass
 import json
+import os
 import subprocess
 import sys
+import tempfile
+import threading
 import urllib.parse
 from datetime import datetime
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 sys.dont_write_bytecode = True  # keep __pycache__ out of the repository
@@ -41,6 +45,7 @@ def script(name):
         "release": ("tdm-release-script", "release_rows.py"),
         "insert": ("tdm-insert-script", "insert_row.py"),
         "update": ("tdm-update-script", "update_rows.py"),
+        "generate": ("tdm-generate-test-data", "generate_test_data.py"),
     }[name]
     return str(SKILLS / skill / "scripts" / file)
 
@@ -205,6 +210,131 @@ def scenarios(config, table):
           status == 0 and any(t["name"] == table for t in out["tables"]))
 
 
+class FakeGitLab(ThreadingHTTPServer):
+    """Answer the three GitLab requests of the generate script, and record what arrived."""
+
+    def __init__(self):
+        super().__init__(("127.0.0.1", 0), FakeGitLabHandler)
+        self.statuses = ["success"]
+        self.jobs = []
+        self.post_status = 201
+        self.requests = []
+
+    def start(self):
+        threading.Thread(target=self.serve_forever, daemon=True).start()
+        return f"http://127.0.0.1:{self.server_address[1]}"
+
+
+class FakeGitLabHandler(BaseHTTPRequestHandler):
+    def log_message(self, *args):
+        pass
+
+    def reply(self, status, payload):
+        data = json.dumps(payload).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_POST(self):
+        length = int(self.headers.get("Content-Length") or 0)
+        body = json.loads(self.rfile.read(length) or b"null")
+        self.server.requests.append(("POST", self.path, self.headers.get("PRIVATE-TOKEN"), body))
+        if self.server.post_status >= 400:
+            return self.reply(self.server.post_status, {"message": "refused"})
+        self.reply(self.server.post_status, {"id": 42, "status": "pending", "web_url": "http://gitlab.test/p/42"})
+
+    def do_GET(self):
+        self.server.requests.append(("GET", self.path, self.headers.get("PRIVATE-TOKEN"), None))
+        if "/jobs" in self.path:
+            return self.reply(200, self.server.jobs)
+        statuses = self.server.statuses
+        self.reply(200, {"id": 42, "status": statuses.pop(0) if len(statuses) > 1 else statuses[0]})
+
+
+def generate_scenarios():
+    """Run the generate script against a fake GitLab; it needs no TDM3."""
+    token = "tok-SECRET-123"
+    variables = {"variables": {"PIPELINE_RUNTIME_CONFIG": "environments/x.yaml", "ATP_TESTS_GIT_REPO_URL": "http://g/r.git",
+                               "ATP_TESTS_GIT_REPO_BRANCH": "main", "EXECUTION_TYPE": "scope",
+                               "EXECUTION_NAME": "regression", "ENABLE_JIRA_INTEGRATION": "false",
+                               "SEND_WEBEX_NOTIFICATION": "true"}}
+    server = FakeGitLab()
+    url = server.start()
+    with tempfile.TemporaryDirectory() as folder:
+        def configure(gitlab_url):
+            (Path(folder) / ".tdm-assistant").mkdir(exist_ok=True)
+            (Path(folder) / ".tdm-assistant" / "config.json").write_text(json.dumps({
+                "GITLAB_URL": gitlab_url, "GITLAB_PROJECT_ID": "7", "GITLAB_REF": "main",
+                "GENERATE_VARIABLES_FILE": "vars.json"}), encoding="utf-8")
+        (Path(folder) / "vars.json").write_text(json.dumps(variables), encoding="utf-8")
+        configure(url)
+
+        def generate(*args, with_token=True):
+            env = {k: v for k, v in os.environ.items() if k != "GITLAB_TOKEN"}
+            if with_token:
+                env["GITLAB_TOKEN"] = token
+            done = subprocess.run([sys.executable, script("generate"), *args], capture_output=True, cwd=folder, env=env)
+            out, err = done.stdout.decode("utf-8"), done.stderr.decode("utf-8")
+            try:
+                return done.returncode, json.loads(out), out + err
+            except ValueError:
+                return done.returncode, None, out + err
+
+        def reset(statuses, jobs=(), post_status=201):
+            server.statuses, server.jobs, server.post_status = list(statuses), list(jobs), post_status
+            server.requests.clear()
+
+        print("\n-- generate (fake GitLab)")
+        reset(["success"])
+        status, out, _ = generate("--set", "EXECUTION_TYPE=test", "--set", "EXECUTION_NAME=Gen domestic")
+        check("generate without --yes only shows the variables",
+              status == 0 and out["started"] is False and not server.requests
+              and out["variables"]["EXECUTION_NAME"] == "Gen domestic"
+              and sorted(out["changed"]) == ["EXECUTION_NAME", "EXECUTION_TYPE"], json.dumps(out)[:300])
+        status, out, _ = generate("--set", "ENABLE_JIRA_INTEGRATION=TRUE")
+        check("a boolean is normalized to lowercase", status == 0 and out["variables"]["ENABLE_JIRA_INTEGRATION"] == "true")
+        for label, argument in (("an unknown variable", "NOPE=1"), ("a boolean that is not true or false",
+                                "SEND_WEBEX_NOTIFICATION=yes"), ("an empty EXECUTION_NAME", "EXECUTION_NAME=")):
+            status, out, _ = generate("--set", argument)
+            check(f"generate rejects {label}", status == 1 and out and out["error"] == "invalid_variables", str(out))
+        status, out, _ = generate("--yes", with_token=False)
+        check("generate --yes needs a token", status == 1 and out and out["error"] == "token_missing" and not server.requests)
+
+        reset(["pending", "running", "success"])
+        status, out, text = generate("--yes", "--interval", "0.05", "--set", "EXECUTION_NAME=Gen domestic")
+        post = next((r for r in server.requests if r[0] == "POST"), None)
+        check("generate waits for the pipeline and reports success",
+              status == 0 and out["started"] and out["succeeded"] and out["pipeline"]["id"] == 42, text[:300])
+        check("generate sends the ref and the variables",
+              post and post[1] == "/api/v4/projects/7/pipeline" and post[3]["ref"] == "main"
+              and {"key": "EXECUTION_NAME", "value": "Gen domestic"} in post[3]["variables"], str(post))
+        check("generate sends the token in PRIVATE-TOKEN and nowhere else",
+              post and post[2] == token and token not in text, text[:300])
+
+        reset(["running", "failed"], [{"name": "generate", "stage": "test", "web_url": "http://gitlab.test/j/1"}])
+        status, out, _ = generate("--yes", "--interval", "0.05")
+        check("generate reports a failed pipeline with its failed jobs",
+              status == 0 and out["succeeded"] is False and out["pipeline"]["status"] == "failed"
+              and out["failed_jobs"][0]["name"] == "generate" and out["pipeline"]["web_url"], str(out))
+
+        reset(["running"])
+        status, out, _ = generate("--yes", "--interval", "0.1", "--timeout", "0.5")
+        check("generate reports a timeout and the pipeline", status == 1 and out and out["error"] == "timeout"
+              and out["pipeline"]["id"] == 42, str(out))
+
+        reset(["success"], post_status=401)
+        status, out, text = generate("--yes")
+        check("generate reports HTTP 401 without the token", status == 1 and out and out["error"] == "http_error"
+              and out["status"] == 401 and token not in text, text[:300])
+
+        configure("http://127.0.0.1:1")
+        status, out, _ = generate("--yes")
+        check("generate reports an unreachable GitLab", status == 1 and out and out["error"] == "server_unreachable", str(out))
+    server.shutdown()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--allow-remote", action="store_true", help="allow a TDM3 server that is not on localhost")
@@ -221,6 +351,7 @@ def main():
     try:
         drop_selftest_tables(config)
         scenarios(config, table)
+        generate_scenarios()
     finally:
         print("\n-- cleanup")
         drop_selftest_tables(config)
