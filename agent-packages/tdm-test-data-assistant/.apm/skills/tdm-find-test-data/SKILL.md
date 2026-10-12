@@ -22,7 +22,8 @@ that, collect:
 - Zero or more column filters: for each, a column name, a comparison (`Contains`, `startWith`, `Equals`, `From`, or
   `To`, case-insensitive), the value to compare against, and whether the comparison is case-sensitive. An empty
   `search-row-parameters-set` is valid — verified live — and matches the first available row with no condition, for
-  a user who wants "any" row rather than one matching specific criteria.
+  a user who wants "any" row rather than one matching specific criteria. For `Equals` the case-sensitivity flag has
+  no effect: the comparison is always exact and case-sensitive, and the flag applies to `Contains` and `startWith`.
 - The column (or columns) whose value the user wants back.
 
 `envName` and `systemName` are optional at the TDM3 API level (it falls back to the first table with this title in

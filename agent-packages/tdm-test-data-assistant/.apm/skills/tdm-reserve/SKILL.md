@@ -22,7 +22,7 @@ tdm-reserve-test-data directly instead.
 |---------------------|-----------------------------------------------------------------------------------------------|
 | `table=<title>`     | The table to reserve in. Required.                                                            |
 | `return=<column>`   | The column whose value identifies each reserved row. Required.                                |
-| `<Column>=<value>`  | A filter: the column equals the value, ignoring case. Repeat it to combine filters with AND.  |
+| `<Column>=<value>`  | A filter: the column equals the value exactly, case-sensitive. Repeat it for AND.             |
 | `all`               | Reserve every available row that matches, not just one.                                       |
 
 Put a name or a value with spaces in double quotes: `"Operator ID"=2502`, `Assignment="QA 1"`. The command supports

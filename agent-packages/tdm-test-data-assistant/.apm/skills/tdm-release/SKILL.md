@@ -23,7 +23,7 @@ tdm-reserve-test-data directly instead.
 |---------------------|-----------------------------------------------------------------------------------------------|
 | `table=<title>`     | The table to release rows in. Required.                                                       |
 | `return=<column>`   | The column whose value identifies each released row. Required when there is a filter.         |
-| `<Column>=<value>`  | A filter: the column equals the value, ignoring case. Repeat it to combine filters with AND.  |
+| `<Column>=<value>`  | A filter: the column equals the value exactly, case-sensitive. Repeat it for AND.             |
 | `all`               | With filters: every reserved row that matches. Without filters: every reserved row of the table. |
 
 Put a name or a value with spaces in double quotes: `"Operator ID"=2502`, `Assignment="QA 1"`. The command supports
