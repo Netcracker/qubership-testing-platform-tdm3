@@ -87,15 +87,32 @@ def call(config, path, query=None, body=None, method=None):
         fail("http_error", f"The response of {path} is not JSON: {exc}")
 
 
-def find_table(config, title):
-    """Return {"name", "id"} of the table with this title in the current system, or fail with the list of tables."""
+def lookup_table(config, title):
+    """Return ({"name", "id"} or None, catalog) for the table with this title in the current system."""
     catalog = call(config, "/api/tdm/tables/catalog",
                    query={"projectId": config["PROJECT_ID"], "systemId": config["SYSTEM_ID_DEFAULT"]})
     matches = [t for t in catalog if t.get("tableTitle") == title]
-    if not matches:
-        fail("table_not_found", f"The current system has no table '{title}'.",
-             tables=[{"name": t.get("tableTitle"), "id": t.get("tableName")} for t in catalog])
-    return {"name": matches[0]["tableTitle"], "id": matches[0]["tableName"]}
+    table = {"name": matches[0]["tableTitle"], "id": matches[0]["tableName"]} if matches else None
+    return table, catalog
+
+
+def list_of_tables(catalog):
+    """Return the catalog as a list of {"name", "id"} entries."""
+    return [{"name": t.get("tableTitle"), "id": t.get("tableName")} for t in catalog]
+
+
+def find_table(config, title):
+    """Return {"name", "id"} of the table with this title in the current system, or fail with the list of tables."""
+    table, catalog = lookup_table(config, title)
+    if table is None:
+        fail("table_not_found", f"The current system has no table '{title}'.", tables=list_of_tables(catalog))
+    return table
+
+
+def addressing(config, table_title):
+    """Return the fields that address a table by names in the atp-action-controller requests."""
+    return {"projectName": config["PROJECT_NAME"], "envName": config["ENV_NAME_DEFAULT"],
+            "systemName": config["SYSTEM_NAME_DEFAULT"], "title-table": table_title}
 
 
 def read_page(config, table_id, occupied, filters, limit):
@@ -133,18 +150,33 @@ def parse_filters(items):
     return filters
 
 
-def invisible_warnings(filters):
-    """Return one warning per filter value that holds an invisible character; ordinary spaces are not meant."""
-    warnings = []
-    for column, value in filters:
-        names = []
-        for ch in value:
-            if ch == " ":
-                continue
-            if ch.isspace() or unicodedata.category(ch) in ("Cf", "Zs", "Zl", "Zp"):
-                name = CONTROL_NAMES.get(ch) or unicodedata.name(ch, f"U+{ord(ch):04X}")
-                if name not in names:
-                    names.append(name)
-        if names:
-            warnings.append(f"The value of '{column}' contains: {', '.join(names)}. It was sent as typed.")
-    return warnings
+def invisible_names(value):
+    """Return the names of the invisible characters in value; ordinary spaces are not meant."""
+    names = []
+    for ch in value:
+        if ch == " ":
+            continue
+        if ch.isspace() or unicodedata.category(ch) in ("Cf", "Zs", "Zl", "Zp"):
+            name = CONTROL_NAMES.get(ch) or unicodedata.name(ch, f"U+{ord(ch):04X}")
+            if name not in names:
+                names.append(name)
+    return names
+
+
+def invisible_warnings(pairs):
+    """Return one warning per (column, value) pair whose value holds an invisible character."""
+    return [f"The value of '{column}' contains: {', '.join(names)}. It was sent as typed."
+            for column, value in pairs if (names := invisible_names(value))]
+
+
+def require_confirmed_values(pairs, confirmed):
+    """Fail unless the user confirmed the values that hold invisible characters; TDM3 would store them."""
+    found = [{"column": column, "characters": names} for column, value in pairs if (names := invisible_names(value))]
+    if found and not confirmed:
+        fail("invisible_characters",
+             "A value contains invisible characters that TDM3 would store. Ask the user to confirm the value, "
+             "then run again with --confirm-invisible.", values=found)
+
+
+CONFIG_FULL = ("TDM3_BASE_URL", "PROJECT_ID", "SYSTEM_ID_DEFAULT", "PROJECT_NAME", "ENV_NAME_DEFAULT",
+               "SYSTEM_NAME_DEFAULT")
