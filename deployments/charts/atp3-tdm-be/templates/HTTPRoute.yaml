@@ -7,7 +7,7 @@ metadata:
     app: '{{ .Values.SERVICE_NAME }}'
 spec:
   hostnames:
-    - '{{ include "atp3tdm.env.ingressHost" . }}'
+    - '{{ include "atp3tdm.ingressHost" . }}'
   parentRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway
@@ -18,7 +18,7 @@ spec:
         - group: ""
           kind: Service
           name: '{{ .Values.SERVICE_NAME }}'
-          port: {{ .Values.atp3tdm.serverPort }}
+          port: 8080
           weight: 1
       matches:
         - path:
