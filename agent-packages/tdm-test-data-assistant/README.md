@@ -202,3 +202,22 @@ Every `atp-action-controller` skill reads `PROJECT_NAME`, `ENV_NAME_DEFAULT`, an
 [tdm-cleanup-test-data-table](.apm/skills/tdm-cleanup-test-data-table/SKILL.md), which needs `PROJECT_ID` instead of
 `PROJECT_NAME` for its two operations; see that skill's own page. None of them resolve project, environment, or
 system on their own — run `tdm-select-context` first if the config file doesn't have them yet.
+
+## Self-test
+
+[tests/selftest.py](tests/selftest.py) checks the scripts of the `*-script` skills against a running TDM3. It is a
+development tool and is not installed with the package. Run it from a folder that has a
+`.tdm-assistant/config.json`, with TDM3 running:
+
+```bash
+python agent-packages/tdm-test-data-assistant/tests/selftest.py
+```
+
+The run creates a table named `ZZ_selftest_<timestamp>` in the current system, exercises every script and its error
+codes on that table, and drops the table at the end, also after a failure. It drops only tables whose names start with
+`ZZ_selftest_`, so it also removes the leftovers of an interrupted run. The exit code is 0 when every check passes and
+1 otherwise.
+
+The script refuses a `TDM3_BASE_URL` that is not on `localhost`; pass `--allow-remote` to override. It does not test the
+agent: how the agent parses a command or words a reply is checked by hand.
+
