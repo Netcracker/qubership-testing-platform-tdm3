@@ -38,16 +38,16 @@ Run the script from the project folder, so that it finds `.tdm-assistant/config.
 
 ## Variables
 
-| User says                              | Variable                    |
-|----------------------------------------|-----------------------------|
-| a test case, "run the test X"          | `EXECUTION_TYPE=test`, `EXECUTION_NAME=X` |
-| a scope, "run the scope X"             | `EXECUTION_TYPE=scope`, `EXECUTION_NAME=X` |
+| User says                              | Variable                                         |
+|----------------------------------------|--------------------------------------------------|
+| a test case, "run the test X"          | `EXECUTION_TYPE=test`, `EXECUTION_NAME=X`        |
+| a scope, "run the scope X"             | `EXECUTION_TYPE=scope`, `EXECUTION_NAME=X`       |
 | another execution type                 | `EXECUTION_TYPE=<type>`, `EXECUTION_NAME=<name>` |
 | an environment                         | `PIPELINE_RUNTIME_CONFIG=<as the user wrote it>` |
-| a branch of the test repository        | `ATP_TESTS_GIT_REPO_BRANCH`  |
-| a repository of the tests              | `ATP_TESTS_GIT_REPO_URL`     |
-| Jira integration on or off             | `ENABLE_JIRA_INTEGRATION=true` or `false` |
-| a Webex notification on or off         | `SEND_WEBEX_NOTIFICATION=true` or `false` |
+| a branch of the test repository        | `ATP_TESTS_GIT_REPO_BRANCH`                      |
+| a repository of the tests              | `ATP_TESTS_GIT_REPO_URL`                         |
+| Jira integration on or off             | `ENABLE_JIRA_INTEGRATION=true` or `false`        |
+| a Webex notification on or off         | `SEND_WEBEX_NOTIFICATION=true` or `false`        |
 
 The environment is a project environment. It does not have to match the environment of the TDM3 context, so don't
 take it from `.tdm-assistant/config.json`, and pass what the user wrote without changing it. Any other variable that
@@ -67,7 +67,7 @@ the file holds can be set the same way, by its name.
     status, and say that this skill cannot stop it.
   - `http_error` or `server_unreachable`: GitLab refused or didn't answer. Show the message and the status. An
     HTTP 401 or 403 usually means the token is wrong or lacks the right to run pipelines.
-  - `config_missing` or `config_incomplete`: the GitLab settings are missing. See the README for the keys.
+  - `config_missing` or `config_incomplete`: the GitLab settings are missing. See the `README` for the keys.
 
 ## Common pitfalls
 

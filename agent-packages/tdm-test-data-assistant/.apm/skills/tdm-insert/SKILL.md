@@ -7,7 +7,7 @@ argument-hint: "table=<title> Column=value ... [new] | help"
 
 # /tdm-insert
 
-A command front end for [tdm-insert-test-data](../tdm-insert-test-data/SKILL.md). It reads the user's arguments
+A command frontend for [tdm-insert-test-data](../tdm-insert-test-data/SKILL.md). It reads the user's arguments
 literally and sends the insert that skill describes; the request shape and the response stay there. For an ordinary
 request in plain language ("add this row to Agents"), follow tdm-insert-test-data directly instead.
 

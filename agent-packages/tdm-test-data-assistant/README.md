@@ -131,8 +131,8 @@ no longer exists); see that skill's own page.
 
 ### Test data generation (GitLab pipeline)
 
-| Skill                                                                  | Purpose                                                                               |
-|------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| Skill                                                                 | Purpose                                                                               |
+|-----------------------------------------------------------------------|---------------------------------------------------------------------------------------|
 | [tdm-generate-test-data](.apm/skills/tdm-generate-test-data/SKILL.md) | Start the project's GitLab pipeline that generates test data, and wait until it ends. |
 
 This skill does not call TDM3. The pipeline runs the project's test cases, and the test cases fill the tables of TDM3
@@ -141,25 +141,25 @@ as their last step. See [Generating test data](#generating-test-data) for the se
 ## Commands
 
 Ten skills are meant to be typed by name, as slash commands, with explicit arguments. They are user-invoked skills, not
-prompts, so they work in every agent that installs the package. Each one is a thin front end that runs the skill
+prompts, so they work in every agent that installs the package. Each one is a thin frontend that runs the skill
 named below; an ordinary plain-language request still goes straight to that skill. Arguments are named, so their order
 doesn't matter; the examples use one order: `table=`, `return=`, the `Column=value` filters, then flags such as `all`.
 
 The slash menu shows a short argument hint next to each command. Each command also answers `help`, `--help`, `-h`,
 or `?` with its syntax and the table of its arguments, without sending any request to TDM3.
 
-| Command                                            | Runs                                                                | Example                                                         |
-|----------------------------------------------------|---------------------------------------------------------------------|-----------------------------------------------------------------|
-| [`/tdm-context`](.apm/skills/tdm-context/SKILL.md) | [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md)       | `/tdm-context system=PostgresDB`                                |
-| [`/tdm-tables`](.apm/skills/tdm-tables/SKILL.md)   | [tdm-list-tables](.apm/skills/tdm-list-tables/SKILL.md)             | `/tdm-tables`                                                   |
-| [`/tdm-find`](.apm/skills/tdm-find/SKILL.md)       | [tdm-browse-test-data-table](.apm/skills/tdm-browse-test-data-table/SKILL.md) | `/tdm-find table=Orders return=ord_num,ord_amount cust_code=C00025` |
-| [`/tdm-reserve`](.apm/skills/tdm-reserve/SKILL.md) | [tdm-reserve-test-data](.apm/skills/tdm-reserve-test-data/SKILL.md) | `/tdm-reserve table=Orders return=ord_num cust_code=C00025 all` |
-| [`/tdm-release`](.apm/skills/tdm-release/SKILL.md) | [tdm-reserve-test-data](.apm/skills/tdm-reserve-test-data/SKILL.md) | `/tdm-release table=Orders return=ord_num cust_code=C00025 all` |
-| [`/tdm-insert`](.apm/skills/tdm-insert/SKILL.md)   | [tdm-insert-test-data](.apm/skills/tdm-insert-test-data/SKILL.md)   | `/tdm-insert table=Agents agent_code=A013 agent_name=Ivan`      |
-| [`/tdm-update`](.apm/skills/tdm-update/SKILL.md)   | [tdm-update-test-data](.apm/skills/tdm-update-test-data/SKILL.md)   | `/tdm-update table=Agents where agent_code=A013 set country=IT` |
-| [`/tdm-delete`](.apm/skills/tdm-delete/SKILL.md)   | [tdm-occupy-test-data-rows-by-id](.apm/skills/tdm-occupy-test-data-rows-by-id/SKILL.md) | `/tdm-delete table=Agents agent_code=A013` |
-| [`/tdm-load`](.apm/skills/tdm-load/SKILL.md)       | [tdm-import-test-data](.apm/skills/tdm-import-test-data/SKILL.md)   | `/tdm-load table=Agents file="C:\data\agents.xlsx" new`         |
-| [`/tdm-generate`](.apm/skills/tdm-generate/SKILL.md) | [tdm-generate-test-data](.apm/skills/tdm-generate-test-data/SKILL.md) | `/tdm-generate test="Generate domestic customers" env=environments/dev.yaml` |
+| Command                                              | Runs                                                                                    | Example                                                                      |
+|------------------------------------------------------|-----------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
+| [`/tdm-context`](.apm/skills/tdm-context/SKILL.md)   | [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md)                           | `/tdm-context system=PostgresDB`                                             |
+| [`/tdm-tables`](.apm/skills/tdm-tables/SKILL.md)     | [tdm-list-tables](.apm/skills/tdm-list-tables/SKILL.md)                                 | `/tdm-tables`                                                                |
+| [`/tdm-find`](.apm/skills/tdm-find/SKILL.md)         | [tdm-browse-test-data-table](.apm/skills/tdm-browse-test-data-table/SKILL.md)           | `/tdm-find table=Orders return=ord_num,ord_amount cust_code=C00025`          |
+| [`/tdm-reserve`](.apm/skills/tdm-reserve/SKILL.md)   | [tdm-reserve-test-data](.apm/skills/tdm-reserve-test-data/SKILL.md)                     | `/tdm-reserve table=Orders return=ord_num cust_code=C00025 all`              |
+| [`/tdm-release`](.apm/skills/tdm-release/SKILL.md)   | [tdm-reserve-test-data](.apm/skills/tdm-reserve-test-data/SKILL.md)                     | `/tdm-release table=Orders return=ord_num cust_code=C00025 all`              |
+| [`/tdm-insert`](.apm/skills/tdm-insert/SKILL.md)     | [tdm-insert-test-data](.apm/skills/tdm-insert-test-data/SKILL.md)                       | `/tdm-insert table=Agents agent_code=A013 agent_name=Ivan`                   |
+| [`/tdm-update`](.apm/skills/tdm-update/SKILL.md)     | [tdm-update-test-data](.apm/skills/tdm-update-test-data/SKILL.md)                       | `/tdm-update table=Agents where agent_code=A013 set country=IT`              |
+| [`/tdm-delete`](.apm/skills/tdm-delete/SKILL.md)     | [tdm-occupy-test-data-rows-by-id](.apm/skills/tdm-occupy-test-data-rows-by-id/SKILL.md) | `/tdm-delete table=Agents agent_code=A013`                                   |
+| [`/tdm-load`](.apm/skills/tdm-load/SKILL.md)         | [tdm-import-test-data](.apm/skills/tdm-import-test-data/SKILL.md)                       | `/tdm-load table=Agents file="C:\data\agents.xlsx" new`                      |
+| [`/tdm-generate`](.apm/skills/tdm-generate/SKILL.md) | [tdm-generate-test-data](.apm/skills/tdm-generate-test-data/SKILL.md)                   | `/tdm-generate test="Generate domestic customers" env=environments/dev.yaml` |
 
 ## Instruction
 
@@ -267,4 +267,3 @@ variable, or put the token on the first line of `.tdm-assistant/gitlab-token`, w
 `ATP_TESTS_GIT_REPO_URL`, `EXECUTION_TYPE`, and `EXECUTION_NAME` must not be empty, and `ENABLE_JIRA_INTEGRATION` and
 `SEND_WEBEX_NOTIFICATION` must be `true` or `false`; the script checks this before it starts the pipeline. The pipeline
 normally ends within minutes, and the script stops waiting after 30 minutes; it cannot cancel a pipeline.
-

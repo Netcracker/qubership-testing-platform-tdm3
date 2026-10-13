@@ -7,7 +7,7 @@ argument-hint: "table=<title> return=<col> [Column=value ...] [all] | help"
 
 # /tdm-reserve
 
-A command front end for [tdm-reserve-test-data](../tdm-reserve-test-data/SKILL.md). It reads the user's arguments
+A command frontend for [tdm-reserve-test-data](../tdm-reserve-test-data/SKILL.md). It reads the user's arguments
 literally and sends the reservation that skill describes; the request shape, the response handling, and the "reserve
 every matching row" pattern stay there. For an ordinary request in plain language ("reserve a SIM card"), follow
 tdm-reserve-test-data directly instead.
@@ -32,7 +32,7 @@ equality only. For another comparison (`Contains`, a range), the user asks in pl
 
 - When the only argument is `help`, `--help`, `-h`, or `?`, send no request. Print the usage from the "Arguments"
   section above, the syntax line and the table of arguments, and nothing else.
-- Never infer a missing `table=` or `return=`. Ask for it. This command exists so that the user names the table
+- Never infer a missing `table=` or `return=`. Ask for it. This command exists so that the user should name the table
   explicitly, unlike a plain-language request.
 - When an argument can't be parsed unambiguously, send nothing. This covers a word with no `=`, a name with spaces
   and no quotes, and any extra token. Reply with the corrected command, for example

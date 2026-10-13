@@ -7,7 +7,7 @@ argument-hint: "(no arguments) | help"
 
 # /tdm-tables
 
-A command front end for [tdm-list-tables](../tdm-list-tables/SKILL.md). It takes no arguments and lists the tables of
+A command frontend for [tdm-list-tables](../tdm-list-tables/SKILL.md). It takes no arguments and lists the tables of
 the current system. For a plain-language request ("show the tables"), follow tdm-list-tables directly instead.
 
 ## Arguments

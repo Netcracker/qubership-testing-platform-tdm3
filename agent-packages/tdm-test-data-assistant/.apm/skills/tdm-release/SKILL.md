@@ -7,7 +7,7 @@ argument-hint: "table=<title> return=<col> Column=value ... [all] | table=<title
 
 # /tdm-release
 
-A command front end for the release part of [tdm-reserve-test-data](../tdm-reserve-test-data/SKILL.md). It reads the
+A command frontend for the release part of [tdm-reserve-test-data](../tdm-reserve-test-data/SKILL.md). It reads the
 user's arguments literally and sends the release that skill describes; the request shapes and the response handling
 stay there. For an ordinary request in plain language ("release the SIM card I reserved"), follow
 tdm-reserve-test-data directly instead.
@@ -19,11 +19,11 @@ tdm-reserve-test-data directly instead.
 /tdm-release table=<title> all
 ```
 
-| Argument            | Meaning                                                                                       |
-|---------------------|-----------------------------------------------------------------------------------------------|
-| `table=<title>`     | The table to release rows in. Required.                                                       |
-| `return=<column>`   | The column whose value identifies each released row. Required when there is a filter.         |
-| `<Column>=<value>`  | A filter: the column equals the value exactly, case-sensitive. Repeat it for AND.             |
+| Argument            | Meaning                                                                                          |
+|---------------------|--------------------------------------------------------------------------------------------------|
+| `table=<title>`     | The table to release rows in. Required.                                                          |
+| `return=<column>`   | The column whose value identifies each released row. Required when there is a filter.            |
+| `<Column>=<value>`  | A filter: the column equals the value exactly, case-sensitive. Repeat it for AND.                |
 | `all`               | With filters: every reserved row that matches. Without filters: every reserved row of the table. |
 
 Put a name or a value with spaces in double quotes: `"Operator ID"=2502`, `Assignment="QA 1"`. The command supports

@@ -7,7 +7,7 @@ argument-hint: "table=<title> where Column=value ... set Column=value ... [all] 
 
 # /tdm-update
 
-A command front end for [tdm-update-test-data](../tdm-update-test-data/SKILL.md). It reads the user's arguments
+A command frontend for [tdm-update-test-data](../tdm-update-test-data/SKILL.md). It reads the user's arguments
 literally and sends the update that skill describes; the request shape stays there. For an ordinary request in plain
 language ("change the commission of agent A007"), follow tdm-update-test-data directly instead.
 

@@ -7,7 +7,7 @@ argument-hint: "test=<name> | scope=<name> [env=<environment>] [branch=<branch>]
 
 # /tdm-generate
 
-A command front end for [tdm-generate-test-data](../tdm-generate-test-data/SKILL.md). It reads the user's arguments
+A command frontend for [tdm-generate-test-data](../tdm-generate-test-data/SKILL.md). It reads the user's arguments
 literally and runs the script that skill describes; the confirmation, the way of waiting, and the handling of the
 result stay there. For an ordinary request in plain language ("generate domestic customers"), follow
 tdm-generate-test-data directly instead.

@@ -7,7 +7,7 @@ argument-hint: "table=<title> file=<path> | query=<SELECT> [timeout=<s>] [new] |
 
 # /tdm-load
 
-A command front end for [tdm-import-test-data](../tdm-import-test-data/SKILL.md). It reads the user's arguments
+A command frontend for [tdm-import-test-data](../tdm-import-test-data/SKILL.md). It reads the user's arguments
 literally and sends the import that skill describes; the request shapes and the response fields stay there. For an
 ordinary request in plain language ("load this Excel file into Orders"), follow tdm-import-test-data directly instead.
 
@@ -18,13 +18,13 @@ ordinary request in plain language ("load this Excel file into Orders"), follow 
 /tdm-load table=<title> query=<SELECT statement> [timeout=<seconds>] [new]
 ```
 
-| Argument            | Meaning                                                                                       |
-|---------------------|-----------------------------------------------------------------------------------------------|
-| `table=<title>`     | The table to load into. Required.                                                             |
-| `file=<path>`       | An `.xlsx` file to load. Give `file=` or `query=`, not both.                                  |
+| Argument            | Meaning                                                                                        |
+|---------------------|------------------------------------------------------------------------------------------------|
+| `table=<title>`     | The table to load into. Required.                                                              |
+| `file=<path>`       | An `.xlsx` file to load. Give `file=` or `query=`, not both.                                   |
 | `query=<statement>` | A `SELECT` statement run on the current system's database. Give `file=` or `query=`, not both. |
-| `timeout=<seconds>` | The query timeout. The default is 1800.                                                       |
-| `new`               | The table must not exist yet. If it does, load nothing.                                       |
+| `timeout=<seconds>` | The query timeout. The default is 1800.                                                        |
+| `new`               | The table must not exist yet. If it does, load nothing.                                        |
 
 Put a path or a statement in double quotes when it contains spaces: `file="C:\data\my file.xlsx"`.
 

@@ -7,7 +7,7 @@ argument-hint: "table=<title> [return=<cols>] [Column=value ...] [occupied] | he
 
 # /tdm-find
 
-A command front end for the paged read of [tdm-browse-test-data-table](../tdm-browse-test-data-table/SKILL.md). It
+A command frontend for the paged read of [tdm-browse-test-data-table](../tdm-browse-test-data-table/SKILL.md). It
 reads the user's arguments literally and shows the matching rows; the request shape and the way to read its grid
 response stay in that skill. For an ordinary request in plain language ("find a SIM card with status 54"), follow
 [tdm-find-test-data](../tdm-find-test-data/SKILL.md) directly instead. This command never reserves or changes a row.

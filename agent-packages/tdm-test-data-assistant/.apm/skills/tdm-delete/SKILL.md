@@ -7,7 +7,7 @@ argument-hint: "table=<title> Column=value ... [all] | help"
 
 # /tdm-delete
 
-A command front end for the delete-by-ID part of
+A command frontend for the delete-by-ID part of
 [tdm-occupy-test-data-rows-by-id](../tdm-occupy-test-data-rows-by-id/SKILL.md). It reads the user's arguments
 literally, finds the matching rows, and deletes them after a confirmation. A deletion is permanent. For an ordinary
 request in plain language, follow that skill directly instead.
