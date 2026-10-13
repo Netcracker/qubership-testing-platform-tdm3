@@ -244,8 +244,8 @@ pipeline, in the same config file:
 | `GENERATE_VARIABLES_FILE` | The JSON file with the pipeline variables, as a path relative to the project folder or an absolute path. |
 | `GITLAB_TOKEN_ENV`        | Optional. The name of the environment variable that holds the token. The default is `GITLAB_TOKEN`.      |
 
-The variables file has one `variables` object. The skill replaces the variables the user names and sends the rest as
-written:
+The variables file has one `variables` object. The skill replaces the variables that the user's request gives
+and sends the rest as written:
 
 ```json
 {

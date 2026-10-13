@@ -3,6 +3,10 @@ description: Handle invisible characters in values, read non-ASCII responses wit
 applyTo: "**/*"
 ---
 
+# Test Data Assistant rules
+
+## Invisible characters
+
 When a value taken from the user's text for a TDM3 request (a filter value, a table or column name, a row value)
 contains a TAB, a line break, a non-breaking space, or another invisible character, name that character in the reply
 and keep it in the value. Ordinary spaces are not meant here: padded `CHAR` values legitimately end with them.
