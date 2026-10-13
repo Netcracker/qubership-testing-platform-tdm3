@@ -21,7 +21,6 @@ Success:
 Other error codes: column_not_found, filter_required, bad_argument.
 """
 
-import argparse
 import getpass
 import importlib
 import socket
@@ -56,15 +55,7 @@ def occupied_by():
 def entry(filters, response_column):
     """Return one occupy-row-requests entry."""
     return {
-        "search-row-parameters-set": [
-            {
-                "name-column": c,
-                "search-criterion": "Equals",
-                "search-value": v,
-                "caseSensitive": False,
-            }
-            for c, v in filters
-        ],
+        "search-row-parameters-set": tdm.search_parameters(filters, False),
         "name-column-response": response_column,
     }
 
@@ -74,30 +65,26 @@ def occupy(config, table_title, user, entries):
     body = tdm.addressing(config, table_title)
     body["occupy-row-requests"] = entries
     return tdm.call(
-        config, "/api/tdm/rest/occupy-records", query={"occupiedBy": user}, body=body
+        config,
+        "/api/tdm/rest/occupy-records",
+        query={"occupiedBy": user},
+        body=body,
     )
 
 
 def parse_arguments():
     """Return the parsed command line."""
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--table", required=True, help="table title")
+    parser = tdm.new_parser(__doc__)
+    tdm.add_table(parser)
     parser.add_argument(
         "--return",
         dest="ret",
         required=True,
         help="column whose value identifies a reserved row",
     )
-    parser.add_argument(
-        "--filter",
-        action="append",
-        default=[],
-        help="Column=value; repeat to combine with AND",
-    )
-    parser.add_argument(
-        "--all", action="store_true", help="reserve every available row that matches"
-    )
-    parser.add_argument("--any", action="store_true", help="allow an empty filter")
+    tdm.add_pairs(parser, "--filter", "Column=value; repeat to combine with AND")
+    tdm.add_switch(parser, "--all", "reserve every available row that matches")
+    tdm.add_switch(parser, "--any", "allow an empty filter")
     return parser.parse_args()
 
 
@@ -148,7 +135,7 @@ def main():
     if wanted:
         entries = [entry(filters, args.ret)] * wanted
         reserved, errors, exhausted = collect(
-            occupy(config, table["name"], user, entries)
+            occupy(config, table["name"], user, entries),
         )
 
     tdm.succeed(

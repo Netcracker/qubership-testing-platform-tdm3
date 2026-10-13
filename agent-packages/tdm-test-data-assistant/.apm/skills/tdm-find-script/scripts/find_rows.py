@@ -16,7 +16,6 @@ Other error codes: column_not_found (with "columns" and, when one column differs
 only in case, "suggestion"), bad_argument.
 """
 
-import argparse
 import importlib
 import sys
 from pathlib import Path
@@ -31,24 +30,15 @@ FIRST_COLUMNS = ["OCCUPIED_BY", "OCCUPIED_DATE"]
 
 def parse_arguments():
     """Return the parsed command line."""
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--table", required=True, help="table title")
+    parser = tdm.new_parser(__doc__)
+    tdm.add_table(parser)
     parser.add_argument(
         "--return",
         dest="ret",
         help="comma-separated columns to show; default: every column",
     )
-    parser.add_argument(
-        "--filter",
-        action="append",
-        default=[],
-        help="Column=value; repeat to combine with AND",
-    )
-    parser.add_argument(
-        "--occupied",
-        action="store_true",
-        help="read the occupied rows instead of the available ones",
-    )
+    tdm.add_pairs(parser, "--filter", "Column=value; repeat to combine with AND")
+    tdm.add_switch(parser, "--occupied", "read the occupied rows, not the free ones")
     return parser.parse_args()
 
 

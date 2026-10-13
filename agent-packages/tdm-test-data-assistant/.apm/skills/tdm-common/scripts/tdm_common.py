@@ -9,9 +9,10 @@ Every script prints exactly one JSON object on stdout, always UTF-8, and exits w
 0 on success and 1 on any error. An error is
 {"ok": false, "error": "<code>", "message": "<text>", ...}. The codes this module
 raises are config_missing, config_incomplete, server_unreachable, http_error,
-table_not_found, and column_not_found. Python 3.8+, standard library only.
+table_not_found, and column_not_found. Python 3.9+, standard library only.
 """
 
+import argparse
 import json
 import sys
 import unicodedata
@@ -72,8 +73,7 @@ def load_config(required=("TDM3_BASE_URL", "PROJECT_ID", "SYSTEM_ID_DEFAULT")):
     if path is None:
         fail(
             "config_missing",
-            "No .tdm-assistant/config.json found. "
-            "Select the project, environment and system first.",
+            "No .tdm-assistant/config.json found. Select the context first.",
         )
     try:
         config = json.loads(path.read_text(encoding="utf-8"))
@@ -157,6 +157,15 @@ def addressing(config, table_title):
     }
 
 
+def equals_filter(column, value):
+    """Return the paged-read filter that matches a column to a value exactly."""
+    return {
+        "name-column": column,
+        "search-criterion": "Equals",
+        "search-values": [value],
+    }
+
+
 def read_page(config, table_id, occupied, filters, limit):
     """Read one page of the table with Equals filters, given as (column, value)."""
     body = {
@@ -164,10 +173,7 @@ def read_page(config, table_id, occupied, filters, limit):
         "offset": 0,
         "limit": limit,
         "occupied": occupied,
-        "filters": [
-            {"name-column": c, "search-criterion": "Equals", "search-values": [v]}
-            for c, v in filters
-        ],
+        "filters": [equals_filter(c, v) for c, v in filters],
     }
     return call(config, "/api/tdm/table", body=body)
 
@@ -188,8 +194,7 @@ def check_column(name, header, what):
         extra["suggestion"] = lower[0]
     fail(
         "column_not_found",
-        f"The table has no column '{name}' ({what}). "
-        "Column names are case-sensitive.",
+        f"The table has no column '{name}' ({what}). Column names are case-sensitive.",
         **extra,
     )
 
@@ -205,6 +210,39 @@ def parse_filters(items):
     return filters
 
 
+def new_parser(doc):
+    """Return an argument parser described by the first line of doc."""
+    return argparse.ArgumentParser(description=doc.splitlines()[0])
+
+
+def add_table(parser):
+    """Add the required --table argument."""
+    parser.add_argument("--table", required=True, help="table title")
+
+
+def add_pairs(parser, flag, help_text, dest=None):
+    """Add a repeatable argument whose values are Column=value pairs."""
+    parser.add_argument(flag, dest=dest, action="append", default=[], help=help_text)
+
+
+def add_switch(parser, flag, help_text):
+    """Add an argument that is true when given."""
+    parser.add_argument(flag, action="store_true", help=help_text)
+
+
+def search_parameters(pairs, case_sensitive):
+    """Return the search-row-parameters-set for Equals conditions on (column, value)."""
+    return [
+        {
+            "name-column": column,
+            "search-criterion": "Equals",
+            "search-value": value,
+            "caseSensitive": case_sensitive,
+        }
+        for column, value in pairs
+    ]
+
+
 def invisible_names(value):
     """Return the names of the invisible characters in value (not plain spaces)."""
     names = []
@@ -213,7 +251,8 @@ def invisible_names(value):
             continue
         if char.isspace() or unicodedata.category(char) in ("Cf", "Zs", "Zl", "Zp"):
             name = CONTROL_NAMES.get(char) or unicodedata.name(
-                char, f"U+{ord(char):04X}"
+                char,
+                f"U+{ord(char):04X}",
             )
             if name not in names:
                 names.append(name)
@@ -226,10 +265,9 @@ def invisible_warnings(pairs):
     for column, value in pairs:
         names = invisible_names(value)
         if names:
-            warnings.append(
-                f"The value of '{column}' contains: {', '.join(names)}. "
-                "It was sent as typed."
-            )
+            listed = ", ".join(names)
+            note = f"The value of '{column}' contains: {listed}. It was sent as typed."
+            warnings.append(note)
     return warnings
 
 

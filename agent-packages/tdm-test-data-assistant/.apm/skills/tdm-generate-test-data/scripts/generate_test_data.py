@@ -35,10 +35,9 @@ With --yes, when the pipeline ends:
 Error codes: config_missing, config_incomplete, bad_argument,
 invalid_variables (with "problems"), token_missing, http_error (with "status"),
 server_unreachable, timeout (with "pipeline"; the pipeline keeps running),
-poll_failed (with "pipeline"). Python 3.8+, standard library only.
+poll_failed (with "pipeline"). Python 3.9+, standard library only.
 """
 
-import argparse
 import importlib
 import json
 import os
@@ -123,7 +122,8 @@ def gitlab(config, token, method, path, body=None):
         ) from exc
     except ValueError as exc:
         raise GitLabError(
-            "http_error", f"The GitLab response is not JSON: {exc}"
+            "http_error",
+            f"The GitLab response is not JSON: {exc}",
         ) from exc
 
 
@@ -144,7 +144,8 @@ def read_variables(config):
         return {str(k): as_text(v) for k, v in variables.items()}
     except (OSError, ValueError, KeyError, AttributeError) as exc:
         return tdm.fail(
-            "config_incomplete", f"Cannot read the variables from {path}: {exc!r}"
+            "config_incomplete",
+            f"Cannot read the variables from {path}: {exc!r}",
         )
 
 
@@ -158,7 +159,7 @@ def check_variables(variables):
                 variables[name] = lowered
             else:
                 problems.append(
-                    f"'{name}' must be true or false, not '{variables[name]}'"
+                    f"'{name}' must be true or false, not '{variables[name]}'",
                 )
     for name in NOT_EMPTY:
         if not variables.get(name, "").strip():
@@ -191,29 +192,24 @@ def failed_jobs(config, token, pipeline_id):
         jobs = gitlab(config, token, "GET", path)
     except GitLabError:
         return []
-    return [
-        {"name": j.get("name"), "stage": j.get("stage"), "web_url": j.get("web_url")}
-        for j in jobs
-    ]
+    fields = ("name", "stage", "web_url")
+    return [{field: job.get(field) for field in fields} for job in jobs]
 
 
 def parse_arguments():
     """Return the parsed command line."""
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "--set",
-        dest="sets",
-        action="append",
-        default=[],
-        help="VARIABLE=value; repeat for more",
-    )
-    parser.add_argument(
+    parser = tdm.new_parser(__doc__)
+    tdm.add_pairs(parser, "--set", "VARIABLE=value; repeat for more", dest="sets")
+    tdm.add_switch(
+        parser,
         "--yes",
-        action="store_true",
-        help="start the pipeline; without it only the variables are shown",
+        "start the pipeline; without it only show the variables",
     )
     parser.add_argument(
-        "--interval", type=float, default=30, help="seconds between two status requests"
+        "--interval",
+        type=float,
+        default=30,
+        help="seconds between two status requests",
     )
     parser.add_argument(
         "--timeout",
@@ -249,8 +245,7 @@ def poll_status(config, token, pipeline, variables, args):
         if waited >= args.timeout:
             tdm.fail(
                 "timeout",
-                f"The pipeline did not end within {int(args.timeout)} seconds. "
-                "It keeps running.",
+                f"The pipeline did not end in {int(args.timeout)} s. It keeps running.",
                 pipeline=pipeline,
                 variables=variables,
             )
@@ -261,10 +256,8 @@ def poll_status(config, token, pipeline, variables, args):
             failures = 0
         except GitLabError as exc:
             failures += 1
-            progress(
-                f"Status request failed ({exc.message}); "
-                f"attempt {failures} of {POLL_FAILURES_ALLOWED}"
-            )
+            note = f"Status request failed ({exc.message}), attempt {failures}"
+            progress(note)
             if failures >= POLL_FAILURES_ALLOWED:
                 tdm.fail(
                     "poll_failed",
@@ -272,10 +265,8 @@ def poll_status(config, token, pipeline, variables, args):
                     pipeline=pipeline,
                     variables=variables,
                 )
-        progress(
-            f"Pipeline {pipeline['id']}: {pipeline['status']} "
-            f"after {int(time.monotonic() - started)} s"
-        )
+        elapsed = int(time.monotonic() - started)
+        progress(f"Pipeline {pipeline['id']}: {pipeline['status']} after {elapsed} s")
     return int(time.monotonic() - started)
 
 

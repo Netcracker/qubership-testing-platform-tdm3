@@ -27,7 +27,6 @@ Other error codes: column_not_found, multiple_matches, invisible_characters,
 rejected, bad_argument.
 """
 
-import argparse
 import importlib
 import re
 import sys
@@ -40,29 +39,12 @@ tdm = importlib.import_module("tdm_common")
 
 def parse_arguments():
     """Return the parsed command line."""
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--table", required=True, help="table title")
-    parser.add_argument(
-        "--where",
-        action="append",
-        default=[],
-        help="Column=value; repeat to combine with AND",
-    )
-    parser.add_argument(
-        "--set",
-        dest="sets",
-        action="append",
-        default=[],
-        help="Column=value to write",
-    )
-    parser.add_argument(
-        "--all", action="store_true", help="allow more than one row to change"
-    )
-    parser.add_argument(
-        "--confirm-invisible",
-        action="store_true",
-        help="values with invisible characters are confirmed",
-    )
+    parser = tdm.new_parser(__doc__)
+    tdm.add_table(parser)
+    tdm.add_pairs(parser, "--where", "Column=value; repeat to combine with AND")
+    tdm.add_pairs(parser, "--set", "Column=value to write", dest="sets")
+    tdm.add_switch(parser, "--all", "allow more than one row to change")
+    tdm.add_switch(parser, "--confirm-invisible", "invisible characters are confirmed")
     return parser.parse_args()
 
 
@@ -78,15 +60,7 @@ def send_update(config, table, where, sets):
     body = tdm.addressing(config, table["name"])
     body["update-row-requests"] = [
         {
-            "search-row-parameters-set": [
-                {
-                    "name-column": c,
-                    "search-criterion": "Equals",
-                    "search-value": v,
-                    "caseSensitive": True,
-                }
-                for c, v in where
-            ],
+            "search-row-parameters-set": tdm.search_parameters(where, True),
             "record-with-data-for-update": dict(sets),
         }
     ]
@@ -132,8 +106,7 @@ def main():
     if matched > 1 and not args.all:
         tdm.fail(
             "multiple_matches",
-            f"{matched} rows match. Nothing was changed. "
-            "Narrow --where or add --all.",
+            f"{matched} rows match. Nothing was changed. Narrow --where or add --all.",
             matched=matched,
             matched_reserved=reserved,
         )

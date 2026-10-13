@@ -21,7 +21,6 @@ Other error codes: table_not_found, table_exists, column_not_found,
 invisible_characters, rejected, bad_argument.
 """
 
-import argparse
 import importlib
 import sys
 from pathlib import Path
@@ -33,22 +32,11 @@ tdm = importlib.import_module("tdm_common")
 
 def parse_arguments():
     """Return the parsed command line."""
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--table", required=True, help="table title")
-    parser.add_argument(
-        "--value",
-        action="append",
-        default=[],
-        help="Column=value; repeat for more columns",
-    )
-    parser.add_argument(
-        "--new", action="store_true", help="create the table when it does not exist"
-    )
-    parser.add_argument(
-        "--confirm-invisible",
-        action="store_true",
-        help="values with invisible characters are confirmed",
-    )
+    parser = tdm.new_parser(__doc__)
+    tdm.add_table(parser)
+    tdm.add_pairs(parser, "--value", "Column=value; repeat for more columns")
+    tdm.add_switch(parser, "--new", "create the table when it does not exist")
+    tdm.add_switch(parser, "--confirm-invisible", "invisible characters are confirmed")
     return parser.parse_args()
 
 
@@ -67,8 +55,7 @@ def main():
     if table is None and not args.new:
         tdm.fail(
             "table_not_found",
-            f"The current system has no table '{args.table}'. "
-            "Pass --new to create it.",
+            f"The current system has no table '{args.table}'. Pass --new to create it.",
             tables=tdm.list_of_tables(catalog),
         )
     if table is not None and args.new:
@@ -89,11 +76,9 @@ def main():
     response = tdm.call(config, "/api/tdm/rest/insert-records", body=body)
     if response.get("type") != "SUCCESS":
         tdm.fail("rejected", response.get("content") or "TDM3 refused the insert.")
-    table = (
-        table
-        or tdm.lookup_table(config, args.table)[0]
-        or {"name": args.table, "id": None}
-    )
+    if table is None:
+        table = tdm.lookup_table(config, args.table)[0]
+    table = table or {"name": args.table, "id": None}
     tdm.succeed(
         table=table,
         created=args.new,

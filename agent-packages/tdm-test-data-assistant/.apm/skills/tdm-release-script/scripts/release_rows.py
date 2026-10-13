@@ -27,7 +27,6 @@ Other error codes: column_not_found, filter_required, multiple_matches,
 bad_argument.
 """
 
-import argparse
 import importlib
 import sys
 from pathlib import Path
@@ -43,25 +42,12 @@ MANY_PREFIX = "More than one value"
 
 def parse_arguments():
     """Return the parsed command line."""
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--table", required=True, help="table title")
+    parser = tdm.new_parser(__doc__)
+    tdm.add_table(parser)
     parser.add_argument("--return", dest="ret", help="column that identifies a row")
-    parser.add_argument(
-        "--filter",
-        action="append",
-        default=[],
-        help="Column=value; repeat to combine with AND",
-    )
-    parser.add_argument(
-        "--all",
-        action="store_true",
-        help="release every reserved row that matches the filters",
-    )
-    parser.add_argument(
-        "--whole-table",
-        action="store_true",
-        help="release every reserved row of the table",
-    )
+    tdm.add_pairs(parser, "--filter", "Column=value; repeat to combine with AND")
+    tdm.add_switch(parser, "--all", "release every reserved row that matches")
+    tdm.add_switch(parser, "--whole-table", "release every reserved row of the table")
     return parser.parse_args()
 
 
@@ -70,7 +56,8 @@ def check_arguments(args, filters):
     if args.whole_table:
         if filters or args.all or args.ret:
             tdm.fail(
-                "bad_argument", "--whole-table takes no filters, --all, or --return."
+                "bad_argument",
+                "--whole-table takes no filters, --all, or --return.",
             )
         return
     if not filters:
@@ -90,9 +77,8 @@ def release_whole_table(config, table, base):
         body=tdm.addressing(config, table["name"]),
     )
     errors = [r.get("content") for r in responses if r.get("type") != "SUCCESS"]
-    message = next(
-        (r.get("content") for r in responses if r.get("type") == "SUCCESS"), None
-    )
+    answers = [r.get("content") for r in responses if r.get("type") == "SUCCESS"]
+    message = answers[0] if answers else None
     tdm.succeed(
         **base,
         mode="whole-table",
@@ -110,15 +96,7 @@ def release_one(config, table, args, filters):
     body = tdm.addressing(config, table["name"])
     body["release-row-requests"] = [
         {
-            "search-row-parameters-set": [
-                {
-                    "name-column": c,
-                    "search-criterion": "Equals",
-                    "search-value": v,
-                    "caseSensitive": True,
-                }
-                for c, v in filters
-            ],
+            "search-row-parameters-set": tdm.search_parameters(filters, True),
             "name-column-response": args.ret,
         }
     ]
@@ -130,8 +108,7 @@ def release_one(config, table, args, filters):
         elif isinstance(content, str) and content.startswith(MANY_PREFIX):
             tdm.fail(
                 "multiple_matches",
-                "More than one reserved row matches. Nothing was released. "
-                "Narrow the filters or use --all.",
+                "Several reserved rows match. Nothing was released. Use --all or narrow.",
             )
         elif isinstance(content, str) and content.startswith(NO_DATA_PREFIX):
             no_row = True

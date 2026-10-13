@@ -11,7 +11,7 @@ reply is checked by hand.
   python tests/selftest.py [--allow-remote]
 
 The run refuses a TDM3 server that is not on localhost, unless --allow-remote is
-given. The exit code is 0 when every check passes and 1 otherwise. Python 3.8+,
+given. The exit code is 0 when every check passes and 1 otherwise. Python 3.9+,
 standard library only.
 """
 
@@ -28,7 +28,6 @@ import urllib.parse
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import List, Tuple
 
 sys.dont_write_bytecode = True  # keep __pycache__ out of the repository
 
@@ -60,7 +59,7 @@ PIPELINE_VARIABLES = {
     "SEND_WEBEX_NOTIFICATION": "true",
 }
 
-results: List[Tuple[str, bool]] = []
+results: list[tuple[str, bool]] = []
 
 
 def script(name):
@@ -72,7 +71,9 @@ def script(name):
 def run(name, *args):
     """Run a script and return (exit code, decoded JSON or None)."""
     done = subprocess.run(
-        [sys.executable, script(name), *args], capture_output=True, check=False
+        [sys.executable, script(name), *args],
+        capture_output=True,
+        check=False,
     )
     try:
         return done.returncode, json.loads(done.stdout.decode("utf-8"))
@@ -223,15 +224,12 @@ def find_scenarios(base, table):
         records(table, "--filter", "code=p1") == 0,
     )
     status, out = run("find", *base, "--return", "note,code", "--filter", "code=P1")
+    good = status == 0 and out["columns"] == ["note", "code"]
+    good = good and out["rows"][0]["values"] == ["first", "P1"]
+    check("find returns the columns asked for, in order", good, shorten(out))
     check(
-        "find returns the columns asked for, in order",
-        status == 0
-        and out["columns"] == ["note", "code"]
-        and out["rows"][0]["values"] == ["first", "P1"],
-        shorten(out),
-    )
-    check(
-        "find returns the row id", status == 0 and len(out["rows"][0]["row_id"]) == 36
+        "find returns the row id",
+        status == 0 and len(out["rows"][0]["row_id"]) == 36,
     )
     out = expect_error(
         "find with a wrong-case filter column",
@@ -296,7 +294,12 @@ def update_scenarios(base):
         "Note=x",
     )
     expect_error(
-        "update with no --where", "update", "bad_argument", *base, "--set", "note=x"
+        "update with no --where",
+        "update",
+        "bad_argument",
+        *base,
+        "--set",
+        "note=x",
     )
     expect_ok(
         "update one row",
@@ -613,7 +616,8 @@ class GenerateHarness:
     def __init__(self, folder, server):
         self.folder, self.server = folder, server
         (Path(folder) / "vars.json").write_text(
-            json.dumps({"variables": PIPELINE_VARIABLES}), encoding="utf-8"
+            json.dumps({"variables": PIPELINE_VARIABLES}),
+            encoding="utf-8",
         )
 
     def configure(self, gitlab_url):
@@ -658,7 +662,10 @@ class GenerateHarness:
         """Check the plan, the validation, and the missing token."""
         self.server.reset(["success"])
         status, out, _ = self.generate(
-            "--set", "EXECUTION_TYPE=test", "--set", "EXECUTION_NAME=Gen domestic"
+            "--set",
+            "EXECUTION_TYPE=test",
+            "--set",
+            "EXECUTION_NAME=Gen domestic",
         )
         check(
             "generate without --yes only shows the variables",
@@ -682,29 +689,23 @@ class GenerateHarness:
             status, out, _ = self.generate("--set", argument)
             self.error(f"generate rejects {label}", "invalid_variables", status, out)
         status, out, _ = self.generate("--yes", with_token=False)
-        check(
-            "generate --yes needs a token",
-            status == 1
-            and out
-            and out["error"] == "token_missing"
-            and not self.server.requests,
-        )
+        good = status == 1 and out and out["error"] == "token_missing"
+        check("generate --yes needs a token", good and not self.server.requests)
 
     def success_scenarios(self):
         """Check a pipeline that succeeds."""
         self.server.reset(["pending", "running", "success"])
         status, out, text = self.generate(
-            "--yes", "--interval", "0.05", "--set", "EXECUTION_NAME=Gen domestic"
+            "--yes",
+            "--interval",
+            "0.05",
+            "--set",
+            "EXECUTION_NAME=Gen domestic",
         )
         post = next((r for r in self.server.requests if r[0] == "POST"), None)
-        check(
-            "generate waits for the pipeline and reports success",
-            status == 0
-            and out["started"]
-            and out["succeeded"]
-            and out["pipeline"]["id"] == 42,
-            text[:300],
-        )
+        good = status == 0 and out["started"] and out["succeeded"]
+        good = good and out["pipeline"]["id"] == 42
+        check("generate waits for the pipeline and reports success", good, text[:300])
         sent = {"key": "EXECUTION_NAME", "value": "Gen domestic"}
         check(
             "generate sends the ref and the variables",
@@ -736,29 +737,21 @@ class GenerateHarness:
         )
         self.server.reset(["running"])
         status, out, _ = self.generate("--yes", "--interval", "0.1", "--timeout", "0.5")
-        check(
-            "generate reports a timeout and the pipeline",
-            status == 1
-            and out
-            and out["error"] == "timeout"
-            and out["pipeline"]["id"] == 42,
-            str(out),
-        )
+        good = status == 1 and out and out["error"] == "timeout"
+        good = good and out["pipeline"]["id"] == 42
+        check("generate reports a timeout and the pipeline", good, str(out))
         self.server.reset(["success"], post_status=401)
         status, out, text = self.generate("--yes")
-        check(
-            "generate reports HTTP 401 without the token",
-            status == 1
-            and out
-            and out["error"] == "http_error"
-            and out["status"] == 401
-            and GITLAB_TOKEN not in text,
-            text[:300],
-        )
+        good = status == 1 and out and out["error"] == "http_error"
+        good = good and out["status"] == 401 and GITLAB_TOKEN not in text
+        check("generate reports HTTP 401 without the token", good, text[:300])
         self.configure("http://127.0.0.1:1")
         status, out, _ = self.generate("--yes")
         self.error(
-            "generate reports an unreachable GitLab", "server_unreachable", status, out
+            "generate reports an unreachable GitLab",
+            "server_unreachable",
+            status,
+            out,
         )
 
 
@@ -789,18 +782,14 @@ def main():
     config = tdm.load_config(tdm.CONFIG_FULL)
     host = urllib.parse.urlparse(config["TDM3_BASE_URL"]).netloc.rsplit(":", 1)[0]
     if host not in LOCAL_HOSTS and not args.allow_remote:
-        print(
-            f"Refusing to run against {config['TDM3_BASE_URL']}: not localhost. "
-            "Pass --allow-remote to override."
-        )
+        url = config["TDM3_BASE_URL"]
+        print(f"Refusing {url}: not localhost. Pass --allow-remote to override.")
         return 1
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     table = PREFIX + stamp
-    print(
-        f"TDM3: {config['TDM3_BASE_URL']}  system: {config['SYSTEM_NAME_DEFAULT']}  "
-        f"table: {table}"
-    )
+    system = config["SYSTEM_NAME_DEFAULT"]
+    print(f"TDM3: {config['TDM3_BASE_URL']}  system: {system}  table: {table}")
     try:
         drop_selftest_tables(config)
         table_scenarios(table)
@@ -808,11 +797,8 @@ def main():
     finally:
         print("\n-- cleanup")
         drop_selftest_tables(config)
-        left = [
-            t
-            for t in tdm.list_of_tables(tdm.lookup_table(config, PREFIX)[1])
-            if t["name"].startswith(PREFIX)
-        ]
+        tables = tdm.list_of_tables(tdm.lookup_table(config, PREFIX)[1])
+        left = [t for t in tables if t["name"].startswith(PREFIX)]
         check("no selftest table is left", not left, str(left))
 
     failed = [label for label, ok in results if not ok]

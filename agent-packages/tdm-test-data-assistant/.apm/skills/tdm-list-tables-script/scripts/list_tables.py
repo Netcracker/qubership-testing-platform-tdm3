@@ -11,7 +11,6 @@ With --whole-project the catalog is not limited to the current system and
 "system" is absent.
 """
 
-import argparse
 import importlib
 import sys
 from pathlib import Path
@@ -23,12 +22,8 @@ tdm = importlib.import_module("tdm_common")
 
 def main():
     """Parse the arguments, request the catalog, and print the tables."""
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "--whole-project",
-        action="store_true",
-        help="list the tables of every system of the project, not only the current one",
-    )
+    parser = tdm.new_parser(__doc__)
+    tdm.add_switch(parser, "--whole-project", "list the tables of every system")
     args = parser.parse_args()
 
     required = ["TDM3_BASE_URL", "PROJECT_ID"]
