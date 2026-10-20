@@ -2,6 +2,10 @@
 name: tdm-list-tables-script
 description: Use only when the user types /tdm-list-tables-script. Pilot of a script-based variant of tdm-list-tables; lists the test data tables of the current TDM3 system by running a script.
 disable-model-invocation: true
+argument-hint: "[--whole-project]"
+metadata:
+  opencode/slash: "true"
+  opencode/autoinvoke: "false"
 ---
 
 # /tdm-list-tables-script

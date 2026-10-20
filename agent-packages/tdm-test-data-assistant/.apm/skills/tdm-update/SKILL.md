@@ -3,6 +3,9 @@ name: tdm-update
 description: Use only when the user types /tdm-update. Replaces column values on the rows of an explicit TDM3 table that match explicit where conditions.
 disable-model-invocation: true
 argument-hint: "table=<title> where Column=value ... set Column=value ... [all] | help"
+metadata:
+  opencode/slash: "true"
+  opencode/autoinvoke: "false"
 ---
 
 # /tdm-update

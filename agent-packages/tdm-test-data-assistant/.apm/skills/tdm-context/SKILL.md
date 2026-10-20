@@ -3,6 +3,9 @@ name: tdm-context
 description: Use only when the user types /tdm-context. Shows the current TDM3 project, environment, and system, or lists, verifies, and switches them from explicit arguments.
 disable-model-invocation: true
 argument-hint: "[project=<name>] [env=<name>] [system=<name>] | list projects|envs|systems | help"
+metadata:
+  opencode/slash: "true"
+  opencode/autoinvoke: "false"
 ---
 
 # /tdm-context

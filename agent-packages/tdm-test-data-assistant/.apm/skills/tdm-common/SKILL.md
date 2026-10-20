@@ -3,6 +3,8 @@ name: tdm-common
 description: Support files for the scripts of the other tdm skills. Not a task; never invoke it.
 user-invocable: false
 disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: "false"
 ---
 
 # tdm-common

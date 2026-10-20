@@ -3,6 +3,9 @@ name: tdm-generate
 description: Use only when the user types /tdm-generate. Starts the project's GitLab pipeline that generates test data, with an explicit test case or scope and environment, and waits until it ends.
 disable-model-invocation: true
 argument-hint: "test=<name> | scope=<name> [env=<environment>] [branch=<branch>] [VARIABLE=value ...] | help"
+metadata:
+  opencode/slash: "true"
+  opencode/autoinvoke: "false"
 ---
 
 # /tdm-generate

@@ -3,6 +3,9 @@ name: tdm-reserve-script
 description: Use only when the user types /tdm-reserve-script. Pilot of a script-based variant of /tdm-reserve; reserves rows of an explicit TDM3 table that match explicit Column=value filters by running a script.
 disable-model-invocation: true
 argument-hint: "table=<title> return=<col> [Column=value ...] [all] | help"
+metadata:
+  opencode/slash: "true"
+  opencode/autoinvoke: "false"
 ---
 
 # /tdm-reserve-script

@@ -3,6 +3,9 @@ name: tdm-tables
 description: Use only when the user types /tdm-tables. Lists the test data tables of the current TDM3 system with their database names.
 disable-model-invocation: true
 argument-hint: "(no arguments) | help"
+metadata:
+  opencode/slash: "true"
+  opencode/autoinvoke: "false"
 ---
 
 # /tdm-tables

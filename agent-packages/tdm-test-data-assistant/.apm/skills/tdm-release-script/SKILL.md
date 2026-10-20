@@ -3,6 +3,9 @@ name: tdm-release-script
 description: Use only when the user types /tdm-release-script. Pilot of a script-based variant of /tdm-release; releases reserved rows of an explicit TDM3 table by running a script.
 disable-model-invocation: true
 argument-hint: "table=<title> return=<col> Column=value ... [all] | table=<title> all | help"
+metadata:
+  opencode/slash: "true"
+  opencode/autoinvoke: "false"
 ---
 
 # /tdm-release-script

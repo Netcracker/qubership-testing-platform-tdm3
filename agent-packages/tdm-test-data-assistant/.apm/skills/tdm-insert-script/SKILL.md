@@ -3,6 +3,9 @@ name: tdm-insert-script
 description: Use only when the user types /tdm-insert-script. Pilot of a script-based variant of /tdm-insert; inserts one row into an existing TDM3 table, or creates the table with that row when new is given, by running a script.
 disable-model-invocation: true
 argument-hint: "table=<title> Column=value ... [new] | help"
+metadata:
+  opencode/slash: "true"
+  opencode/autoinvoke: "false"
 ---
 
 # /tdm-insert-script

@@ -3,6 +3,9 @@ name: tdm-release
 description: Use only when the user types /tdm-release. Releases reserved rows of an explicit TDM3 table that match explicit Column=value filters, or every reserved row of the table after a confirmation.
 disable-model-invocation: true
 argument-hint: "table=<title> return=<col> Column=value ... [all] | table=<title> all | help"
+metadata:
+  opencode/slash: "true"
+  opencode/autoinvoke: "false"
 ---
 
 # /tdm-release

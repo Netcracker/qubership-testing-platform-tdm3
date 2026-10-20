@@ -3,6 +3,9 @@ name: tdm-find
 description: Use only when the user types /tdm-find. Shows the rows of an explicit TDM3 table that match explicit Column=value filters, without reserving them.
 disable-model-invocation: true
 argument-hint: "table=<title> [return=<cols>] [Column=value ...] [occupied] | help"
+metadata:
+  opencode/slash: "true"
+  opencode/autoinvoke: "false"
 ---
 
 # /tdm-find

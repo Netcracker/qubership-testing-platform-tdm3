@@ -148,6 +148,11 @@ doesn't matter; the examples use one order: `table=`, `return=`, the `Column=val
 The slash menu shows a short argument hint next to each command. Each command also answers `help`, `--help`, `-h`,
 or `?` with its syntax and the table of its arguments, without sending any request to TDM3.
 
+OpenCode lists a skill as a slash command only when its frontmatter has `metadata` with `opencode/slash: "true"`,
+so each command carries it, together with `opencode/autoinvoke: "false"`, which keeps the agent from picking a
+command on its own. Claude Code ignores these keys. OpenCode shows no argument hint, so `help` is the way to see the
+arguments there.
+
 | Command                                              | Runs                                                                                    | Example                                                                      |
 |------------------------------------------------------|-----------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
 | [`/tdm-context`](.apm/skills/tdm-context/SKILL.md)   | [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md)                           | `/tdm-context system=PostgresDB`                                             |
