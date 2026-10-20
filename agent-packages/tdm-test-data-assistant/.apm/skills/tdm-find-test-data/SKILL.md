@@ -14,7 +14,7 @@ another test never matches — and neither endpoint reserves the row it finds.
 
 Run [tdm-select-context](../tdm-select-context/SKILL.md) first if `PROJECT_NAME`, `ENV_NAME_DEFAULT`, or
 `SYSTEM_NAME_DEFAULT` aren't resolved yet — this skill reads `TDM3_BASE_URL`, `projectName`, `envName`, and
-`systemName` from [the config file](../../../README.md#configuration) rather than resolving them itself. Beyond
+`systemName` from [the config file](../tdm-select-context/SKILL.md#the-config-file) rather than resolving them itself. Beyond
 that, collect:
 
 - `title-table` — the table title to search.

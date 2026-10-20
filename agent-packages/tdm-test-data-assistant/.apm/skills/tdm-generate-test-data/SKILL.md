@@ -67,7 +67,9 @@ the file holds can be set the same way, by its name.
     status, and say that this skill cannot stop it.
   - `http_error` or `server_unreachable`: GitLab refused or didn't answer. Show the message and the status. An
     HTTP 401 or 403 usually means the token is wrong or lacks the right to run pipelines.
-  - `config_missing` or `config_incomplete`: the GitLab settings are missing. See the `README` for the keys.
+  - `config_missing` or `config_incomplete`: the GitLab settings are missing. Tell the user to add `GITLAB_URL`,
+    `GITLAB_PROJECT_ID`, `GITLAB_REF` (the branch to run the pipeline from), and `GENERATE_VARIABLES_FILE` (the JSON
+    file with the pipeline variables) to `.tdm-assistant/config.json`. `GITLAB_TOKEN_ENV` is optional.
 
 ## Common pitfalls
 

@@ -21,7 +21,7 @@ earlier response returned them, reserve the rows by ID with
 Same context resolution as [tdm-find-test-data](../tdm-find-test-data/SKILL.md): run
 [tdm-select-context](../tdm-select-context/SKILL.md) first if `PROJECT_NAME`, `ENV_NAME_DEFAULT`, or
 `SYSTEM_NAME_DEFAULT` aren't resolved yet, and read them from
-[the config file](../../../README.md#configuration) rather than asking the user directly. Beyond that:
+[the config file](../tdm-select-context/SKILL.md#the-config-file) rather than asking the user directly. Beyond that:
 
 - `title-table` — the table to reserve or release rows in.
   Decide which table it is as described in [tdm-list-tables](../tdm-list-tables/SKILL.md#which-table-the-user-means).

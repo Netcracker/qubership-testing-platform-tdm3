@@ -44,4 +44,5 @@ resolve them in the order project, environment, system. A `list` call only lists
 - After a switch, print the resulting context in one line: `<project> → <environment> → <system>`. A level below the
   one that changed, and not named in the same call, is unset (see "Switching a level" in tdm-select-context): print it
   as unset and ask for it, or list it.
-- When `TDM3_BASE_URL` is not resolved, ask for it before anything else, as the package `README` says.
+- When `TDM3_BASE_URL` is not resolved, ask for it before anything else, as
+  [the config file](../tdm-select-context/SKILL.md#the-config-file) says.

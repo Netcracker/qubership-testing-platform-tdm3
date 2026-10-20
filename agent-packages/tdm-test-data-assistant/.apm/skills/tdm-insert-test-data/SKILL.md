@@ -13,7 +13,7 @@ inserts into it otherwise — there's no separate "create table" step.
 
 Run [tdm-select-context](../tdm-select-context/SKILL.md) first if `PROJECT_NAME`, `ENV_NAME_DEFAULT`, or
 `SYSTEM_NAME_DEFAULT` aren't resolved yet — read them from
-[the config file](../../../README.md#configuration) rather than asking the user directly. Beyond that:
+[the config file](../tdm-select-context/SKILL.md#the-config-file) rather than asking the user directly. Beyond that:
 
 - `title-table` — the table to insert into (or create).
   Decide which table it is as described in [tdm-list-tables](../tdm-list-tables/SKILL.md#which-table-the-user-means).

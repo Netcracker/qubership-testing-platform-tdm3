@@ -7,11 +7,39 @@ user-invocable: false
 # Select the TDM3 working context
 
 Resolves project, environment, and system, in that order — each step's list is scoped to the previous step's
-choice, so they can't be resolved independently. See [the package `README.md`](../../../README.md#configuration) for the
-config file's location and the full key list; this skill is what writes `PROJECT_ID`, `PROJECT_NAME`,
-`ENV_ID_DEFAULT`, `ENV_NAME_DEFAULT`, `SYSTEM_ID_DEFAULT`, and `SYSTEM_NAME_DEFAULT` into it.
+choice, so they can't be resolved independently. The config file is described below; this skill is what writes
+`PROJECT_ID`, `PROJECT_NAME`, `ENV_ID_DEFAULT`, `ENV_NAME_DEFAULT`, `SYSTEM_ID_DEFAULT`, and `SYSTEM_NAME_DEFAULT`
+into it.
 
-Resolve `TDM3_BASE_URL` first (see the `README.md`) — every request below is `GET <TDM3_BASE_URL>/api/tdm/...`.
+Resolve `TDM3_BASE_URL` first, as the next section says — every request below is
+`GET <TDM3_BASE_URL>/api/tdm/...`.
+
+## The config file
+
+Every skill of this package takes the TDM3 address, the project, the environment, and the system from one JSON file.
+This section is all an agent needs to find, read, and write it.
+
+**Read exactly two paths, in this order:** `.tdm-assistant/config.json` in the folder the session works in, then
+`.tdm-assistant/config.json` in the user's home folder, which holds a personal default for every repository. Don't
+search the disk for the file, don't list folders to find it, and don't open any other file whose name contains `tdm`:
+the answer is at one of these two paths, or the file does not exist yet.
+
+When neither file exists, the settings have not been saved yet. Ask the user for `TDM3_BASE_URL`, then resolve the
+project, the environment, and the system below, and save the result.
+
+**Resolution order for every setting:** a value in the user's current request wins, then the environment variable with
+the same name as the key, then the config file, then ask the user.
+
+| Key                                        | Meaning                                                              |
+|--------------------------------------------|----------------------------------------------------------------------|
+| `TDM3_BASE_URL`                            | Base URL of the running TDM3 service.                                |
+| `PROJECT_ID`, `PROJECT_NAME`               | The project in scope.                                                |
+| `ENV_ID_DEFAULT`, `ENV_NAME_DEFAULT`       | The environment in scope. Changeable at any time.                    |
+| `SYSTEM_ID_DEFAULT`, `SYSTEM_NAME_DEFAULT` | The system in scope, within that environment. Changeable at any time. |
+
+**Writing:** save the resolved values to `.tdm-assistant/config.json` in the session folder, creating the
+`.tdm-assistant` folder if needed, after the user confirms. Keep the other keys of the file as they are. Never put a
+password or a token in this file.
 
 ## How to show a list
 
