@@ -153,6 +153,11 @@ so each command carries it, together with `opencode/autoinvoke: "false"`, which 
 command on its own. Claude Code ignores these keys. OpenCode shows no argument hint, so `help` is the way to see the
 arguments there.
 
+Codex starts a skill when the user types `$` and its name, or picks it from `/skills`. Each command skill carries
+`agents/openai.yaml` with `policy.allow_implicit_invocation: false`, so Codex does not start a command from the
+wording of a request. Cursor starts a skill from `/` and honors `disable-model-invocation`, so the commands need
+nothing more there.
+
 | Command                                              | Runs                                                                                    | Example                                                                      |
 |------------------------------------------------------|-----------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
 | [`/tdm-context`](.apm/skills/tdm-context/SKILL.md)   | [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md)                           | `/tdm-context system=PostgresDB`                                             |
@@ -176,6 +181,9 @@ the character in its reply, and asks for confirmation before writing such a valu
 It also tells the agent how to read a response on Windows without corrupting non-ASCII text, such as a Cyrillic user
 name, and fixes the layout of the rows it shows: `OCCUPIED_BY` and `OCCUPIED_DATE` first, and column headers either
 always in TDM3's names or always in the user's language.
+
+For Codex and OpenCode, `apm install` does not put the instruction into the agent context. Run `apm compile` in the
+project, which writes it into `AGENTS.md`.
 
 ## Configuration
 
