@@ -62,6 +62,7 @@ public class DynamicSystem {
     @OneToMany(mappedBy = "system", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Fetch(FetchMode.SUBSELECT)
     @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private List<DynamicConnection> connections = new ArrayList<>();
 
     public DynamicSystem(DynamicEnvironment env, String systemName) {
