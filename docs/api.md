@@ -179,7 +179,10 @@ Fields can be sent as a flat JSON object or nested under an `environment` proper
 | `newSystemName`    | no                                     | PUT            | Rename the target system.                                                                      |
 | `systemDeleteName` | no                                     | DELETE         | When set, deletes only this system; otherwise deletes the whole environment.                   |
 
-\* `connections` is required on POST and PUT. `GET` ignores it.
+\* `connections` is required on POST and PUT, and it must hold at least one connection. `GET` ignores it. A `PUT` with
+no `connections` is rejected with `400` and the message `At least one connection is required in 'connections'.`, so a
+rename (`newEnvName` or `newSystemName`) cannot be sent on its own. Send it together with at least one connection; the
+connections in that request are upserted as well.
 
 **Connection object** (each item of `connections`):
 
@@ -278,7 +281,8 @@ curl -X PUT http://localhost:8080/api/tdm/rest/create-env \
   }'
 ```
 
-Rename environment (all systems in the environment are renamed):
+Rename environment (all systems in the environment are renamed). The request must carry at least one connection, which
+is upserted together with the rename:
 
 ```bash
 curl -X PUT http://localhost:8080/api/tdm/rest/create-env \
