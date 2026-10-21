@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -55,6 +56,11 @@ public class UsersOccupyStatisticUtils {
     private static final String ENVIRONMENT_FIELD = "catalog.environment_id";
     private static final String SYSTEM_FIELD = "stats.system_id";
     private static final String STATS_PREFIX = "stats.";
+    /**
+     * Characters an ORDER BY column may contain: a column name or a quoted date alias such as "2024-05-01".
+     * Without spaces, commas, or parentheses, the name cannot add anything to the ORDER BY clause.
+     */
+    private static final Pattern ORDER_COLUMN = Pattern.compile("[A-Za-z0-9_\"-]+");
     private static final String SUMM_TEMPLATE = " sum(case when occupied_date = '%s' "
             + " then amount else 0 end) AS \"%s\",";
 
@@ -231,12 +237,13 @@ public class UsersOccupyStatisticUtils {
      * @return String of tiler
      */
     public static String databaseFiltering(TestDataTableFilter filter, String field, String value) {
+        String escapedValue = TestDataUtils.escapeCharacters(value);
         switch (SearchConditionType.find(filter.getSearchCondition())) {
             case CONTAINS:
-                value = "'%" + value + "%'";
+                value = "'%" + escapedValue + "%'";
                 break;
             case START_WITH:
-                value = "'" + value + "%'";
+                value = "'" + escapedValue + "%'";
                 break;
             default:
                 return "";
@@ -285,10 +292,15 @@ public class UsersOccupyStatisticUtils {
      *
      * @param order Order type
      * @return String of order
+     * @throws IllegalArgumentException if the column name contains a character other than a letter, a digit,
+     *         {@code _}, {@code -}, or {@code "}
      */
     public static String setOrderForUsersStats(TestDataTableOrder order) {
         if (order == null) {
             order = new TestDataTableOrder("occupied_by", OrderType.ASC);
+        }
+        if (order.getColumnName() == null || !ORDER_COLUMN.matcher(order.getColumnName()).matches()) {
+            throw new IllegalArgumentException("Invalid sort column: " + order.getColumnName());
         }
         return String.format(ORDER_BY_TEMPLATE, order.getColumnName(), order.getOrderType(OrderType.ASC).toString());
     }

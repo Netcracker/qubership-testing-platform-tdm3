@@ -1,21 +1,28 @@
-kind: Ingress
+{{ if contains "legacy-ingress" .Values.GATEWAY_SYSTEM_TYPE }}
 apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
   name: '{{ .Values.SERVICE_NAME }}'
+  labels:
+    app: '{{ .Values.SERVICE_NAME }}'
   annotations:
     haproxy.router.openshift.io/timeout: 10h
+    {{- if contains "gateway-api-default" .Values.GATEWAY_SYSTEM_TYPE }}
+    gateway-api-converter.netcracker.com/ignore: "true"
+    {{- end }}
 spec:
   tls:
     - hosts:
-        - {{ include "atp3tdm.ingressHost" . }}
+        - '{{ include "atp3tdm.ingressHost" . }}'
   rules:
     - host: '{{ include "atp3tdm.ingressHost" . }}'
       http:
         paths:
           - path: /
-            pathType: "Prefix"
+            pathType: Prefix
             backend:
               service:
+                name: '{{ .Values.SERVICE_NAME }}'
                 port:
                   number: 8080
-                name: '{{ .Values.SERVICE_NAME }}'
+{{ end }} 

@@ -53,6 +53,7 @@ import org.qubership.atp.tdm.repo.TestDataTableRepository;
 import org.qubership.atp.tdm.service.ColumnService;
 import org.qubership.atp.tdm.service.DataRefreshService;
 import org.qubership.atp.tdm.service.TestDataFlagsService;
+import org.qubership.atp.tdm.service.TestDataService;
 import org.qubership.atp.tdm.service.impl.CleanupServiceImpl;
 import org.qubership.atp.tdm.utils.TestDataTableConvertor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,6 +77,7 @@ public class AtpActionRepositoryImpl implements AtpActionRepository {
     private final ColumnService columnService;
     private final DataRefreshService dataRefreshService;
     private final TestDataFlagsService testDataFlagsService;
+    private final TestDataService testDataService;
     private final CleanupServiceImpl cleanupService;
     private final LockManager lockManager;
 
@@ -89,6 +91,7 @@ public class AtpActionRepositoryImpl implements AtpActionRepository {
                                    @Nonnull ColumnService columnService,
                                    @Nonnull DataRefreshService dataRefreshService,
                                    @Nonnull TestDataFlagsService testDataFlagsService,
+                                   @Nonnull TestDataService testDataService,
                                    @Nonnull CleanupServiceImpl cleanupService,
                                    @Nonnull LockManager lockManager) {
         this.catalogRepository = catalogRepository;
@@ -97,6 +100,7 @@ public class AtpActionRepositoryImpl implements AtpActionRepository {
         this.columnService = columnService;
         this.dataRefreshService = dataRefreshService;
         this.testDataFlagsService = testDataFlagsService;
+        this.testDataService = testDataService;
         this.cleanupService = cleanupService;
         this.lockManager = lockManager;
     }
@@ -152,9 +156,8 @@ public class AtpActionRepositoryImpl implements AtpActionRepository {
                             UUID rowId = table.getData().stream()
                                     .map(r -> UUID.fromString(String.valueOf(r.get("ROW_ID"))))
                                     .findFirst().orElseThrow(() -> new TdmOccupyDataIncorrectlyException(tableTitle));
-                            testDataTableRepository.occupyTestData(tableDetails.getTableName(), occupiedBy,
+                            testDataService.occupyTestData(tableDetails.getTableName(), occupiedBy,
                                     Collections.singletonList(rowId));
-                            testDataTableRepository.updateLastUsage(tableDetails.getTableName());
                             String value = row.get().get(nameColumnResponse).toString();
                             responseMessages.add(new ResponseMessage(ResponseType.SUCCESS, value, finalResultLink));
                         } else {
@@ -217,9 +220,8 @@ public class AtpActionRepositoryImpl implements AtpActionRepository {
                             }
                         }
                         if (columnsExists) {
-                            testDataTableRepository.occupyTestData(tableDetails.getTableName(), occupiedBy,
+                            testDataService.occupyTestData(tableDetails.getTableName(), occupiedBy,
                                     Collections.singletonList(rowId));
-                            testDataTableRepository.updateLastUsage(tableDetails.getTableName());
                             try {
                                 responseMessages.add(new ResponseMessage(ResponseType.SUCCESS,
                                         new ObjectMapper().writeValueAsString(responseValues),

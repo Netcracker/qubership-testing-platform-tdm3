@@ -21,8 +21,17 @@ release commit, not by when they were written.
 - `@Schema` descriptions on every REST request and response model, and Javadoc on the backend service interfaces,
   the REST controllers, and the env-configurator module's public API.
 
+### Changed
+
+- **Breaking:** `POST /api/tdm/rest/occupy-records` and `POST /api/tdm/rest/occupy-records-full-row` require the
+  query parameter `occupiedBy`, the name of the user who occupies the rows, as `PUT /api/tdm/occupy` does. A request
+  without it now fails with HTTP 400. The rows were occupied by the fixed user `ATP_User`; they are now occupied by
+  `occupiedBy`.
+
 ### Fixed
 
+- Rows occupied through `occupy-records` and `occupy-records-full-row` were missing from the occupation statistics.
+  They are now recorded the way `PUT /api/tdm/occupy` records them.
 - Swagger UI and `/v3/api-docs` returned HTTP 500 instead of the API description, because the build pulled in a
   `springdoc-openapi-ui` release built for Spring Boot 2. Replaced it with the Spring Boot 3 release and committed
   the generated `docs/openapi.json`, checked on every build.
@@ -30,6 +39,9 @@ release commit, not by when they were written.
   as a `TestDataTableFilter`, the wrong type; it accepts `ApiDataFilter`.
 - The generated OpenAPI schema for `ResponseMessage.type` listed the enum values as lowercase `success`/`error`;
   the API actually returns uppercase `SUCCESS`/`ERROR`.
+- A username with an apostrophe, such as `O'Brien`, was stored in `OCCUPIED_BY` with the apostrophe doubled
+  (`O''Brien`) when rows were occupied through `PUT /api/tdm/occupy` or the `atp-action-controller` occupy
+  operations. The name is now stored as sent.
 
 ## [1.0.10] - 2026-09-07
 

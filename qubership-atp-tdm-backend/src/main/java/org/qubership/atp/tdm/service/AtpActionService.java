@@ -43,10 +43,11 @@ public interface AtpActionService {
 
     List<ResponseMessage> occupyTestData(@Nonnull String projectName, @Nullable String envName,
                                          @Nullable String systemName, @Nonnull String tableTitle,
-                                         List<OccupyRowRequest> occupyRowRequests);
+                                         @Nonnull String occupiedBy, List<OccupyRowRequest> occupyRowRequests);
 
     List<ResponseMessage> occupyTestDataFullRow(@Nonnull String projectName, @Nullable String envName,
                                                 @Nullable String systemName, @Nonnull String tableTitle,
+                                                @Nonnull String occupiedBy,
                                                 List<OccupyFullRowRequest> occupyFullRowRequests);
 
     List<ResponseMessage> releaseTestData(@Nonnull String projectName, @Nullable String envName,

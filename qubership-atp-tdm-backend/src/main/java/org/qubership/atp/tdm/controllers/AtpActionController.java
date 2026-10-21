@@ -26,9 +26,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Nonnull;
 
@@ -66,18 +68,23 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
 
     /**
      * For each of {@code request.occupyRowRequests}, occupies the first available row matching its search
-     * criteria and returns one column's value, as ATP_User.
+     * criteria, marks it as occupied by {@code occupiedBy}, records the occupation in the statistics, and
+     * returns one column's value.
      */
     @Operation(operationId = "atpOccupyTestData", summary = "Occupy rows and return one column",
             description = "For each request in occupy-row-requests, occupies the first available row that "
                     + "matches search-row-parameters-set and returns the value of name-column-response. "
-                    + "The row is marked as occupied by ATP_User.")
+                    + "The row is marked as occupied by the user in occupiedBy, and the occupation is recorded in "
+                    + "the statistics.")
     @AuditAction(auditAction = "ATP Action. Occupy test data to project {{#request.projectName}} "
             + "to table {{#request.titleTable}}")
     @PostMapping(value = "/occupy-records")
-    public List<ResponseMessage> occupyTestData(@RequestBody RestApiRequest request) {
+    public List<ResponseMessage> occupyTestData(
+            @Parameter(description = "Name of the user who occupies the rows.")
+            @RequestParam String occupiedBy,
+            @RequestBody RestApiRequest request) {
         return service.occupyTestData(request.getProjectName(), request.getEnvName(),
-                request.getSystemName(), request.getTitleTable(), request.getOccupyRowRequests());
+                request.getSystemName(), request.getTitleTable(), occupiedBy, request.getOccupyRowRequests());
     }
 
     /**
@@ -88,13 +95,17 @@ public class AtpActionController /* implements AtpActionControllerApi */ {
             description = "For each request in occupy-full-row-requests, occupies the first available row that "
                     + "matches search-row-parameters-set and returns the values of response-column-names as a "
                     + "JSON object. The row stays available when one of the columns does not exist. "
-                    + "The row is marked as occupied by ATP_User.")
+                    + "The row is marked as occupied by the user in occupiedBy, and the occupation is recorded in "
+                    + "the statistics.")
     @AuditAction(auditAction = "ATP Action. Occupy test data to project {{#request.projectName}} "
             + "to table {{#request.titleTable}}")
     @PostMapping(value = "/occupy-records-full-row")
-    public List<ResponseMessage> occupyTestDataFullRow(@RequestBody RestApiRequest request) {
+    public List<ResponseMessage> occupyTestDataFullRow(
+            @Parameter(description = "Name of the user who occupies the rows.")
+            @RequestParam String occupiedBy,
+            @RequestBody RestApiRequest request) {
         return service.occupyTestDataFullRow(request.getProjectName(), request.getEnvName(),
-                request.getSystemName(), request.getTitleTable(), request.getOccupyFullRowRequests());
+                request.getSystemName(), request.getTitleTable(), occupiedBy, request.getOccupyFullRowRequests());
     }
 
     /**

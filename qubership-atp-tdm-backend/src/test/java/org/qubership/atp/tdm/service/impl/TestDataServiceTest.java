@@ -41,6 +41,8 @@ import org.qubership.atp.tdm.model.table.TestDataTableFilter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.ParameterizedTest;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 
 import java.io.File;
@@ -303,6 +305,29 @@ public class TestDataServiceTest extends AbstractTestDataTest {
             Assertions.assertEquals(actualRowIds, rowIdsToOccupy);
         } catch (Exception e) {
             throw e;
+        } finally {
+            deleteTestDataTableIfExists(tableName);
+            catalogRepository.deleteByTableName(tableName);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"O'Brien", "Иван Петров", "a.b, c;d: \"e\" (f) [g] & h%_ +=#?/", "x'' OR ''1''=''1"})
+    public void testDataService_occupyTestData_occupiedByStoredUnchanged(String occupiedBy) {
+        String tableName = "tdm_test_occupied_by_stored_unchanged";
+        try {
+            createTestDataTable(tableName);
+            createTestDataTableCatalog(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+                    tableName, tableName);
+            TestDataTable table = testDataService.getTestData(tableName);
+            List<UUID> rowIdsToOccupy = extractRowIds(table.getData().subList(0, 2));
+
+            testDataService.occupyTestData(tableName, occupiedBy, rowIdsToOccupy);
+
+            table = testDataService.getTestData(tableName, null, null, new ArrayList<>(), null, true);
+            List<Object> actualOccupiedBy = new ArrayList<>();
+            table.getData().forEach(row -> actualOccupiedBy.add(row.get("OCCUPIED_BY")));
+            Assertions.assertEquals(Arrays.asList(occupiedBy, occupiedBy), actualOccupiedBy);
         } finally {
             deleteTestDataTableIfExists(tableName);
             catalogRepository.deleteByTableName(tableName);

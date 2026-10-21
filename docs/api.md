@@ -50,6 +50,9 @@ instead of or in addition to it; `link` carries a URL into the TDM UI, or an emp
 - The `atp-action-controller` operations that report per row, such as occupying or releasing rows, return one
   `ResponseMessage` per row request, with HTTP status 200 whether that row request succeeded or failed. A caller
   must read `type` field by field; the HTTP status alone does not say whether a row request succeeded.
+  The two occupy operations, `/occupy-records` and `/occupy-records-full-row`, also take a required `occupiedBy`
+  query parameter, the name of the user who occupies the rows, as `/occupy` does. They record each occupation in the
+  statistics under that name.
 - The [Dynamic Environment API](#dynamic-environment-api) returns a `ResponseMessage` on success, and on some, but
   not all, of its failures; see [Failure responses](#failure-responses) there.
 

@@ -54,7 +54,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class AtpActionServiceImpl implements AtpActionService {
 
-    private static final String OCCUPIED_BY_USER = "ATP_User";
     private static final Pattern TEMP_ENV_TIMESTAMP_PATTERN = Pattern.compile(" [0-9]{1,4}-[0-9]{1,2}-[0-9]{1,2}"
             + "T[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}.*");
 
@@ -107,25 +106,27 @@ public class AtpActionServiceImpl implements AtpActionService {
     @Override
     public List<ResponseMessage> occupyTestData(@Nonnull String projectName, @Nullable String envName,
                                                 @Nullable String systemName, @Nonnull String tableTitle,
+                                                @Nonnull String occupiedBy,
                                                 List<OccupyRowRequest> occupyRowRequests) {
         log.info("ATP Action. Occupation of test data. Table Title: {}", tableTitle);
         EnvironmentContext environmentContext = getEnvironmentContext(projectName, envName, systemName);
         String link = this.formResultLink(environmentContext.getProjectId(), environmentContext.getEnvId(),
                 environmentContext.getSystemId());
         return repository.occupyTestData(environmentContext.getProjectId(), environmentContext.getSystemId(),
-                tableTitle, OCCUPIED_BY_USER, occupyRowRequests, link);
+                tableTitle, occupiedBy, occupyRowRequests, link);
     }
 
     @Override
     public List<ResponseMessage> occupyTestDataFullRow(@Nonnull String projectName, @Nullable String envName,
                                                        @Nullable String systemName, @Nonnull String tableTitle,
+                                                       @Nonnull String occupiedBy,
                                                        List<OccupyFullRowRequest> occupyFullRowRequests) {
         log.info("ATP Action. Occupation of test data to return several rows. Table Title: {}", tableTitle);
         EnvironmentContext environmentContext = getEnvironmentContext(projectName, envName, systemName);
         String link = this.formResultLink(environmentContext.getProjectId(), environmentContext.getEnvId(),
                 environmentContext.getSystemId());
         return repository.occupyTestDataFullRow(environmentContext.getProjectId(), environmentContext.getSystemId(),
-                tableTitle, OCCUPIED_BY_USER, occupyFullRowRequests, link);
+                tableTitle, occupiedBy, occupyFullRowRequests, link);
     }
 
     @Override
