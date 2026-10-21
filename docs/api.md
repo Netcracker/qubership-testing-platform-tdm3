@@ -306,9 +306,17 @@ curl -X PUT http://localhost:8080/api/tdm/rest/create-env \
 
 #### 4. Get connections
 
-`GET` takes query parameters `projectName`, `envName`, and optionally `systemName`. When `systemName` is omitted, every system in the environment is returned. Values of
-parameters whose names look like secrets (`password`, `token`, `secret`, and names that contain those words, such as
-`db_password` or `apiToken`) are returned as `***`. The stored values are not changed.
+`GET` takes query parameters `projectName`, `envName`, and optionally `systemName`. When `systemName` is omitted,
+every system in the environment is returned.
+
+Values of parameters whose names look like secrets are returned as `***`. The stored values are not changed. A name
+is matched ignoring case and the separators `-`, `_`, `.`, and space, so `api-key`, `API_KEY`, and `apiKey` are the
+same name. A value is masked when the name:
+
+- contains `password`, `token`, `secret`, `credential`, `authentication`, `authorization`, `apikey`, or `privatekey`.
+  For example `db_password`, `apiToken`, `client_secret`, `credentials_json`, and `private-key`.
+- is `auth` or ends with `auth`, such as `basic_auth`. A name that only contains `auth` in the middle, such as
+  `author`, is not masked.
 
 ```bash
 curl -G http://localhost:8080/api/tdm/rest/create-env \
