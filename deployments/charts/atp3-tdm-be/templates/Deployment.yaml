@@ -6,6 +6,8 @@ metadata:
     app: '{{ .Values.SERVICE_NAME }}'
     name: '{{ .Values.SERVICE_NAME }}'
     servicetype: '{{ .Values.SERVICE_TYPE }}'
+    app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION }}'
 spec:
   strategy:
     type: Recreate
@@ -23,6 +25,8 @@ spec:
         app: '{{ .Values.SERVICE_NAME }}'
         deploymentconfig: '{{ .Values.SERVICE_NAME }}'
         servicetype: '{{ .Values.SERVICE_TYPE }}'
+        app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+        app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION }}'
     spec:
       securityContext:
         {{- include "tdmbe.securityContext.pod" . | nindent 8 }}
@@ -40,11 +44,11 @@ spec:
           imagePullPolicy: IfNotPresent
           resources:
             requests:
-              memory: '{{ .Values.MEMORY_REQUEST }}'
-              cpu: '{{ .Values.CPU_REQUEST }}'
+              memory: '{{ .Values.MEMORY_REQUEST | default "512Mi" }}'
+              cpu: '{{ .Values.CPU_REQUEST | default "50m" }}'
             limits:
-              memory: '{{ .Values.MEMORY_LIMIT }}'
-              cpu: '{{ .Values.CPU_LIMIT }}'
+              memory: '{{ .Values.MEMORY_LIMIT | default "1Gi" }}'
+              cpu: '{{ .Values.CPU_LIMIT | default "500m" }}'
           livenessProbe:
             httpGet:
               path: /rest/deployment/liveness
