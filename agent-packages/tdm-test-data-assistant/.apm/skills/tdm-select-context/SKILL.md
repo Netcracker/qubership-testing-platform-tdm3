@@ -30,11 +30,11 @@ project, the environment, and the system below, and save the result.
 **Resolution order for every setting:** a value in the user's current request wins, then the environment variable with
 the same name as the key, then the config file, then ask the user.
 
-| Key                                        | Meaning                                                              |
-|--------------------------------------------|----------------------------------------------------------------------|
-| `TDM3_BASE_URL`                            | Base URL of the running TDM3 service.                                |
-| `PROJECT_ID`, `PROJECT_NAME`               | The project in scope.                                                |
-| `ENV_ID_DEFAULT`, `ENV_NAME_DEFAULT`       | The environment in scope. Changeable at any time.                    |
+| Key                                        | Meaning                                                               |
+|--------------------------------------------|-----------------------------------------------------------------------|
+| `TDM3_BASE_URL`                            | Base URL of the running TDM3 service.                                 |
+| `PROJECT_ID`, `PROJECT_NAME`               | The project in scope.                                                 |
+| `ENV_ID_DEFAULT`, `ENV_NAME_DEFAULT`       | The environment in scope. Changeable at any time.                     |
 | `SYSTEM_ID_DEFAULT`, `SYSTEM_NAME_DEFAULT` | The system in scope, within that environment. Changeable at any time. |
 
 **Writing:** save the resolved values to `.tdm-assistant/config.json` in the session folder, creating the
