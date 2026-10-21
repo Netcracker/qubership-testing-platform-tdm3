@@ -57,4 +57,22 @@ class SensitiveParameterMaskTest {
         assertTrue(SensitiveParameterMask.isSensitive("api_key"));
         assertTrue(SensitiveParameterMask.isSensitive("client_secret"));
     }
+
+    @Test
+    void isSensitive_matchesAuthenticationCredentialAndPrivateKeyNames() {
+        String[] names = {"authentication", "Authentication", "auth", "basic_auth", "authorization",
+            "credential", "credentials_json", "private-key", "private_key", "privateKeyPem", "api-key",
+            "x-api-key", "apiKey"};
+        for (String name : names) {
+            assertTrue(SensitiveParameterMask.isSensitive(name), name);
+        }
+    }
+
+    @Test
+    void isSensitive_keepsNamesThatOnlyLookSimilar() {
+        String[] names = {"author", "host", "port", "url", "db_login", "keystore_path"};
+        for (String name : names) {
+            assertFalse(SensitiveParameterMask.isSensitive(name), name);
+        }
+    }
 }

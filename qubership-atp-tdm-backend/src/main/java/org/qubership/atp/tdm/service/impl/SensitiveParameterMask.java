@@ -17,9 +17,10 @@
 package org.qubership.atp.tdm.service.impl;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Masks secret connection-parameter values on public reads. Stored values are left unchanged.
@@ -28,20 +29,17 @@ public final class SensitiveParameterMask {
 
     public static final String MASK = "***";
 
-    private static final Set<String> SENSITIVE_KEYS = Set.of(
+    private static final List<String> SENSITIVE_FRAGMENTS = List.of(
             "password",
             "token",
             "secret",
-            "apikey",
-            "api_key",
-            "access_token",
-            "accesstoken",
-            "auth",
-            "authorization",
             "credential",
-            "credentials",
-            "private_key",
+            "authentication",
+            "authorization",
+            "apikey",
             "privatekey");
+
+    private static final Pattern SEPARATORS = Pattern.compile("[-_. ]");
 
     private SensitiveParameterMask() {
     }
@@ -62,17 +60,15 @@ public final class SensitiveParameterMask {
     }
 
     /**
-     * A key is sensitive when it is one of the known secret names, or when it contains
-     * {@code password}, {@code token}, or {@code secret}. Matching ignores case.
+     * A key is sensitive when, ignoring case and the separators {@code -}, {@code _}, {@code .} and space, it
+     * contains {@code password}, {@code token}, {@code secret}, {@code credential}, {@code authentication},
+     * {@code authorization}, {@code apikey} or {@code privatekey}, or when it is {@code auth} or ends with it.
      */
     public static boolean isSensitive(String key) {
         if (key == null) {
             return false;
         }
-        String normalized = key.toLowerCase(Locale.ROOT);
-        return SENSITIVE_KEYS.contains(normalized)
-                || normalized.contains("password")
-                || normalized.contains("token")
-                || normalized.contains("secret");
+        String normalized = SEPARATORS.matcher(key.toLowerCase(Locale.ROOT)).replaceAll("");
+        return normalized.endsWith("auth") || SENSITIVE_FRAGMENTS.stream().anyMatch(normalized::contains);
     }
 }
