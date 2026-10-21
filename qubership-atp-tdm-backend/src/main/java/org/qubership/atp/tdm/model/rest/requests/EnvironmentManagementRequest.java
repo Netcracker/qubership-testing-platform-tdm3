@@ -26,9 +26,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-@Schema(description = "Request body of every atp-env-controller operation (GET, POST, PUT, and DELETE "
-        + "/api/tdm/rest/create-env). Its fields can be sent flat, as shown here, or nested under an "
-        + "\"environment\" property; both are equivalent.")
+@Schema(description = "Request body of the atp-env-controller operations POST, PUT, and DELETE "
+        + "/api/tdm/rest/create-env; GET takes query parameters instead. Its fields can be sent flat, as shown "
+        + "here, or nested under an \"environment\" property; both are equivalent.")
 @Data
 public class EnvironmentManagementRequest {
 
@@ -45,8 +45,8 @@ public class EnvironmentManagementRequest {
     @Schema(description = "Read by DELETE: when set, only this system is deleted; otherwise the whole "
             + "environment is deleted.")
     private String systemDeleteName;
-    @Schema(description = "Connections for systemName (one DB and/or one HTTP). Required by POST and PUT. "
-            + "Ignored by GET.")
+    @Schema(description = "Connections for systemName (one DB and/or one HTTP). Read by POST and PUT, "
+            + "which require at least one.")
     private List<EnvironmentConnectionRequest> connections;
 
     @JsonProperty("environment")

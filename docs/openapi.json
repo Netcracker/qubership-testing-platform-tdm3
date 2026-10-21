@@ -3592,14 +3592,14 @@
             "description" : "Connection type. Only \"DB\" and \"HTTP\" are accepted, ignoring case. Stored as DB or HTTP."
           }
         },
-        "description" : "Connections for systemName (one DB and/or one HTTP). Required by POST and PUT. Ignored by GET."
+        "description" : "Connections for systemName (one DB and/or one HTTP). Read by POST and PUT, which require at least one."
       },
       "EnvironmentManagementRequest" : {
         "type" : "object",
         "properties" : {
           "connections" : {
             "type" : "array",
-            "description" : "Connections for systemName (one DB and/or one HTTP). Required by POST and PUT. Ignored by GET.",
+            "description" : "Connections for systemName (one DB and/or one HTTP). Read by POST and PUT, which require at least one.",
             "items" : {
               "$ref" : "#/components/schemas/EnvironmentConnectionRequest"
             }
@@ -3636,7 +3636,7 @@
             "description" : "System name within the environment. Read by POST and PUT."
           }
         },
-        "description" : "Request body of every atp-env-controller operation (GET, POST, PUT, and DELETE /api/tdm/rest/create-env). Its fields can be sent flat, as shown here, or nested under an \"environment\" property; both are equivalent."
+        "description" : "Request body of the atp-env-controller operations POST, PUT, and DELETE /api/tdm/rest/create-env; GET takes query parameters instead. Its fields can be sent flat, as shown here, or nested under an \"environment\" property; both are equivalent."
       },
       "EnvsList" : {
         "type" : "object",
