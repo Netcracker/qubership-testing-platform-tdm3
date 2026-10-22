@@ -39,6 +39,7 @@ def parse_arguments():
     )
     tdm.add_pairs(parser, "--filter", "Column=value; repeat to combine with AND")
     tdm.add_switch(parser, "--occupied", "read the occupied rows, not the free ones")
+    tdm.add_print_arguments(parser)
     return parser.parse_args()
 
 
@@ -66,6 +67,19 @@ def cell_value(cell):
     return value.rstrip(" ") if isinstance(value, str) else value
 
 
+def print_request(args, filters):
+    """Print the paged-read request instead of sending it."""
+    config = tdm.load_config(optional=tdm.placeholders_on())
+    table_id = tdm.param("tableName", None)
+    if not tdm.placeholders_on():
+        table_id = tdm.find_table(config, args.table)["id"]
+    notes = ["tableName is the database name of the table, from GET /api/tdm/tables/catalog."]
+    if args.ret:
+        notes.append("The response lists every column; use " + args.ret + ".")
+    body = tdm.page_body(table_id, args.occupied, filters, PAGE_SIZE)
+    tdm.show_request(config, "POST", "/api/tdm/table", "Read rows", body=body, notes=notes)
+
+
 def main():
     """Read the rows and print them."""
     args = parse_arguments()
@@ -73,6 +87,9 @@ def main():
     wanted = args.ret.split(",") if args.ret else None
     if wanted is not None and not all(wanted):
         tdm.fail("bad_argument", "--return has an empty column name.")
+
+    if tdm.configure_print(args):
+        print_request(args, filters)
 
     config = tdm.load_config()
     table = tdm.find_table(config, args.table)

@@ -85,6 +85,7 @@ def parse_arguments():
     tdm.add_pairs(parser, "--filter", "Column=value; repeat to combine with AND")
     tdm.add_switch(parser, "--all", "reserve every available row that matches")
     tdm.add_switch(parser, "--any", "allow an empty filter")
+    tdm.add_print_arguments(parser)
     return parser.parse_args()
 
 
@@ -112,6 +113,24 @@ def collect(responses):
     return reserved, errors, exhausted
 
 
+def print_request(args, filters):
+    """Print the reserve request instead of sending it."""
+    config = tdm.load_config(tdm.CONFIG_FULL, optional=tdm.placeholders_on())
+    body = tdm.addressing(config, args.table)
+    body["occupy-row-requests"] = [entry(filters, args.ret)]
+    user = None if tdm.placeholders_on() else occupied_by()
+    notes = ["Send one entry for each row to reserve."] if args.all else []
+    tdm.show_request(
+        config,
+        "POST",
+        "/api/tdm/rest/occupy-records",
+        "Reserve rows",
+        query={"occupiedBy": tdm.param("occupiedBy", user)},
+        body=body,
+        notes=notes,
+    )
+
+
 def main():
     """Reserve the rows and print the result."""
     args = parse_arguments()
@@ -121,6 +140,9 @@ def main():
             "filter_required",
             "No filter given. Pass --any to reserve the first available row.",
         )
+
+    if tdm.configure_print(args):
+        print_request(args, filters)
 
     config = tdm.load_config(tdm.CONFIG_FULL)
     table = tdm.find_table(config, args.table)

@@ -68,12 +68,13 @@ def script(name):
     return str(SKILLS / skill / "scripts" / file)
 
 
-def run(name, *args):
+def run(name, *args, cwd=None):
     """Run a script and return (exit code, decoded JSON or None)."""
     done = subprocess.run(
         [sys.executable, script(name), *args],
         capture_output=True,
         check=False,
+        cwd=cwd,
     )
     try:
         return done.returncode, json.loads(done.stdout.decode("utf-8"))
@@ -530,11 +531,93 @@ def list_scenarios(table):
     )
 
 
+def check_printed(label, args, needles, forbidden=(), cwd=None):
+    """Check that a script prints a request that holds the needles and not the forbidden."""
+    status, out = run(*args, cwd=cwd)
+    shown = (out or {}).get("text", "")
+    good = status == 0 and out is not None and out.get("printed") is True
+    good = good and all(needle in shown for needle in needles)
+    good = good and not any(item in shown for item in forbidden)
+    check(label, good, shorten(out))
+
+
+def print_scenarios(base, table):
+    """Check that the scripts show the requests and send nothing."""
+    print("\n-- print the request")
+    config = tdm.load_config(tdm.CONFIG_FULL)
+    group = ["--filter", "grp=A"]
+    reserve = ["reserve", *base, "--return", "code", *group]
+    real = [config["TDM3_BASE_URL"], config["PROJECT_NAME"]]
+    holders = ["<TDM3_BASE_URL>", "<projectName>", "<grp>"]
+    check_printed(
+        "reserve shows a curl request with placeholders",
+        [*reserve, "--print-request", "curl"],
+        ["curl -X POST", "occupiedBy=<occupiedBy>", *holders],
+        forbidden=real,
+    )
+    check_printed(
+        "reserve shows a Bruno request with placeholders",
+        [*reserve, "--print-request", "bruno"],
+        ["meta {", "post {", "{{TDM3_BASE_URL}}", "{{grp}}"],
+        forbidden=real,
+    )
+    check_printed(
+        "reserve shows real values with --values",
+        [*reserve, "--print-request", "curl", "--values"],
+        real,
+        forbidden=holders,
+    )
+    check_printed(
+        "insert shows its row as placeholders",
+        ["insert", *base, "--value", "code=P7", "--print-request", "curl"],
+        ["insert-records", "<code>"],
+        forbidden=["P7"],
+    )
+    check_printed(
+        "update shows the new value as its own placeholder",
+        ["update", *base, "--where", "code=P1", "--set", "note=x", "--print-request", "curl"],
+        ["update-records", "<code>", "<note_new>"],
+    )
+    release = ["release", *base, "--return", "code", *group]
+    check_printed(
+        "release shows one row",
+        [*release, "--print-request", "curl"],
+        ["release-records", "<grp>"],
+    )
+    check_printed(
+        "release --all shows the release by ids",
+        [*release, "--all", "--print-request", "curl"],
+        ["PUT", "tableName=<tableName>", "<ROW_ID>"],
+    )
+    check_printed(
+        "release --whole-table shows the bulk request",
+        ["release", *base, "--whole-table", "--print-request", "curl"],
+        ["release-records/bulk"],
+    )
+    check_printed(
+        "find shows the paged read",
+        ["find", *base, *group, "--print-request", "curl"],
+        ["/api/tdm/table", "<tableName>", "<grp>"],
+    )
+    with tempfile.TemporaryDirectory() as folder:
+        check_printed(
+            "placeholders need no config file",
+            ["insert", *base, "--value", "code=P7", "--print-request", "curl"],
+            ["<projectName>", "<code>"],
+            cwd=folder,
+        )
+    check(
+        "printing sent nothing",
+        records(table) == 4 and records(table, "--occupied") == 0,
+    )
+
+
 def table_scenarios(table):
     """Run the scenarios of the scripts that use the temporary table."""
     base = ["--table", table]
     insert_scenarios(base)
     find_scenarios(base, table)
+    print_scenarios(base, table)
     update_scenarios(base)
     first = reserve_scenarios(base, table)
     reserved_update_scenarios(base)

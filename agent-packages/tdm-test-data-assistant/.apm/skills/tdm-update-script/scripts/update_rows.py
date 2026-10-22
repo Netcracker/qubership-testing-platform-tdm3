@@ -45,6 +45,7 @@ def parse_arguments():
     tdm.add_pairs(parser, "--set", "Column=value to write", dest="sets")
     tdm.add_switch(parser, "--all", "allow more than one row to change")
     tdm.add_switch(parser, "--confirm-invisible", "invisible characters are confirmed")
+    tdm.add_print_arguments(parser)
     return parser.parse_args()
 
 
@@ -55,20 +56,35 @@ def count_matches(config, table, where):
     return available + reserved, reserved
 
 
-def send_update(config, table, where, sets):
-    """Send the update and return the answer of TDM3."""
-    body = tdm.addressing(config, table["name"])
+def update_body(config, title, where, sets):
+    """Return the body of the request that updates the matching rows."""
+    body = tdm.addressing(config, title)
     body["update-row-requests"] = [
         {
             "search-row-parameters-set": tdm.search_parameters(where, True),
-            "record-with-data-for-update": dict(sets),
+            "record-with-data-for-update": {c: tdm.param(c + "_new", v) for c, v in sets},
         }
     ]
+    return body
+
+
+def send_update(config, table, where, sets):
+    """Send the update and return the answer of TDM3."""
+    body = update_body(config, table["name"], where, sets)
     responses = tdm.call(config, "/api/tdm/rest/update-records", body=body)
     response = responses[0] if responses else {}
     if response.get("type") != "SUCCESS":
         tdm.fail("rejected", response.get("content") or "TDM3 refused the update.")
     return response.get("content") or ""
+
+
+def print_request(args, where, sets):
+    """Print the update request instead of sending it."""
+    config = tdm.load_config(tdm.CONFIG_FULL, optional=tdm.placeholders_on())
+    body = update_body(config, args.table, where, sets)
+    notes = ["TDM3 updates every row that matches, reserved or not."]
+    path = "/api/tdm/rest/update-records"
+    tdm.show_request(config, "POST", path, "Update rows", body=body, notes=notes)
 
 
 def main():
@@ -83,6 +99,9 @@ def main():
     set_names = [c for c, _ in sets]
     if len(set(set_names)) != len(set_names):
         tdm.fail("bad_argument", "A column is given twice in --set.")
+
+    if tdm.configure_print(args):
+        print_request(args, where, sets)
 
     config = tdm.load_config(tdm.CONFIG_FULL)
     table = tdm.find_table(config, args.table)

@@ -64,12 +64,17 @@ def find_config():
     return None
 
 
-def load_config(required=("TDM3_BASE_URL", "PROJECT_ID", "SYSTEM_ID_DEFAULT")):
+def load_config(required=("TDM3_BASE_URL", "PROJECT_ID", "SYSTEM_ID_DEFAULT"), optional=False):
     """Return the config, or fail when it is missing or lacks a required key.
+
+    With optional=True a missing file gives an empty config, for the print mode that
+    shows placeholders and needs no value from the file.
 
     CONFIG_DIR holds the folder of the config file, the .tdm-assistant folder.
     """
     path = find_config()
+    if path is None and optional:
+        return {}
     if path is None:
         fail(
             "config_missing",
@@ -150,9 +155,9 @@ def find_table(config, title):
 def addressing(config, table_title):
     """Return the fields that address a table by names in atp-action requests."""
     return {
-        "projectName": config["PROJECT_NAME"],
-        "envName": config["ENV_NAME_DEFAULT"],
-        "systemName": config["SYSTEM_NAME_DEFAULT"],
+        "projectName": param("projectName", config.get("PROJECT_NAME")),
+        "envName": param("envName", config.get("ENV_NAME_DEFAULT")),
+        "systemName": param("systemName", config.get("SYSTEM_NAME_DEFAULT")),
         "title-table": table_title,
     }
 
@@ -162,19 +167,24 @@ def equals_filter(column, value):
     return {
         "name-column": column,
         "search-criterion": "Equals",
-        "search-values": [value],
+        "search-values": [param(column, value)],
     }
 
 
-def read_page(config, table_id, occupied, filters, limit):
-    """Read one page of the table with Equals filters, given as (column, value)."""
-    body = {
+def page_body(table_id, occupied, filters, limit):
+    """Return the body of the paged read with Equals filters on (column, value)."""
+    return {
         "tableName": table_id,
         "offset": 0,
         "limit": limit,
         "occupied": occupied,
         "filters": [equals_filter(c, v) for c, v in filters],
     }
+
+
+def read_page(config, table_id, occupied, filters, limit):
+    """Read one page of the table with Equals filters, given as (column, value)."""
+    body = page_body(table_id, occupied, filters, limit)
     return call(config, "/api/tdm/table", body=body)
 
 
@@ -236,11 +246,106 @@ def search_parameters(pairs, case_sensitive):
         {
             "name-column": column,
             "search-criterion": "Equals",
-            "search-value": value,
+            "search-value": param(column, value),
             "caseSensitive": case_sensitive,
         }
         for column, value in pairs
     ]
+
+
+PRINT = {"on": False, "format": "curl", "values": False}
+
+
+def add_print_arguments(parser):
+    """Add the arguments that show the request instead of sending it."""
+    parser.add_argument(
+        "--print-request",
+        choices=("curl", "bruno"),
+        help="show the request in this format, and send nothing",
+    )
+    add_switch(parser, "--values", "with --print-request: real values, no placeholders")
+
+
+def configure_print(args):
+    """Switch the print mode on or off from the arguments; return whether it is on."""
+    PRINT["on"] = bool(args.print_request)
+    PRINT["format"] = args.print_request or "curl"
+    PRINT["values"] = args.values
+    return PRINT["on"]
+
+
+def placeholders_on():
+    """Return whether the requests shown carry placeholders instead of values."""
+    return PRINT["on"] and not PRINT["values"]
+
+
+def placeholder(name):
+    """Return the placeholder called name, in the format that is printed."""
+    if PRINT["format"] == "bruno":
+        return "{{" + name + "}}"
+    return "<" + name + ">"
+
+
+def param(name, value):
+    """Return value, or the placeholder called name when placeholders are on."""
+    return placeholder(name) if placeholders_on() else value
+
+
+def query_text(query):
+    """Return the query string; placeholders keep their brackets."""
+    if not query:
+        return ""
+    pairs = [f"{k}={urllib.parse.quote(str(v), safe='<>{}')}" for k, v in query.items()]
+    return "?" + "&".join(pairs)
+
+
+def render_curl(method, url, body):
+    """Return the request as a curl command."""
+    lines = [f"curl -X {method} '{url}'"]
+    if body is not None:
+        text = json.dumps(body, ensure_ascii=False, indent=2).replace("'", "'\\''")
+        lines.append("  -H 'Content-Type: application/json'")
+        lines.append(f"  -d '{text}'")
+    return " \\\n".join(lines)
+
+
+def render_bruno(method, url, body, label):
+    """Return the request as the text of a Bruno .bru file."""
+    kind = "json" if body is not None else "none"
+    parts = [
+        "meta {\n  name: " + label + "\n  type: http\n  seq: 1\n}\n",
+        method.lower() + " {\n  url: " + url + "\n  body: " + kind + "\n  auth: none\n}\n",
+    ]
+    if body is not None:
+        dumped = json.dumps(body, ensure_ascii=False, indent=2)
+        indented = "\n".join("  " + line for line in dumped.split("\n"))
+        parts.append("headers {\n  Content-Type: application/json\n}\n")
+        parts.append("body:json {\n" + indented + "\n}\n")
+    return "\n".join(parts)
+
+
+def show_request(config, method, path, label, **parts):
+    """Print the request in the chosen format and exit; nothing is sent.
+
+    parts may hold query (a dict), body (the JSON body), and notes (a list of strings).
+    """
+    body = parts.get("body")
+    base = param("TDM3_BASE_URL", config.get("TDM3_BASE_URL", ""))
+    url = base + path + query_text(parts.get("query"))
+    if PRINT["format"] == "bruno":
+        text = render_bruno(method, url, body, label)
+    else:
+        text = render_curl(method, url, body)
+    succeed(
+        printed=True,
+        format=PRINT["format"],
+        values=PRINT["values"],
+        method=method,
+        url=url,
+        body=body,
+        text=text,
+        notes=list(parts.get("notes", ())),
+    )
 
 
 def invisible_names(value):

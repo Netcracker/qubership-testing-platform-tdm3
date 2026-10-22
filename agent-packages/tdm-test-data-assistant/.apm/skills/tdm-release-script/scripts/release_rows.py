@@ -48,6 +48,7 @@ def parse_arguments():
     tdm.add_pairs(parser, "--filter", "Column=value; repeat to combine with AND")
     tdm.add_switch(parser, "--all", "release every reserved row that matches")
     tdm.add_switch(parser, "--whole-table", "release every reserved row of the table")
+    tdm.add_print_arguments(parser)
     return parser.parse_args()
 
 
@@ -91,15 +92,21 @@ def release_whole_table(config, table, base):
     )
 
 
-def release_one(config, table, args, filters):
-    """Release the single reserved row that matches; return (values, errors, none)."""
-    body = tdm.addressing(config, table["name"])
+def release_body(config, title, args, filters):
+    """Return the body of the request that releases the one reserved row."""
+    body = tdm.addressing(config, title)
     body["release-row-requests"] = [
         {
             "search-row-parameters-set": tdm.search_parameters(filters, True),
             "name-column-response": args.ret,
         }
     ]
+    return body
+
+
+def release_one(config, table, args, filters):
+    """Release the single reserved row that matches; return (values, errors, none)."""
+    body = release_body(config, table["name"], args, filters)
     released, errors, no_row = [], [], False
     for response in tdm.call(config, "/api/tdm/rest/release-records", body=body):
         content = response.get("content")
@@ -140,11 +147,45 @@ def release_matching(config, table, args, filters):
     return released, page.get("records", len(rows)) > len(rows)
 
 
+def print_request(args, filters):
+    """Print the release request instead of sending it."""
+    config = tdm.load_config(tdm.CONFIG_FULL, optional=tdm.placeholders_on())
+    show = tdm.show_request
+    if args.whole_table:
+        body = tdm.addressing(config, args.table)
+        show(
+            config,
+            "POST",
+            "/api/tdm/rest/release-records/bulk",
+            "Release the table",
+            body=body,
+        )
+    if args.all:
+        table_id = tdm.param("tableName", None)
+        if not tdm.placeholders_on():
+            table_id = tdm.find_table(config, args.table)["id"]
+        notes = ["The ROW_IDs come from a paged read of the occupied rows."]
+        show(
+            config,
+            "PUT",
+            "/api/tdm/release",
+            "Release rows by id",
+            query={"tableName": table_id},
+            body=[tdm.placeholder("ROW_ID")],
+            notes=notes,
+        )
+    body = release_body(config, args.table, args, filters)
+    show(config, "POST", "/api/tdm/rest/release-records", "Release a row", body=body)
+
+
 def main():
     """Release the rows and print the result."""
     args = parse_arguments()
     filters = tdm.parse_filters(args.filter)
     check_arguments(args, filters)
+
+    if tdm.configure_print(args):
+        print_request(args, filters)
 
     config = tdm.load_config(tdm.CONFIG_FULL)
     table = tdm.find_table(config, args.table)

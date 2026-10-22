@@ -37,7 +37,18 @@ def parse_arguments():
     tdm.add_pairs(parser, "--value", "Column=value; repeat for more columns")
     tdm.add_switch(parser, "--new", "create the table when it does not exist")
     tdm.add_switch(parser, "--confirm-invisible", "invisible characters are confirmed")
+    tdm.add_print_arguments(parser)
     return parser.parse_args()
+
+
+def print_request(args, pairs):
+    """Print the insert request instead of sending it."""
+    config = tdm.load_config(tdm.CONFIG_FULL, optional=tdm.placeholders_on())
+    body = tdm.addressing(config, args.table)
+    body["insert-records"] = [{c: tdm.param(c, v) for c, v in pairs}]
+    notes = ["TDM3 creates the table when no table has this title."]
+    path = "/api/tdm/rest/insert-records"
+    tdm.show_request(config, "POST", path, "Insert a row", body=body, notes=notes)
 
 
 def main():
@@ -49,6 +60,9 @@ def main():
     names = [c for c, _ in pairs]
     if len(set(names)) != len(names):
         tdm.fail("bad_argument", "A column is given twice.")
+
+    if tdm.configure_print(args):
+        print_request(args, pairs)
 
     config = tdm.load_config(tdm.CONFIG_FULL)
     table, catalog = tdm.lookup_table(config, args.table)
