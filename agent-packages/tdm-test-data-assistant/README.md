@@ -140,13 +140,13 @@ as their last step. See [Generating test data](#generating-test-data) for the se
 
 ### Showing a request
 
-| Skill                                                      | Purpose                                                                          |
-|------------------------------------------------------------|----------------------------------------------------------------------------------|
-| [tdm-show-request](.apm/skills/tdm-show-request/SKILL.md) | The REST request of a data operation, as curl or Bruno, instead of its result.   |
+| Skill                                                     | Purpose                                                                          |
+|-----------------------------------------------------------|----------------------------------------------------------------------------------|
+| [tdm-show-request](.apm/skills/tdm-show-request/SKILL.md) | The REST request of a data operation, as cURL or Bruno, instead of its result.   |
 
 The operations with a script (find, reserve, release, insert, update) take `--print-request curl` or
 `--print-request bruno`, and print the request without sending it. The context (`TDM3_BASE_URL`, `projectName`,
-`envName`, `systemName`, `occupiedBy`) and the values that the user gave come as placeholders: `<name>` in curl and
+`envName`, `systemName`, `occupiedBy`) and the values that the user gave come as placeholders: `<name>` in cURL and
 `{{name}}` in Bruno. `--values` prints real values instead. The placeholders need neither a config file nor a running
 TDM3, and the request is not checked against the table.
 

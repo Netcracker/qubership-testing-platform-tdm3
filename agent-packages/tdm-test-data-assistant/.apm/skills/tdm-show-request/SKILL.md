@@ -1,6 +1,6 @@
 ---
 name: tdm-show-request
-description: Use when the user wants the REST request of a data operation (find, reserve, release, insert, update) instead of its result, for example to paste it into a test case as a step. Shows the request as curl or as a Bruno request, with placeholders or with real values, and sends nothing.
+description: Use when the user wants the REST request of a data operation (find, reserve, release, insert, update) instead of its result, for example to paste it into a test case as a step. Shows the request as cURL or as a Bruno request, with placeholders or with real values, and sends nothing.
 user-invocable: false
 ---
 
@@ -46,11 +46,11 @@ inserted value shows the column name. The new value of an update has the suffix 
 placeholders are `tableName` (the database name of the table, from `GET /api/tdm/tables/catalog`) and `ROW_ID` (the
 IDs from a paged read of the occupied rows, for releasing by ID).
 
-curl shows a placeholder as `<name>`, and Bruno as `{{name}}`, which is the Bruno variable syntax.
+cURL shows a placeholder as `<name>`, and Bruno as `{{name}}`, which is the Bruno variable syntax.
 
 ## Reply
 
-Show the `text` field in a code block, tagged `bash` for curl and `text` for Bruno. For Bruno say that it is the
+Show the `text` field in a code block, tagged `bash` for cURL and `text` for Bruno. For Bruno say that it is the
 content of a `.bru` file. List the placeholders that the request holds and what each one stands for, and show the
 `notes` of the script when it has any. Say that the request was not sent.
 
@@ -68,7 +68,7 @@ script.
 ## Common pitfalls
 
 - Running the operation instead of showing it. Without `--print-request` a script reserves, changes, or releases rows.
-- Showing real context in the request by default. A project, environment, and user name in a test case tie it to one
+- Showing real context in the request by default. A project, environment, and username in a test case tie it to one
   setup, so use `--values` only when asked.
 - Reading `ROW_ID` as a value to fill in. The request that releases by ID needs the IDs from a read of the occupied
   rows; the placeholder says that they come from there.
