@@ -39,6 +39,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Nonnull;
 
@@ -66,8 +67,12 @@ public class AtpEnvController {
     @AuditAction(auditAction = "ATP Action. Get connections for environment {{#envName}} "
             + "in project {{#projectName}}")
     @GetMapping
-    public ResponseEntity<Object> getConnections(@RequestParam("projectName") String projectName,
-                                                 @RequestParam("envName") String envName,
+    public ResponseEntity<Object> getConnections(@Parameter(required = true)
+                                                 @RequestParam(value = "projectName", required = false)
+                                                 String projectName,
+                                                 @Parameter(required = true)
+                                                 @RequestParam(value = "envName", required = false)
+                                                 String envName,
                                                  @RequestParam(value = "systemName", required = false)
                                                  String systemName) {
         try {

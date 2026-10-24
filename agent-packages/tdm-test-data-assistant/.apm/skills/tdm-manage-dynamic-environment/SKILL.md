@@ -125,8 +125,7 @@ which happened, so don't parse it to confirm scope. An unknown `envName` returns
 
 | Code  | When                                                                                  | Body                                                |
 |-------|---------------------------------------------------------------------------------------|-----------------------------------------------------|
-| `400` | Validation: duplicate system, bad `type`, missing or empty `parameters` or `connections`, unknown project | `ResponseMessage` with `type: "ERROR"`              |
-| `400` | GET without `projectName` or `envName`                                                | Spring Boot's default error JSON, with a stack trace |
+| `400` | Validation: duplicate system, bad `type`, missing or empty `parameters` or `connections`, unknown project, GET without `projectName` or `envName` | `ResponseMessage` with `type: "ERROR"`              |
 | `404` | Unknown environment (GET, PUT, DELETE)                                                | `ResponseMessage` with `type: "ERROR"`              |
 | `404` | Unknown system on GET with `systemName`                                               | `ResponseMessage` with `type: "ERROR"`              |
 | `404` | Unknown system on PUT                                                                 | Spring Boot's default error JSON, with a stack trace |
@@ -146,7 +145,7 @@ The unknown-system message is the same on GET and PUT:
 - Expecting PUT to replace the whole connection list: it only upserts the types you send.
 - Treating a masked `***` from GET as the stored value, or sending it back in a PUT: that overwrites the real secret
   with the three asterisks.
-- Assuming every failure body is a `ResponseMessage`: PUT on a missing system (`404`) and GET without `projectName` or
-  `envName` (`400`) return Spring Boot's raw error JSON with a stack trace.
+- Assuming every failure body is a `ResponseMessage`: PUT on a missing system (`404`) returns Spring Boot's raw error
+  JSON with a stack trace.
 - Trusting delete's success message to say what was deleted: it's the same text for "removed one system" and
   "removed the whole environment."
