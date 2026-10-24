@@ -75,13 +75,8 @@ public class AtpEnvController {
                                                  String envName,
                                                  @RequestParam(value = "systemName", required = false)
                                                  String systemName) {
-        try {
-            EnvironmentConnectionsResponse body = service.getConnections(projectName, envName, systemName);
-            return ResponseEntity.ok(body);
-        } catch (SystemNotFoundException ex) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ResponseMessage(ResponseType.ERROR, ex.getMessage()));
-        }
+        EnvironmentConnectionsResponse body = service.getConnections(projectName, envName, systemName);
+        return ResponseEntity.ok(body);
     }
 
     /**
@@ -134,12 +129,20 @@ public class AtpEnvController {
     }
 
     /**
-     * Environment-not-found on GET, PUT, and DELETE. {@code SystemNotFoundException} on PUT still falls through
-     * to Spring Boot's default error page; GET handles that exception itself.
+     * Environment-not-found on GET, PUT, and DELETE.
      */
     @ExceptionHandler(EnvironmentNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseMessage handleEnvironmentNotFound(EnvironmentNotFoundException ex) {
+        return new ResponseMessage(ResponseType.ERROR, ex.getMessage());
+    }
+
+    /**
+     * System-not-found on GET and PUT.
+     */
+    @ExceptionHandler(SystemNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseMessage handleSystemNotFound(SystemNotFoundException ex) {
         return new ResponseMessage(ResponseType.ERROR, ex.getMessage());
     }
 

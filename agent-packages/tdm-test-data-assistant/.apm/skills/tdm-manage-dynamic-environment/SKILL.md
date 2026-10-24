@@ -104,8 +104,7 @@ Set `newEnvName` instead of or alongside `newSystemName` to rename the environme
 PUT without `connections` fails with `400`, `At least one connection is required in 'connections'.`, so send at least
 one connection with it, and that connection is upserted as well.
 
-A `systemName` that doesn't exist is the one PUT failure that doesn't return a `ResponseMessage`: it is Spring Boot's
-default `404` error JSON (`timestamp`, `status`, `error`, `trace`, `message`, `path`). The `message` reads
+A `systemName` that doesn't exist returns `404` with a `ResponseMessage` whose `content` reads
 `System [<system>] not found in project [<project>], environment [<env>].`
 
 ## Delete a system, or the whole environment
@@ -127,11 +126,9 @@ which happened, so don't parse it to confirm scope. An unknown `envName` returns
 |-------|---------------------------------------------------------------------------------------|-----------------------------------------------------|
 | `400` | Validation: duplicate system, bad `type`, missing or empty `parameters` or `connections`, unknown project, GET without `projectName` or `envName` | `ResponseMessage` with `type: "ERROR"`              |
 | `404` | Unknown environment (GET, PUT, DELETE)                                                | `ResponseMessage` with `type: "ERROR"`              |
-| `404` | Unknown system on GET with `systemName`                                               | `ResponseMessage` with `type: "ERROR"`              |
-| `404` | Unknown system on PUT                                                                 | Spring Boot's default error JSON, with a stack trace |
+| `404` | Unknown system (GET with `systemName`, PUT)                                           | `ResponseMessage` with `type: "ERROR"`              |
 
-The unknown-system message is the same on GET and PUT:
-`System [<system>] not found in project [<project>], environment [<env>].`
+Every error of this endpoint is a `ResponseMessage`; read the reason from `content`.
 
 ## Common pitfalls
 
@@ -145,7 +142,5 @@ The unknown-system message is the same on GET and PUT:
 - Expecting PUT to replace the whole connection list: it only upserts the types you send.
 - Treating a masked `***` from GET as the stored value, or sending it back in a PUT: that overwrites the real secret
   with the three asterisks.
-- Assuming every failure body is a `ResponseMessage`: PUT on a missing system (`404`) returns Spring Boot's raw error
-  JSON with a stack trace.
 - Trusting delete's success message to say what was deleted: it's the same text for "removed one system" and
   "removed the whole environment."
