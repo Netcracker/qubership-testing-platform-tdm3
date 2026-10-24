@@ -248,6 +248,22 @@ class AtpEnvControllerMvcTest extends AbstractEnvTest {
     }
 
     @Test
+    void updateEnv_unknownSystem_returns404WithResponseMessage() throws Exception {
+        mockMvc.perform(post(API_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(ENV_NAME, SYSTEM_NAME)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put(API_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateRequestBody(ENV_NAME, SYSTEM_NAME_2, null, null)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.type").value("ERROR"))
+                .andExpect(jsonPath("$.content").value("System [" + SYSTEM_NAME_2 + "] not found in project ["
+                        + PROJECT_NAME + "], environment [" + ENV_NAME + "]."));
+    }
+
+    @Test
     void updateEnv_newSystemNameAlreadyExists_returns400() throws Exception {
         mockMvc.perform(post(API_PATH)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -479,6 +495,21 @@ class AtpEnvControllerMvcTest extends AbstractEnvTest {
                         .param("systemName", "missing"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.type").value("ERROR"));
+    }
+
+    @Test
+    void getConnections_missingProjectNameOrEnvName_returns400WithResponseMessage() throws Exception {
+        mockMvc.perform(get(API_PATH)
+                        .param("projectName", PROJECT_NAME))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value("ERROR"))
+                .andExpect(jsonPath("$.content").value("projectName and envName are required."));
+
+        mockMvc.perform(get(API_PATH)
+                        .param("envName", ENV_NAME))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value("ERROR"))
+                .andExpect(jsonPath("$.content").value("projectName and envName are required."));
     }
 
     private String twoConnectionBody(String envName, String systemName) {
