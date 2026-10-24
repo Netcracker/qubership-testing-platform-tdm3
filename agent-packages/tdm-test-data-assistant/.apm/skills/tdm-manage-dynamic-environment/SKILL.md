@@ -1,28 +1,30 @@
 ---
 name: tdm-manage-dynamic-environment
-description: Use when the user wants to create, update, or delete a TDM3 dynamic environment, system, or connection — the environments and systems tdm-select-context resolves against. Calls the TDM3 REST API directly.
+description: Use when the user wants to read, create, update, or delete a TDM3 dynamic environment, system, or connection — the environments and systems tdm-select-context resolves against. Calls the TDM3 REST API directly.
 user-invocable: false
 ---
 
-# Create, update, or delete a TDM3 dynamic environment or system
+# Read, create, update, or delete a TDM3 dynamic environment or system
 
-All three operations share one endpoint, `/api/tdm/rest/create-env`, distinguished by HTTP method. This is the
-write side of what [tdm-select-context](../tdm-select-context/SKILL.md) and
-[tdm-list-tables](../tdm-list-tables/SKILL.md) read.
+All four operations share one endpoint, `/api/tdm/rest/create-env`, distinguished by HTTP method. This is the
+read and write side of what [tdm-select-context](../tdm-select-context/SKILL.md) and
+[tdm-list-tables](../tdm-list-tables/SKILL.md) resolve against.
 
 ## Required inputs
 
 - `projectName` — must be a name from `PROJECTS_INFO` (see [tdm-select-context](../tdm-select-context/SKILL.md)'s
   `PROJECT_NAME`).
-- `envName` — the environment to create, update, or delete.
-- For create/update: `systemName` and a `connection` object — `{name, type, parameters}`, where `type` is required
-  (for example `"HTTP"` or `"DB"`) and `parameters` holds type-specific values such as `url`.
+- `envName` — the environment to read, create, update, or delete.
+- For create and update: `systemName` and a `connections` list. Each item is `{type, parameters}`. `type` is `DB` or
+  `HTTP` (any case) and `parameters` is a non-empty map of type-specific values such as `url`. The list holds one or two
+  items, and no two share a type.
 
-The request body can be sent flat (as below) or nested under an `"environment"` key — both are equivalent.
+POST, PUT, and DELETE take a JSON body, which can be sent flat (as below) or nested under an `"environment"` key; both
+are equivalent. GET takes query parameters instead.
 
 ## `DB`-type connection parameters
 
-For `connection.type: "DB"`, the minimal working set of `parameters` — verified live end-to-end, including a real
+For a connection of type `DB`, the minimal working set of `parameters` — verified live end-to-end, including a real
 `POST /api/tdm/import/sql` run against the resulting system — is:
 
 ```json
@@ -37,6 +39,33 @@ TDM3's own UI additionally sends `db_host`, `db_port`, and `db_name` — those t
 the case `jdbc_url` is empty) and by a live `import/sql` run that succeeded without them. Include `jdbc_url` rather
 than reconstructing it from host/port/database — it's the one the connection code actually uses.
 
+## Read the connections of an environment or system
+
+```bash
+curl -G '<TDM3_BASE_URL>/api/tdm/rest/create-env' \
+  --data-urlencode 'projectName=<project>' \
+  --data-urlencode 'envName=<env>' \
+  --data-urlencode 'systemName=<system, optional>'
+```
+
+Omit `systemName` to get every system of the environment. The response is not a `ResponseMessage`:
+
+```json
+{
+  "projectName": "<project>",
+  "envName": "<env>",
+  "systems": [
+    { "systemName": "<system>", "connections": [ { "type": "HTTP", "parameters": { "url": "http://example.com" } } ] }
+  ]
+}
+```
+
+The values of secret-looking parameters come back as `***`; the stored values are unchanged. A parameter name is
+matched ignoring case and the separators `-`, `_`, `.`, and space, and its value is masked when the name contains
+`password`, `token`, `secret`, `credential`, `authentication`, `authorization`, `apikey`, or `privatekey`, or when it
+is `auth` or ends with `auth`. So `db_password` is masked and `author` is not. Do not read a password, token, or key
+back through GET: to confirm a secret, compare against the value you sent, and to change one, send it again with PUT.
+
 ## Create an environment and system, or add a system to an existing environment
 
 ```bash
@@ -46,16 +75,15 @@ curl -X POST '<TDM3_BASE_URL>/api/tdm/rest/create-env' \
     "projectName": "<project>",
     "envName": "<env>",
     "systemName": "<system>",
-    "connection": { "name": "HTTP", "type": "HTTP", "parameters": { "url": "http://example.com" } }
+    "connections": [ { "type": "HTTP", "parameters": { "url": "http://example.com" } } ]
   }'
 ```
 
-Verified live: `{"type":"SUCCESS","content":"Environment [<env>] created successfully.","contentObject":null,"link":""}`.
-A `systemName` that already exists in `envName` returns a **plain-text** `400 Bad Request`
-(`System [<name>] already exists in environment [<env>]. Use PUT to update.`) — not a `ResponseMessage`, verified
-live.
+On success, the response is `{"type":"SUCCESS","content":"Environment [<env>] created successfully.",...}`. A
+`systemName` that already exists in `envName` returns `400` with a `ResponseMessage` of `type: "ERROR"`
+(`System [<name>] already exists in environment [<env>]. Use PUT to update.`).
 
-## Update a system's connection, or rename the environment or system
+## Update connections, or rename the environment or system
 
 ```bash
 curl -X PUT '<TDM3_BASE_URL>/api/tdm/rest/create-env' \
@@ -65,16 +93,21 @@ curl -X PUT '<TDM3_BASE_URL>/api/tdm/rest/create-env' \
     "envName": "<env>",
     "systemName": "<system>",
     "newSystemName": "<new name, optional>",
-    "connection": { "name": "HTTP", "type": "HTTP", "parameters": { "url": "http://example.org" } }
+    "connections": [ { "type": "HTTP", "parameters": { "url": "http://example.org" } } ]
   }'
 ```
 
-Set `newEnvName` instead of/alongside `newSystemName` to rename the environment. **A `systemName` that doesn't
-exist is the one failure this controller doesn't catch — verified live: a raw `404` with Spring Boot's default
-error JSON (`timestamp`, `status`, `error`, `trace`, `message`, `path`), not a `ResponseMessage`,** unlike every
-other error in this controller. The message inside the trace also has project and environment swapped
-(`"System [X] not found in project [<envName>], environment [<projectName>]"`) — read the identifiers by position,
-not by the label next to them.
+PUT upserts each connection by `type`: a `DB` item replaces the system's `DB` connection, and a connection whose type
+is not in the request stays as it is. To remove a connection, delete the system and create it again.
+
+Set `newEnvName` instead of or alongside `newSystemName` to rename the environment. A rename cannot be sent alone:
+PUT without `connections` fails with `400`, `At least one connection is required in 'connections'.`, so send at least
+one connection with it, and that connection is upserted as well.
+
+A `systemName` that doesn't exist is the one PUT failure that doesn't return a `ResponseMessage`: it is Spring Boot's
+default `404` error JSON (`timestamp`, `status`, `error`, `trace`, `message`, `path`). The message inside the trace
+also has project and environment swapped (`"System [X] not found in project [<envName>], environment [<projectName>]"`),
+so read the identifiers by position, not by the label next to them.
 
 ## Delete a system, or the whole environment
 
@@ -84,20 +117,33 @@ curl -X DELETE '<TDM3_BASE_URL>/api/tdm/rest/create-env' \
   -d '{ "projectName": "<project>", "envName": "<env>", "systemDeleteName": "<system, optional>" }'
 ```
 
-Omit `systemDeleteName` to delete the whole environment. Verified live both ways: on success, `content` reads
-`"Environment [<env>] deleted successfully."` **even when only a system was deleted** — the message doesn't say
-which happened, so don't parse it to confirm scope. An unknown `envName` is the one error this controller does
-catch gracefully (unlike PUT above) — verified live: `HTTP 404` with a proper `ResponseMessage`,
+Omit `systemDeleteName` to delete the whole environment. On success, `content` reads
+`"Environment [<env>] deleted successfully."` **even when only a system was deleted**; the message doesn't say
+which happened, so don't parse it to confirm scope. An unknown `envName` returns `404` with a `ResponseMessage`,
 `{"type":"ERROR","content":"Environment [<env>] not found in project [<project>].",...}`.
+
+## Error responses
+
+| Code  | When                                                                                  | Body                                                |
+|-------|---------------------------------------------------------------------------------------|-----------------------------------------------------|
+| `400` | Validation: duplicate system, bad `type`, missing or empty `parameters` or `connections`, unknown project, GET without `projectName` or `envName` | `ResponseMessage` with `type: "ERROR"`              |
+| `404` | Unknown environment (GET, PUT, DELETE)                                                | `ResponseMessage` with `type: "ERROR"`              |
+| `404` | Unknown system on GET with `systemName`                                               | `ResponseMessage` with `type: "ERROR"`              |
+| `404` | Unknown system on PUT                                                                 | Spring Boot's default error JSON, with a stack trace |
 
 ## Common pitfalls
 
-- Omitting `connection.type`: required on create/update, verified live to fail with plain-text `400`,
-  `Connection 'type' must not be blank.`, even though nothing else in the request looked wrong.
+- Sending the old `connection` object or a connection `name`: the request body now takes `connections`, a list, and a
+  `name` is ignored. A POST or PUT without `connections` fails with `400`.
+- Using a type other than `DB` or `HTTP` (`GIT`, `LDAP`, `SSH`, ...): rejected with `400`.
+- Sending two connections of the same type in one request: rejected, because the type identifies the connection.
 - Omitting `db_type` from a `DB` connection's `parameters` because `jdbc_url` is already set: the create/update
-  call still succeeds (nothing validates `parameters`' contents), but every later operation that uses the
-  connection fails — the missing-field error shows up far from where the mistake was made.
-- Assuming every failure returns a `ResponseMessage`: only the create-duplicate case and the delete-not-found case
-  do. Update-on-a-missing-system is a raw 404 stack trace; create-on-a-missing-`type` is a raw 400 plain text.
+  call still succeeds (nothing validates `parameters`' contents beyond being non-empty), but every later operation
+  that uses the connection fails — the missing-field error shows up far from where the mistake was made.
+- Expecting PUT to replace the whole connection list: it only upserts the types you send.
+- Treating a masked `***` from GET as the stored value, or sending it back in a PUT: that overwrites the real secret
+  with the three asterisks.
+- Assuming every failure body is a `ResponseMessage`: update-on-a-missing-system is still Spring Boot's raw `404`
+  with a stack trace.
 - Trusting delete's success message to say what was deleted: it's the same text for "removed one system" and
   "removed the whole environment."
