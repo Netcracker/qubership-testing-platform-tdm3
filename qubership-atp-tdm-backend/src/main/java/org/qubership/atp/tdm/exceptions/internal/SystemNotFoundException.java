@@ -25,6 +25,6 @@ public class SystemNotFoundException extends TdmInternalException {
 
     public SystemNotFoundException(String systemName, String envName, String projectName) {
         super(String.format("System [%s] not found in project [%s], environment [%s].",
-                systemName, envName, projectName));
+                systemName, projectName, envName));
     }
 }
