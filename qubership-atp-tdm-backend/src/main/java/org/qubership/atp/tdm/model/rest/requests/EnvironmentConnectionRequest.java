@@ -18,16 +18,17 @@ package org.qubership.atp.tdm.model.rest.requests;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class EnvironmentConnectionRequest {
 
-    @Schema(description = "Connection name.")
-    private String name;
-    @Schema(description = "Connection type, such as \"DB\" or \"HTTP\". See the supported connection types in "
-            + "the atp-env-controller documentation.")
+    @Schema(description = "Connection type. Only \"DB\" and \"HTTP\" are accepted, ignoring case. "
+            + "Stored as DB or HTTP.")
     private String type;
     @Schema(description = "Connection parameters, specific to type: for example url, username, and password "
             + "for a DB connection.")
