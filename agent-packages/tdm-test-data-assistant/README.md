@@ -4,6 +4,8 @@ Skills that call the TDM3 (`qubership-atp-tdm`) REST API directly, so an agent c
 data without a separate MCP server. Each skill sends its own HTTP requests; there's no authentication layer, since
 TDM3 is reached from inside the network perimeter.
 
+To install the package and start working, follow the [user guide](docs/user-guide.md).
+
 Background: [docs/design-brief.md](docs/design-brief.md) is the original goals and functions this package was
 built from; [docs/tdm-background.md](docs/tdm-background.md) is general background on test data management as a
 practice, not a description of TDM3 itself.
