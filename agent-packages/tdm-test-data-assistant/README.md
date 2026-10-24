@@ -240,8 +240,9 @@ system on their own — run `tdm-select-context` first if the config file doesn'
 
 ## Self-test
 
-[tests/selftest.py](tests/selftest.py) checks the scripts of the `*-script` skills against a running TDM3. It is a
-development tool and is not installed with the package. Run it from a folder that has a
+[tests/selftest.py](tests/selftest.py) checks the scripts of the `*-script` skills and the Dynamic Environment API
+behind [tdm-manage-dynamic-environment](.apm/skills/tdm-manage-dynamic-environment/SKILL.md) against a running TDM3.
+It is a development tool and is not installed with the package. Run it from a folder that has a
 `.tdm-assistant/config.json`, with TDM3 running:
 
 ```bash
@@ -250,8 +251,10 @@ python agent-packages/tdm-test-data-assistant/tests/selftest.py
 
 The run creates a table named `ZZ_selftest_<timestamp>` in the current system, exercises every script and its error
 codes on that table, and drops the table at the end, also after a failure. It drops only tables whose names start with
-`ZZ_selftest_`, so it also removes the leftovers of an interrupted run. The exit code is 0 when every check passes and
-1 otherwise.
+`ZZ_selftest_`, so it also removes the leftovers of an interrupted run. It also creates an environment named
+`ZZ_selftest_env_<timestamp>` in the project of the config, calls `create-env` with `POST`, `GET`, `PUT`, and
+`DELETE` on it, and deletes it at the end, also after a failure. The exit code is 0 when every check passes and 1
+otherwise.
 
 The script refuses a `TDM3_BASE_URL` that is not on `localhost`; pass `--allow-remote` to override. It does not test the
 agent: how the agent parses a command or words a reply is checked by hand.

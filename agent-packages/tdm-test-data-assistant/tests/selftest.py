@@ -4,9 +4,11 @@ The scripts are the ones in .apm/skills/*/scripts. The run creates a table named
 ZZ_selftest_<timestamp> in the current system of .tdm-assistant/config.json
 (searched from the working directory upwards), exercises every script and its
 error codes on that table, and drops the table at the end, also after a failure.
-It touches no other table. The generate script is run against a fake GitLab in this
-process. The tests do not cover the agent: how it parses a command or words a
-reply is checked by hand.
+It touches no other table. The create-env API behind tdm-manage-dynamic-environment is
+exercised on an environment named ZZ_selftest_env_<timestamp> in the project of the
+config, and that environment is deleted at the end too. The generate script is run
+against a fake GitLab in this process. The tests do not cover the agent: how it parses
+a command or words a reply is checked by hand.
 
   python tests/selftest.py [--allow-remote]
 
@@ -24,7 +26,9 @@ import subprocess
 import sys
 import tempfile
 import threading
+import urllib.error
 import urllib.parse
+import urllib.request
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -36,6 +40,21 @@ sys.path.insert(0, str(SKILLS / "tdm-common" / "scripts"))
 tdm = importlib.import_module("tdm_common")
 
 PREFIX = "ZZ_selftest_"
+ENV_PREFIX = PREFIX + "env_"
+ENV_PATH = "/api/tdm/rest/create-env"
+HTTP_CONNECTION = {"type": "HTTP", "parameters": {"url": "http://example.com"}}
+DB_CONNECTION = {
+    "type": "db",
+    "name": "ignored",
+    "parameters": {
+        "jdbc_url": "jdbc:postgresql://h:5432/d",
+        "db_login": "u",
+        "db_password": "secret1",
+        "db_type": "postgresql",
+        "author": "me",
+        "basic_auth": "zzz",
+    },
+}
 LOCAL_HOSTS = ("localhost", "127.0.0.1", "[::1]")
 TAB = chr(9)
 SCRIPTS = {
@@ -625,6 +644,274 @@ def table_scenarios(table):
     list_scenarios(table)
 
 
+def env_request(config, method, query=None, body=None):
+    """Send a create-env request and return (HTTP status, decoded JSON or None)."""
+    url = config["TDM3_BASE_URL"] + ENV_PATH
+    if query:
+        url += "?" + urllib.parse.urlencode(query)
+    data = None if body is None else json.dumps(body).encode("utf-8")
+    headers = {"Content-Type": "application/json"} if data else {}
+    request = urllib.request.Request(url, data=data, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(request, timeout=tdm.TIMEOUT_SECONDS) as response:
+            status, raw = response.status, response.read()
+    except urllib.error.HTTPError as exc:
+        status, raw = exc.code, exc.read()
+    try:
+        return status, json.loads(raw.decode("utf-8"))
+    except ValueError:
+        return status, None
+
+
+def expect_env(label, config, method, status, query=None, body=None, **fields):
+    """Check the HTTP status and the top-level JSON fields of a create-env request."""
+    got, out = env_request(config, method, query, body)
+    good = got == status and isinstance(out, dict)
+    good = good and all(out.get(k) == v for k, v in fields.items())
+    check(label, good, f"HTTP {got} {shorten(out)}")
+    return out
+
+
+def env_body(base, system=None, connections=None, **more):
+    """Return a create-env request body for the environment in base."""
+    body = dict(base)
+    if system:
+        body["systemName"] = system
+    if connections is not None:
+        body["connections"] = connections
+    return {**body, **more}
+
+
+def env_systems(config, base, system=None):
+    """Return {system: {connection type: parameters}} as GET reports it, or None."""
+    query = dict(base)
+    if system:
+        query["systemName"] = system
+    status, out = env_request(config, "GET", query)
+    if status != 200 or not isinstance(out, dict):
+        return None
+    return {
+        item["systemName"]: {c["type"]: c["parameters"] for c in item["connections"]}
+        for item in out["systems"]
+    }
+
+
+def drop_selftest_environments(config, base):
+    """Delete the environment of this run and the ones that earlier runs left."""
+    listing = tdm.call(
+        config, f"/api/tdm/projects/{config['PROJECT_ID']}/environments/lazy"
+    )
+    names = {item["name"] for item in listing or []}
+    names = {name for name in names if name.startswith(ENV_PREFIX)}
+    for name in sorted(names | {base["envName"]}):
+        print(f"      deleting environment {name}")
+        env_request(config, "DELETE", body={**base, "envName": name})
+
+
+def env_create_scenarios(config, base):
+    """Check POST and the GET that reads it back."""
+    print("\n-- create-env: create")
+    expect_env(
+        "POST creates an environment with a system",
+        config,
+        "POST",
+        200,
+        body=env_body(base, "s1", [HTTP_CONNECTION]),
+        type="SUCCESS",
+    )
+    systems = env_systems(config, base)
+    check(
+        "GET shows the system and its HTTP connection",
+        systems == {"s1": {"HTTP": HTTP_CONNECTION["parameters"]}},
+        str(systems),
+    )
+    refused = {
+        "POST of an existing system": env_body(base, "s1", [HTTP_CONNECTION]),
+        "POST with the old connection object": env_body(
+            base, "s2", connection={"name": "HTTP", **HTTP_CONNECTION}
+        ),
+        "POST with a GIT connection": env_body(
+            base, "s2", [{"type": "GIT", "parameters": {"url": "x"}}]
+        ),
+        "POST with two connections of one type": env_body(
+            base, "s2", [HTTP_CONNECTION, {"type": "http", "parameters": {"url": "b"}}]
+        ),
+    }
+    for label, body in refused.items():
+        expect_env(
+            label + " is refused with a ResponseMessage",
+            config,
+            "POST",
+            400,
+            body=body,
+            type="ERROR",
+        )
+    listed = set(env_systems(config, base))
+    check("refused requests created no system", listed == {"s1"}, str(listed))
+
+
+def env_secret_scenarios(config, base):
+    """Check the nested request form, the type case, and the masking of GET."""
+    print("\n-- create-env: secrets")
+    expect_env(
+        "POST accepts the nested form and a lowercase type",
+        config,
+        "POST",
+        200,
+        body={"environment": env_body(base, "s2", [DB_CONNECTION])},
+        type="SUCCESS",
+    )
+    one = env_systems(config, base, "s2")
+    params = (one or {}).get("s2", {}).get("DB", {})
+    check("GET with systemName lists that system only", set(one or {}) == {"s2"})
+    check("GET reports the lowercase type as DB", bool(params), str(one))
+    check(
+        "GET masks the secret parameters",
+        params.get("db_password") == "***" and params.get("basic_auth") == "***",
+        str(params),
+    )
+    check(
+        "GET leaves the other parameters, also author, which only contains auth",
+        params.get("db_login") == "u" and params.get("author") == "me",
+        str(params),
+    )
+
+
+def env_update_scenarios(config, base):
+    """Check the upsert and the rename of PUT."""
+    print("\n-- create-env: update")
+    expect_env(
+        "PUT adds a connection of another type",
+        config,
+        "PUT",
+        200,
+        body=env_body(base, "s2", [HTTP_CONNECTION]),
+        type="SUCCESS",
+    )
+    kept = env_systems(config, base, "s2")
+    check(
+        "PUT keeps the connection it was not sent",
+        set((kept or {}).get("s2", {})) == {"DB", "HTTP"},
+        str(kept),
+    )
+    expect_env(
+        "PUT of a rename without a connection is refused",
+        config,
+        "PUT",
+        400,
+        body=env_body(base, "s2", newSystemName="s3"),
+        type="ERROR",
+    )
+    out = expect_env(
+        "PUT of an unknown system is a 404 ResponseMessage",
+        config,
+        "PUT",
+        404,
+        body=env_body(base, "nope", [HTTP_CONNECTION]),
+        type="ERROR",
+    )
+    expected = (
+        f"System [nope] not found in project [{base['projectName']}], "
+        f"environment [{base['envName']}]."
+    )
+    check(
+        "the message names project and environment under their own labels",
+        (out or {}).get("content") == expected,
+        shorten(out),
+    )
+    expect_env(
+        "PUT renames a system together with a connection",
+        config,
+        "PUT",
+        200,
+        body=env_body(base, "s2", [HTTP_CONNECTION], newSystemName="s3"),
+        type="SUCCESS",
+    )
+    listed = set(env_systems(config, base))
+    check("the renamed system is listed", listed == {"s1", "s3"}, str(listed))
+
+
+def env_read_error_scenarios(config, base):
+    """Check the errors of GET."""
+    print("\n-- create-env: read errors")
+    known = dict(base)
+    cases = [
+        ("GET of an unknown system", 404, {**known, "systemName": "nope"}),
+        ("GET of an unknown environment", 404, {**known, "envName": "NoSuchEnv"}),
+        ("GET of an unknown project", 400, {**known, "projectName": "NoSuchProject"}),
+        ("GET without envName", 400, {"projectName": known["projectName"]}),
+        ("GET without projectName", 400, {"envName": known["envName"]}),
+        ("GET without parameters", 400, {}),
+    ]
+    for label, status, query in cases:
+        expect_env(
+            label + " is a ResponseMessage",
+            config,
+            "GET",
+            status,
+            query=query,
+            type="ERROR",
+        )
+    out = expect_env(
+        "GET without parameters names the required ones",
+        config,
+        "GET",
+        400,
+        query={},
+        content="projectName and envName are required.",
+    )
+    traced = "trace" in (out or {})
+    check("a GET error carries no stack trace", not traced, shorten(out))
+
+
+def env_delete_scenarios(config, base):
+    """Check DELETE of a system and of the environment."""
+    print("\n-- create-env: delete")
+    expect_env(
+        "DELETE with systemDeleteName removes that system",
+        config,
+        "DELETE",
+        200,
+        body=env_body(base, systemDeleteName="s3"),
+        type="SUCCESS",
+    )
+    check("only the other system is left", set(env_systems(config, base)) == {"s1"})
+    expect_env(
+        "DELETE removes the environment",
+        config,
+        "DELETE",
+        200,
+        body=env_body(base),
+        type="SUCCESS",
+    )
+    expect_env(
+        "DELETE of the same environment again is a 404 ResponseMessage",
+        config,
+        "DELETE",
+        404,
+        body=env_body(base),
+        type="ERROR",
+    )
+    expect_env(
+        "GET of the deleted environment is a 404 ResponseMessage",
+        config,
+        "GET",
+        404,
+        query=base,
+        type="ERROR",
+    )
+
+
+def env_scenarios(config, env):
+    """Run the scenarios of the create-env API on a temporary environment."""
+    base = {"projectName": config["PROJECT_NAME"], "envName": env}
+    env_create_scenarios(config, base)
+    env_secret_scenarios(config, base)
+    env_update_scenarios(config, base)
+    env_read_error_scenarios(config, base)
+    env_delete_scenarios(config, base)
+
+
 class FakeGitLab(ThreadingHTTPServer):
     """Answer the GitLab requests of the generate script, and record them."""
 
@@ -871,18 +1158,26 @@ def main():
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     table = PREFIX + stamp
+    env = ENV_PREFIX + stamp
+    base = {"projectName": config["PROJECT_NAME"], "envName": env}
     system = config["SYSTEM_NAME_DEFAULT"]
     print(f"TDM3: {config['TDM3_BASE_URL']}  system: {system}  table: {table}")
+    print(f"      project: {base['projectName']}  environment: {env}")
     try:
         drop_selftest_tables(config)
+        drop_selftest_environments(config, base)
         table_scenarios(table)
+        env_scenarios(config, env)
         generate_scenarios()
     finally:
         print("\n-- cleanup")
         drop_selftest_tables(config)
+        drop_selftest_environments(config, base)
         tables = tdm.list_of_tables(tdm.lookup_table(config, PREFIX)[1])
         left = [t for t in tables if t["name"].startswith(PREFIX)]
         check("no selftest table is left", not left, str(left))
+        status, _ = env_request(config, "GET", base)
+        check("no selftest environment is left", status == 404, f"HTTP {status}")
 
     failed = [label for label, ok in results if not ok]
     print(f"\n{len(results) - len(failed)} of {len(results)} checks passed")
