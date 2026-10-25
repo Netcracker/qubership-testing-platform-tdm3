@@ -107,9 +107,9 @@ import/export) but addressed mostly by **database table name** (`TDM_<hash>`, fr
 
 ### `atp-env-controller` (`/api/tdm/rest/create-env`)
 
-| Skill                                                                                 | Purpose                                                                                                          |
-|---------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| [tdm-manage-dynamic-environment](.apm/skills/tdm-manage-dynamic-environment/SKILL.md) | Read, create, update, or delete a dynamic environment, system, or connection, which `tdm-select-context` resolves against. |
+| Skill                                                                                 | Purpose                                                                                                                     |
+|---------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| [tdm-manage-dynamic-environment](.apm/skills/tdm-manage-dynamic-environment/SKILL.md) | Read, create, update, or delete a dynamic environment, system, or connection, which `tdm-select-context` resolves against.  |
 
 ### `data-cleanup-controller` (`/api/tdm/cleanup/*`)
 

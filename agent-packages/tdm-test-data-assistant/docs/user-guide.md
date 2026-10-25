@@ -4,7 +4,7 @@ The `tdm-test-data-assistant` package gives your coding agent skills to find, re
 TDM3. Follow the sections in order the first time: install the package with APM, set the working context, and work with
 the data. Later, [update the package](#update-the-package) with two commands.
 
-For the full list of skills and the settings of each one, see the [package README](../README.md).
+For the full list of skills and the settings of each one, see the [package `README`](../README.md).
 
 ## Before you start
 
@@ -261,8 +261,8 @@ when several do, it asks you to narrow `where` or to add `all`.
 clear yes. A deletion is permanent.
 
 When a value you type or paste contains an invisible character, such as a TAB or a non-breaking space, the agent names
-the character. For a read it sends the value as typed and tells you the character may explain an empty result. For a
-write it waits for your confirmation first, because TDM3 would store the character.
+the character. For a reading it sends the value as typed and tells you the character may explain an empty result. For a
+writing it waits for your confirmation first, because TDM3 would store the character.
 
 ### Load rows from a file or a query
 
@@ -280,7 +280,7 @@ reports an entry that failed even when TDM3 answered with HTTP 200.
 
 `/tdm-generate` starts the GitLab pipeline of your project, which runs test cases that fill TDM3 tables. It needs the
 GitLab settings in the config file and a token in the `GITLAB_TOKEN` environment variable. See
-[Generating test data](../README.md#generating-test-data) in the README for the keys. The agent shows the pipeline
+[Generating test data](../README.md#generating-test-data) in the `README` for the keys. The agent shows the pipeline
 variables and asks you to confirm before it starts the pipeline, then waits up to 30 minutes for the result.
 
 ### Show a request instead of sending it
@@ -294,7 +294,7 @@ checked against the table.
 
 Some tasks have no command and are done by asking: statistics and their email schedules, cleanup rules, exporting a
 table to Excel or CSV, changing the title of a table, and creating or changing dynamic environments. The
-[README](../README.md#skills) lists each skill with its scope.
+[`README`](../README.md#skills) lists each skill with its scope.
 
 ## Troubleshooting
 

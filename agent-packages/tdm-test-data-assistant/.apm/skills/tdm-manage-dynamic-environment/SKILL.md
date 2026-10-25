@@ -122,11 +122,11 @@ which happened, so don't parse it to confirm scope. An unknown `envName` returns
 
 ## Error responses
 
-| Code  | When                                                                                  | Body                                                |
-|-------|---------------------------------------------------------------------------------------|-----------------------------------------------------|
-| `400` | Validation: duplicate system, bad `type`, missing or empty `parameters` or `connections`, unknown project, GET without `projectName` or `envName` | `ResponseMessage` with `type: "ERROR"`              |
-| `404` | Unknown environment (GET, PUT, DELETE)                                                | `ResponseMessage` with `type: "ERROR"`              |
-| `404` | Unknown system (GET with `systemName`, PUT)                                           | `ResponseMessage` with `type: "ERROR"`              |
+| Code  | When                                                                                                                                               | Body                                                |
+|-------|----------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
+| `400` | Validation: duplicate system, bad `type`, missing or empty `parameters` or `connections`, unknown project, GET without `projectName` or `envName`  | `ResponseMessage` with `type: "ERROR"`              |
+| `404` | Unknown environment (GET, PUT, DELETE)                                                                                                             | `ResponseMessage` with `type: "ERROR"`              |
+| `404` | Unknown system (GET with `systemName`, PUT)                                                                                                        | `ResponseMessage` with `type: "ERROR"`              |
 
 Every error of this endpoint is a `ResponseMessage`; read the reason from `content`.
 
