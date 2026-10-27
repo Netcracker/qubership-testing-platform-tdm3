@@ -71,7 +71,11 @@ you searched for.
 4. **Verify.** Run `python agent-packages/tdm-test-data-assistant/tests/selftest.py` against a local TDM3 when one is
    available, and pass the Python linters that CI runs on the package (pylint and ruff format, see
    `.github/super-linter.env`). If you could not run the selftest, say so in the pull request.
-5. **Report it.** The commit messages name the package change, and the pull request description has a "Test Data
+5. **Check the controller table.** When the change adds, removes, or renames a controller or a skill, or makes a skill
+   start or stop calling an endpoint of another controller, redo the table in this file as the last edit before the
+   commit, in the same commit. List the `@RequestMapping` prefixes of the controllers, run the `grep` above for each
+   prefix, and correct every row that the result does not confirm. Add a row for a controller that the table lacks.
+6. **Report it.** The commit messages name the package change, and the pull request description has a "Test Data
    Assistant" section: what changed in the package and why, or why nothing did. Where a change is breaking, say so in
    the first line of that section.
 
