@@ -17,6 +17,9 @@ given. The exit code is 0 when every check passes and 1 otherwise. Python 3.9+,
 standard library only.
 """
 
+# The selftest keeps every scenario in one runnable file.
+# pylint: disable=too-many-lines
+
 import argparse
 import getpass
 import importlib
@@ -663,8 +666,9 @@ def env_request(config, method, query=None, body=None):
         return status, None
 
 
-def expect_env(label, config, method, status, query=None, body=None, **fields):
-    """Check the HTTP status and the top-level JSON fields of a create-env request."""
+def expect_env(label, config, outcome, query=None, body=None, **fields):
+    """Check (method, status) and the top-level JSON fields of a create-env request."""
+    method, status = outcome
     got, out = env_request(config, method, query, body)
     good = got == status and isinstance(out, dict)
     good = good and all(out.get(k) == v for k, v in fields.items())
@@ -690,17 +694,15 @@ def env_systems(config, base, system=None):
     status, out = env_request(config, "GET", query)
     if status != 200 or not isinstance(out, dict):
         return None
-    return {
-        item["systemName"]: {c["type"]: c["parameters"] for c in item["connections"]}
-        for item in out["systems"]
-    }
+    systems = {}
+    for item in out["systems"]:
+        systems[item["systemName"]] = {c["type"]: c["parameters"] for c in item["connections"]}
+    return systems
 
 
 def drop_selftest_environments(config, base):
     """Delete the environment of this run and the ones that earlier runs left."""
-    listing = tdm.call(
-        config, f"/api/tdm/projects/{config['PROJECT_ID']}/environments/lazy"
-    )
+    listing = tdm.call(config, f"/api/tdm/projects/{config['PROJECT_ID']}/environments/lazy")
     names = {item["name"] for item in listing or []}
     names = {name for name in names if name.startswith(ENV_PREFIX)}
     for name in sorted(names | {base["envName"]}):
@@ -714,8 +716,7 @@ def env_create_scenarios(config, base):
     expect_env(
         "POST creates an environment with a system",
         config,
-        "POST",
-        200,
+        ("POST", 200),
         body=env_body(base, "s1", [HTTP_CONNECTION]),
         type="SUCCESS",
     )
@@ -725,14 +726,12 @@ def env_create_scenarios(config, base):
         systems == {"s1": {"HTTP": HTTP_CONNECTION["parameters"]}},
         str(systems),
     )
+    old_form = env_body(base, "s2", connection={"name": "HTTP", **HTTP_CONNECTION})
+    git_form = env_body(base, "s2", [{"type": "GIT", "parameters": {"url": "x"}}])
     refused = {
         "POST of an existing system": env_body(base, "s1", [HTTP_CONNECTION]),
-        "POST with the old connection object": env_body(
-            base, "s2", connection={"name": "HTTP", **HTTP_CONNECTION}
-        ),
-        "POST with a GIT connection": env_body(
-            base, "s2", [{"type": "GIT", "parameters": {"url": "x"}}]
-        ),
+        "POST with the old connection object": old_form,
+        "POST with a GIT connection": git_form,
         "POST with two connections of one type": env_body(
             base, "s2", [HTTP_CONNECTION, {"type": "http", "parameters": {"url": "b"}}]
         ),
@@ -741,8 +740,7 @@ def env_create_scenarios(config, base):
         expect_env(
             label + " is refused with a ResponseMessage",
             config,
-            "POST",
-            400,
+            ("POST", 400),
             body=body,
             type="ERROR",
         )
@@ -756,8 +754,7 @@ def env_secret_scenarios(config, base):
     expect_env(
         "POST accepts the nested form and a lowercase type",
         config,
-        "POST",
-        200,
+        ("POST", 200),
         body={"environment": env_body(base, "s2", [DB_CONNECTION])},
         type="SUCCESS",
     )
@@ -783,8 +780,7 @@ def env_update_scenarios(config, base):
     expect_env(
         "PUT adds a connection of another type",
         config,
-        "PUT",
-        200,
+        ("PUT", 200),
         body=env_body(base, "s2", [HTTP_CONNECTION]),
         type="SUCCESS",
     )
@@ -797,23 +793,19 @@ def env_update_scenarios(config, base):
     expect_env(
         "PUT of a rename without a connection is refused",
         config,
-        "PUT",
-        400,
+        ("PUT", 400),
         body=env_body(base, "s2", newSystemName="s3"),
         type="ERROR",
     )
     out = expect_env(
         "PUT of an unknown system is a 404 ResponseMessage",
         config,
-        "PUT",
-        404,
+        ("PUT", 404),
         body=env_body(base, "nope", [HTTP_CONNECTION]),
         type="ERROR",
     )
-    expected = (
-        f"System [nope] not found in project [{base['projectName']}], "
-        f"environment [{base['envName']}]."
-    )
+    where = f"project [{base['projectName']}], environment [{base['envName']}]"
+    expected = f"System [nope] not found in {where}."
     check(
         "the message names project and environment under their own labels",
         (out or {}).get("content") == expected,
@@ -822,8 +814,7 @@ def env_update_scenarios(config, base):
     expect_env(
         "PUT renames a system together with a connection",
         config,
-        "PUT",
-        200,
+        ("PUT", 200),
         body=env_body(base, "s2", [HTTP_CONNECTION], newSystemName="s3"),
         type="SUCCESS",
     )
@@ -847,16 +838,14 @@ def env_read_error_scenarios(config, base):
         expect_env(
             label + " is a ResponseMessage",
             config,
-            "GET",
-            status,
+            ("GET", status),
             query=query,
             type="ERROR",
         )
     out = expect_env(
         "GET without parameters names the required ones",
         config,
-        "GET",
-        400,
+        ("GET", 400),
         query={},
         content="projectName and envName are required.",
     )
@@ -870,8 +859,7 @@ def env_delete_scenarios(config, base):
     expect_env(
         "DELETE with systemDeleteName removes that system",
         config,
-        "DELETE",
-        200,
+        ("DELETE", 200),
         body=env_body(base, systemDeleteName="s3"),
         type="SUCCESS",
     )
@@ -879,24 +867,21 @@ def env_delete_scenarios(config, base):
     expect_env(
         "DELETE removes the environment",
         config,
-        "DELETE",
-        200,
+        ("DELETE", 200),
         body=env_body(base),
         type="SUCCESS",
     )
     expect_env(
         "DELETE of the same environment again is a 404 ResponseMessage",
         config,
-        "DELETE",
-        404,
+        ("DELETE", 404),
         body=env_body(base),
         type="ERROR",
     )
     expect_env(
         "GET of the deleted environment is a 404 ResponseMessage",
         config,
-        "GET",
-        404,
+        ("GET", 404),
         query=base,
         type="ERROR",
     )
