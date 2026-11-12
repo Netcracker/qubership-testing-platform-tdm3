@@ -79,7 +79,7 @@ them touches the database before the restore step finishes.
 | Property | Environment variable | Default | Meaning |
 | --- | --- | --- | --- |
 | `tdm.db.transfer.key` | `TDM_DB_TRANSFER_KEY` | unset | The transfer key. At least 32 characters. The feature is off while the key is unset or shorter. |
-| `tdm.db.transfer.max-size` | `TDM_DB_TRANSFER_MAX_SIZE` | to be decided | Largest upload the service accepts, in bytes. See [open question 2](#open-questions). |
+| `tdm.db.transfer.max-size` | `TDM_DB_TRANSFER_MAX_SIZE` | `100MB` | Largest compressed dump the service accepts, as a Spring data size. `100MB` is 104857600 bytes. Independent of `MAX_FILE_SIZE` and `MAX_REQUEST_SIZE`. |
 | `tdm.db.transfer.staging-dir` | `TDM_DB_TRANSFER_DIR` | `transfer` next to the database files | Directory for the staged dump, the status file, and the backups. It must be on the same volume as the database. |
 | `tdm.db.transfer.backups` | `TDM_DB_TRANSFER_BACKUPS` | `2` | Number of database backups to keep after a successful import. |
 
@@ -161,15 +161,19 @@ The status body:
 {
   "state": "STAGED",
   "uploadedAt": "2026-11-11T10:15:30Z",
-  "sizeBytes": 734003200,
+  "sizeBytes": 73400320,
   "sha256": "9f2c...e1",
   "dumpServiceVersion": "1.0.13",
   "dumpH2Version": "2.2.224",
+  "warnings": [],
   "approvedAt": null,
   "finishedAt": null,
   "error": null
 }
 ```
+
+`warnings` lists problems that do not stop the import, such as a large version gap (see
+[Dump format](#dump-format-and-compatibility)). The upload response and every later status response carry it.
 
 The states are `NONE`, `STAGED`, `APPROVED`, `APPLYING`, `APPLIED`, and `FAILED`. After a restore, `GET` shows the last
 result (`APPLIED` or `FAILED` with `error`) until the next upload.
@@ -245,8 +249,8 @@ sequenceDiagram
 The free-space check requires room for the upload, a backup of the current database, and the restored database. It
 estimates the restored size as the size of the dump times a factor that [spike S6](#spikes) measures.
 
-The compatibility rule at this step is: the service version in the header must not be newer than the running service.
-Older versions are accepted, and Liquibase brings the schema forward on the next start.
+The version rule at this step compares the service version in the dump header with the version of the running service.
+See [Dump format](#dump-format-and-compatibility) for the outcomes.
 
 ## Import: applying at startup
 
@@ -268,7 +272,7 @@ flowchart TD
     E --> G["Create a new database with jdbc.Url, jdbc.User, jdbc.Password; RUNSCRIPT the dump"]
     G -- error --> RB["Delete new files, move the backup back, mark FAILED, move the dump to failed/"]
     RB --> POOL
-    G -- ok --> H["Clear transient scheduler state, run sanity checks"]
+    G -- ok --> H["Clear scheduler runtime state, run sanity checks"]
     H -- error --> RB
     H -- ok --> I["Close the connection, mark APPLIED, move the dump to applied/, prune old backups"]
     I --> POOL
@@ -289,11 +293,39 @@ Rules that the diagram does not show:
 
 ### Scheduler state
 
-The database also holds Quartz and ShedLock tables. The restore keeps the Quartz job definitions and triggers, because
-`JobsInitListener` and the stored cleanup and refresh schedules depend on them. It deletes the transient rows that
-describe the source service: fired triggers, scheduler instance state, and the ShedLock rows. Otherwise the clustered
-Quartz job store (`org.quartz.jobStore.isClustered=true`) would see an instance that no longer exists and try to recover
-its jobs. [Spike S5](#spikes) checks the table names and the behavior.
+The dump includes the Quartz and ShedLock tables. They hold two kinds of rows.
+
+**Definitions** say what runs and when: `QRTZ_JOB_DETAILS`, `QRTZ_TRIGGERS` with the cron, simple, and blob trigger
+tables, `QRTZ_CALENDARS`, and `QRTZ_PAUSED_TRIGGER_GRPS`. They are project data, such as the cleanup, refresh, and
+statistics schedules. The restore keeps them unchanged, so the target runs the same schedules as the source.
+
+**Runtime state** says what the source process was doing when the dump was taken:
+
+- `QRTZ_SCHEDULER_STATE` holds the source's scheduler instance (`instanceId` is `AUTO`, so every start gets a new one).
+- `QRTZ_FIRED_TRIGGERS` holds the executions that were in progress.
+- `QRTZ_TRIGGERS.TRIGGER_STATE` is `ACQUIRED`, `BLOCKED`, or `PAUSED_BLOCKED` for triggers that an instance had claimed.
+- Every row of the `shedlock` table is a lock held by the source, valid until its `lock_until` time.
+
+The target must not inherit this state, because it belongs to a process that the target does not have. No scheduler runs
+during the restore step, so the rows do no harm there. They take effect after the target starts, when Quartz looks for
+failed instances and the first job asks for a lock. A claimed trigger could stay claimed, a job that was running on the
+source could be recovered on the target, and a bulk action could wait for a lock that expires up to
+`LOCK_BULK_ACTION_SEC` (3600 seconds by default) later.
+
+After `RUNSCRIPT`, and before the sanity checks, the restore step clears the runtime state in one transaction:
+
+1. Delete all rows of `QRTZ_FIRED_TRIGGERS` and `QRTZ_SCHEDULER_STATE`.
+2. Set `TRIGGER_STATE` to `WAITING` where it is `ACQUIRED` or `BLOCKED`, and to `PAUSED` where it is `PAUSED_BLOCKED`.
+   These are the changes Quartz makes itself when it recovers the jobs of a scheduler.
+3. Delete all rows of `shedlock`.
+
+The rows of `QRTZ_LOCKS` stay: they are fixed rows that the Quartz job store needs. A failure in the cleanup fails the
+restore, and the rollback applies. A job that was running on the source does not run again on the target. A trigger
+whose fire time has passed is handled by Quartz misfire handling when the service starts, as after any downtime.
+
+The cleanup runs on the import side, not on the export side. The target is where the rule has to hold for every dump,
+and removing the rows from the export stream would not reset `TRIGGER_STATE`. The dump stays a complete copy of the
+source database. [Spike S5](#spikes) confirms the statements against the Quartz version in use.
 
 ## State machine
 
@@ -340,13 +372,24 @@ database/
 | Wrong or missing key | `403`. The attempt is logged with the client address and no key value. |
 | Restore fails | Rollback to the backup, status `FAILED`, service starts with the old data. |
 | Process dies during the restore | Next start rolls back (`APPLYING` found), status `FAILED: interrupted`. |
-| Liquibase fails after a successful restore | Startup fails, as for any broken database. The status shows `APPLIED` and the path of the backup, so a deployer can restore it by hand. See [open question 6](#open-questions). |
+| Liquibase or a later startup step fails after a successful restore | The service does not start, as it does not start for any broken database. The API is not available, so the [recovery runbook](#recovery-when-the-service-does-not-start) works on the volume. |
 | Platform does not restart the service after `apply` | The dump stays `APPROVED` until someone restarts the service. `GET` shows it. |
 
 ## Dump format and compatibility
 
 - The file is a gzip stream of UTF-8 SQL statements, one `SCRIPT` row per statement, preceded by the header line.
-- An older dump loads into a newer service. A dump from a newer service is rejected at upload.
+- The header carries the version of the service that wrote the dump (its `project.version`). A qualifier such as
+  `-SNAPSHOT` is ignored when the versions are compared. The upload compares it with the version of the running service:
+
+  | Dump version | Outcome |
+  | --- | --- |
+  | Newer than the service | Rejected with `400`. Downgrades are not supported. |
+  | Same major version, equal or older | Accepted. Liquibase brings the schema forward on the next start. |
+  | Older major version | Accepted with an entry in `warnings`, for example a dump from 1.0.5 loaded into 5.10.20. |
+  | Missing or not a version | Rejected with `400`. |
+
+  The warning is information, not a block: the approval is a separate request, and the person who sends it sees the
+  warning in the status. A version gap inside one major version, such as 1.0.5 into 1.5.10, gives no warning.
 - The H2 version of the dump is recorded for diagnostics. Loading a dump from another H2 major version is not
   guaranteed. [Spike S3](#spikes) tests the versions the project uses.
 
@@ -359,12 +402,37 @@ database/
 - **Restart.** `apply` with `restart=true` exits with status 0. A Kubernetes Deployment restarts the container. A plain
   `docker run` without a restart policy does not, so the deployer restarts it.
 - **Memory.** The upload and the export stream, so memory use does not grow with the size of the database.
+- **The source service.** The target runs the same schedules as the source: cleanup, refresh, and the statistics emails.
+  If the source keeps running after the export, both services run them. Stop or disable the source when the move is
+  final.
+
+## Recovery when the service does not start
+
+After a successful replacement, startup continues as an ordinary start, and Liquibase runs as it always does. If
+Liquibase or another step fails, the service does not start and the REST API, including the status endpoint, is not
+available. The recovery therefore works on the volume. The implementation turns these steps into a page in
+`docs/troubleshooting.md` for administrators and the support team:
+
+1. Stop the service.
+2. In the staging directory, find the newest directory under `backup/`. It holds the database files that the import
+   replaced. The service logs its path at `INFO` level when the replacement finishes.
+3. Move the current database files out of the database directory, and keep them for the analysis of the failure.
+4. Copy the files from the backup directory into the database directory.
+5. Start the service. It starts with the previous data. `status.json` still says `APPLIED`, which does no harm: only an
+   `APPROVED` dump is applied.
+6. Keep the dump in `applied/` for the analysis. A new upload replaces it.
 
 ## Tests
 
 - Round trip: export a database with several test data tables, import the dump into an empty service, compare the
   catalog and the table contents.
 - Older dump: import a dump from the previous schema version and check that Liquibase upgrades it.
+- Version rule: a dump from a newer version and a dump with a missing version are rejected. A dump from an older major
+  version is accepted with an entry in `warnings`. A dump from an older minor version of the same major version is
+  accepted with no warning.
+- Scheduler state: export while a cleanup job runs and a bulk action holds a lock, import the dump, and check that the
+  target keeps the schedules, holds no scheduler instance, fired trigger, claimed trigger state, or lock of the source,
+  and fires the jobs on schedule. See [Scheduler state](#scheduler-state).
 - Rollback: stage a dump that fails in the middle of `RUNSCRIPT`, restart, and check that the old data is back and the
   status is `FAILED`.
 - Crash: kill the process between moving the backup and finishing the restore, restart, and check the rollback.
@@ -375,23 +443,18 @@ database/
 - Unapproved dump: restart with a `STAGED` dump and check that nothing changes.
 - Size: an upload over the limit gets `413`, and the part file is removed.
 
-## Documentation and Test Data Assistant impact
+## Documentation impact
 
 Documentation that the implementation updates:
 
 - `docs/api.md`: a row in the endpoint groups table for the new tag, and a section for the five operations.
 - `docs/configuration.md`: the four properties above, in a new section.
-- `docs/troubleshooting.md`: the errors of the transfer, including a restore that ended in `FAILED`.
+- `docs/troubleshooting.md`: the errors of the transfer, including a restore that ended in `FAILED`, and the
+  [recovery runbook](#recovery-when-the-service-does-not-start).
 - `docs/architecture.md`: a short section that points to this page.
 - `CHANGELOG.md`: an entry under the next version.
 - `deployments/charts/atp3-tdm-be`: the Secret, the `TDM_DB_TRANSFER_KEY` variable, and the default of
   `atp.logging.controller.headers.ignore`.
-
-`AGENTS.md` requires a review of `agent-packages/tdm-test-data-assistant` for every change to the REST API. The five
-operations are new and change no existing endpoint, so no existing skill breaks. The package needs a decision on
-whether to add a skill for the transfer ([open question 4](#open-questions)). If it does, the implementation also adds
-the `DatabaseTransferController` row to the controller table in `AGENTS.md`, raises the `version` in `apm.yml` by a
-minor step, and extends `tests/selftest.py`.
 
 ## Spikes
 
@@ -404,24 +467,25 @@ implementation starts.
 | S2 | Which `SCRIPT` options does the dump need so that it does not carry the source's user and password hash, and does not override settings that come from the target URL? | The target database user and password come from `TDM_DB_USER` and `TDM_DB_PASSWORD`. |
 | S3 | Does a dump round trip for every column type the test data tables use, including large objects? Does a dump from another H2 2.x version load? | Decides the compatibility statement. |
 | S4 | Which statement kinds does a real dump contain? Does the live database define any alias or trigger? | Fixes the allowlist of `DumpValidator`. |
-| S5 | Which tables hold Quartz and ShedLock state, and does Quartz start cleanly after the transient rows are cleared? | Fixes the cleanup step. |
+| S5 | Which `TRIGGER_STATE` values does the Quartz version in use write for claimed triggers? Does the service start, keep its schedules, and run them after the cleanup of [Scheduler state](#scheduler-state)? Does `spring.quartz.jdbc.initialize-schema=ALWAYS` leave existing Quartz data intact? | Confirms the cleanup statements. |
 | S6 | How large is the restored database compared with the gzip dump, and how long does `RUNSCRIPT` take for a database of several gigabytes? | Sets the disk pre-check factor and the timeout advice. |
 
-## Open questions
+## Decisions
 
-1. **Restart.** Is it acceptable that `apply` makes the service exit and relies on the platform to start it again, or
-   should the restart always be a deployer action? The platforms in use decide this.
-2. **Upload size.** What is the default of `tdm.db.transfer.max-size`, and what do the ingress and gateway of the
-   supported deployments allow today?
-3. **Scheduler state.** Is the proposal to keep the schedules and clear only the transient rows right, or should an
-   import leave all Quartz tables empty so that the service recreates the schedules from its own configuration?
-4. **Agent package.** Should `tdm-test-data-assistant` get a skill for the transfer? If it does, it has to read the
-   key from the environment, never store it, and name the target service in an explicit confirmation before it calls
-   `apply`.
-5. **The key.** Is a shared secret acceptable for the teams that deploy TDM3, or is a stricter option needed, such as
-   enabling the feature only during a maintenance window by setting the key and removing it afterwards?
-6. **Liquibase failure.** Should the restore step run Liquibase against the restored database before it reports
-   `APPLIED`, so that an incompatible dump rolls back instead of failing the whole startup? This costs a second
-   Liquibase configuration in the restore step.
-7. **Version rule.** Is "the dump version is not newer than the service" the right check, or should the rule compare
-   Liquibase changesets?
+1. **Restart.** `apply` with `restart=true` may make the service exit and rely on the platform to start it again. A
+   manual stop and start after `apply` is also acceptable, because an import is a rare operation.
+2. **Upload size.** The default of `tdm.db.transfer.max-size` is `100MB` for the compressed file, the same size as the
+   defaults of `MAX_FILE_SIZE` and `MAX_REQUEST_SIZE`. The property is separate from them. A deployer who needs a
+   larger dump raises it, and the ingress or gateway limits of the deployment apply as they do to every other upload.
+3. **Scheduler state.** The import brings the definitions of the Quartz jobs and triggers over unchanged, like every
+   other table. It clears the runtime state of the source: the scheduler instance, the fired triggers, the claimed
+   trigger states, and the ShedLock rows. Definitions are project data, and runtime state belongs to the process that
+   wrote it. See [Scheduler state](#scheduler-state).
+4. **The key.** A shared secret is acceptable for now.
+5. **Liquibase failure.** After the replacement, startup continues as an ordinary start, and Liquibase runs as it always
+   does. If it fails, the service does not start. The administrators and the support team get the
+   [recovery runbook](#recovery-when-the-service-does-not-start), which includes putting the previous database back.
+6. **Version rule.** A dump from a newer version than the service is rejected. A dump from an older major version is
+   accepted with a warning. See [Dump format](#dump-format-and-compatibility).
+
+No open questions remain. The [spikes](#spikes) hold the facts that the implementation has to establish first.

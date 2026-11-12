@@ -100,8 +100,7 @@ Negative:
   Whoever holds it can read and replace all data.
 - An export and an import need disk space for several copies of the database: the staged script, the backup, and the new
   database. A large database needs a volume sized for it.
-- The REST API grows by five operations: export, upload, status, cancel, and approve. The Test Data Assistant agent
-  package has to be reviewed for a new skill, as `AGENTS.md` requires.
+- The REST API grows by five operations: export, upload, status, cancel, and approve.
 - A script is code. The statement filter lowers the risk of running a crafted script but does not remove it, so the
   transfer key must be treated as an administrator credential.
 
