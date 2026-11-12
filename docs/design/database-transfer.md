@@ -2,7 +2,7 @@
 
 Status: proposal for discussion. This page elaborates
 [ADR 0001](../adr/0001-database-transfer-through-rest-api.md), which records the decision. It describes the behavior the
-feature will have, the components that implement it, and the questions the team has to settle before the work starts.
+feature will have, the components that implement it, and what the [spikes](#spikes) found.
 
 ## Goals and non-goals
 
@@ -115,19 +115,40 @@ database credentials.
 The transfer key already allows a holder to read and replace all data, so the key holder is trusted at administrator
 level. The risk is bigger than data replacement, though, so the import adds a second barrier. `DumpValidator` reads the
 whole dump once while it is stored, splitting it into statements with a tokenizer that understands quoted strings,
-quoted identifiers, and comments. It rejects the dump when:
+quoted identifiers, and comments. It accepts only the statement kinds that a dump of the live database contains
+([spike S4](#spikes)):
 
-- a statement is not one of the kinds a TDM3 dump contains: creating or altering schemas, tables, indexes, sequences,
-  and constraints, `INSERT ... VALUES`, comments, and a short list of `SET` options;
-- any statement uses `ALIAS`, `TRIGGER`, `AGGREGATE`, `RUNSCRIPT`, `CALL`, `SCRIPT`, `CSVREAD`, `CSVWRITE`,
-  `FILE_READ`, `FILE_WRITE`, `LINK_SCHEMA`, `SHUTDOWN`, or a statement that creates or changes users, roles, or grants;
+- `CREATE CACHED TABLE`, `ALTER TABLE ... ADD CONSTRAINT`, and `CREATE INDEX`;
+- `INSERT INTO ... VALUES`;
+- comment lines (`-- ...`), including the `-- H2 <version>;` line and the row-count lines that `SCRIPT` writes;
+- exactly one alias: `CREATE FORCE ALIAS "PUBLIC"."UUID_GENERATE_V4" FOR 'org.h2.value.ValueUuid.getNewRandom'`,
+  which a Liquibase changeset creates in every TDM3 database. Any other alias, or this alias with another target, is
+  rejected.
+
+It rejects the dump when:
+
+- a statement is of any other kind, including `TRIGGER`, `AGGREGATE`, `RUNSCRIPT`, `CALL`, `SCRIPT`, `CSVREAD`,
+  `CSVWRITE`, `FILE_READ`, `FILE_WRITE`, `LINK_SCHEMA`, `SHUTDOWN`, and `INSERT ... SELECT`;
 - the first line is not the TDM3 dump header (see [Dump format](#dump-format-and-compatibility)).
 
-The filter lowers the risk and does not remove it, because H2 is a large SQL dialect. The exact allowlist is fixed by
-[spike S4](#spikes), which runs the filter against a real dump of a production-like database.
+The filter lowers the risk and does not remove it, because H2 is a large SQL dialect. A migration that adds a statement
+kind to the schema adds it to the allowlist in the same change, and a test that dumps a freshly migrated database fails
+until it does.
 
 The service also stores the SHA-256 of the validated file in the status file and checks it again at startup before it
 runs the dump.
+
+### Users and passwords
+
+A dump of the live database contains a `CREATE USER` statement for the database user of the service, with its password
+hash ([spike S2](#spikes)). The export therefore runs `SCRIPT NOPASSWORDS`, so the hash never leaves the source. That
+option alone makes the dump unsafe to load: it writes `CREATE USER IF NOT EXISTS "<name>" PASSWORD '' ADMIN`, and a
+database that runs the statement accepts a login of that administrator with an empty password.
+
+The staging step therefore drops every statement that creates or changes a user or a role, or grants a right, and stores
+the dump without them. This is the one case where the validator removes a statement instead of rejecting the dump,
+because every dump the export writes contains one. The database user and password of the target stay those of
+`TDM_DB_USER` and `TDM_DB_PASSWORD`. The SHA-256 in the status file is the hash of the stored file.
 
 ## REST API
 
@@ -184,9 +205,14 @@ touched.
 
 ## Export
 
-The export runs the H2 `SCRIPT` command on one connection from the pool and writes each returned row straight into the
-response through a `GZIPOutputStream`. It uses `StreamingResponseBody`, so neither the dump nor a temporary file sits in
-memory or on disk.
+The export runs the H2 `SCRIPT NOPASSWORDS` command on one connection from the pool and writes each returned row
+straight into the response through a `GZIPOutputStream`. It uses `StreamingResponseBody`, so neither the dump nor a
+temporary file sits in memory or on disk.
+
+The export runs in one transaction: `autoCommit` is off and the isolation level is `REPEATABLE_READ`. With H2's default
+`READ_COMMITTED`, `SCRIPT` reads each table at its own point in time, so a dump taken under write load can hold a
+transaction in one table and not in another ([spike S1](#spikes)). In the repeatable-read transaction, every table
+shows the same snapshot, and writers are not blocked.
 
 ```mermaid
 sequenceDiagram
@@ -246,8 +272,9 @@ sequenceDiagram
     end
 ```
 
-The free-space check requires room for the upload, a backup of the current database, and the restored database. It
-estimates the restored size as the size of the dump times a factor that [spike S6](#spikes) measures.
+The free-space check requires room for the upload and the restored database next to the current one, which the restore
+moves to `backup/` instead of copying it. It estimates the restored size as five times the size of the dump, which is
+above the 4.2 to 4.6 that [spike S6](#spikes) measured.
 
 The version rule at this step compares the service version in the dump header with the version of the running service.
 See [Dump format](#dump-format-and-compatibility) for the outcomes.
@@ -307,10 +334,11 @@ statistics schedules. The restore keeps them unchanged, so the target runs the s
 - Every row of the `shedlock` table is a lock held by the source, valid until its `lock_until` time.
 
 The target must not inherit this state, because it belongs to a process that the target does not have. No scheduler runs
-during the restore step, so the rows do no harm there. They take effect after the target starts, when Quartz looks for
-failed instances and the first job asks for a lock. A claimed trigger could stay claimed, a job that was running on the
-source could be recovered on the target, and a bulk action could wait for a lock that expires up to
-`LOCK_BULK_ACTION_SEC` (3600 seconds by default) later.
+during the restore step, so the rows do no harm there. They take effect after the target starts. A trigger that the
+source had claimed could stay claimed, a stale instance row would send Quartz looking for a scheduler that does not
+exist, and a bulk action could wait for a lock that expires up to `LOCK_BULK_ACTION_SEC` (3600 seconds by default)
+later. Job recovery is not among the effects: every TDM3 job has `requests_recovery` set to false, so Quartz never
+reruns a job that was in progress.
 
 After `RUNSCRIPT`, and before the sanity checks, the restore step clears the runtime state in one transaction:
 
@@ -319,9 +347,10 @@ After `RUNSCRIPT`, and before the sanity checks, the restore step clears the run
    These are the changes Quartz makes itself when it recovers the jobs of a scheduler.
 3. Delete all rows of `shedlock`.
 
-The rows of `QRTZ_LOCKS` stay: they are fixed rows that the Quartz job store needs. A failure in the cleanup fails the
-restore, and the rollback applies. A job that was running on the source does not run again on the target. A trigger
-whose fire time has passed is handled by Quartz misfire handling when the service starts, as after any downtime.
+The rows of `QRTZ_LOCKS` stay: they are fixed rows that the Quartz job store needs. A trigger in the `ERROR` state stays
+in it, as on the source. A failure in the cleanup fails the restore, and the rollback applies. A trigger whose fire
+time has passed is handled by Quartz misfire handling when the service starts, as after any downtime. This has a
+visible effect on the data: see [Table expiry and transferred data](#table-expiry-and-transferred-data).
 
 The cleanup runs on the import side, not on the export side. The target is where the rule has to hold for every dump,
 and removing the rows from the export stream would not reset `TRIGGER_STATE`. The dump stays a complete copy of the
@@ -379,7 +408,8 @@ database/
 
 - The file is a gzip stream of UTF-8 SQL statements, one `SCRIPT` row per statement, preceded by the header line.
 - The header carries the version of the service that wrote the dump (its `project.version`). A qualifier such as
-  `-SNAPSHOT` is ignored when the versions are compared. The upload compares it with the version of the running service:
+  `-SNAPSHOT` is ignored when the versions are compared. The upload compares it with the version of the running
+  service:
 
   | Dump version | Outcome |
   | --- | --- |
@@ -390,13 +420,23 @@ database/
 
   The warning is information, not a block: the approval is a separate request, and the person who sends it sees the
   warning in the status. A version gap inside one major version, such as 1.0.5 into 1.5.10, gives no warning.
+- **The version `0.0.1.LOCAL`.** This is the placeholder of a development run, not a release, and a service on a project
+  machine never has it. Two rules cover it, and the rest of the table does not apply to it:
+  - A target with the version `0.0.1.LOCAL` counts as newer than every dump whose version is not `0.0.1.LOCAL`. The
+    import is not blocked. The status carries a `warnings` entry that names both versions, for example `The dump comes
+    from 1.0.13 and this service runs 0.0.1.LOCAL, a development version that counts as newer than any release`.
+  - A dump with the version `0.0.1.LOCAL` comes from a development run. Into a target with the same version it is
+    accepted. Into a target with another version the service applies no special rule, and the developer decides what
+    that import means for the change being tested.
 - The H2 version of the dump is recorded for diagnostics. Loading a dump from another H2 major version is not
   guaranteed. [Spike S3](#spikes) tests the versions the project uses.
 
 ## Operations
 
-- **Disk.** Size the volume for the live database, one backup, and the staged dump together. A rule of thumb is three
-  times the database, until spike S6 gives a measured factor.
+- **Disk.** During a restore the volume holds the replaced database, the restored database, and the staged dump. The
+  restored database was never larger than half the size of the source file in the spikes, because the restore writes a
+  compact file, so twice the database plus the dump is enough for the restore. Add the backups that stay afterwards
+  (`tdm.db.transfer.backups`, each as large as the database it replaced).
 - **Ingress.** The upload and the export are large and long. The ingress or gateway must allow a request body as large
   as the biggest dump (for NGINX, `proxy-body-size`) and a read timeout longer than the longest export.
 - **Restart.** `apply` with `restart=true` exits with status 0. A Kubernetes Deployment restarts the container. A plain
@@ -405,6 +445,36 @@ database/
 - **The source service.** The target runs the same schedules as the source: cleanup, refresh, and the statistics emails.
   If the source keeps running after the export, both services run them. Stop or disable the source when the move is
   final.
+
+## Table expiry and transferred data
+
+TDM3 deletes a test data table when its last use is older than the retention period. The rows of such a table are
+references to data in the database of the system under test, and a month later that system has replaced the data, so
+the table has lost its value. The cleanup is part of how the service works, and a transfer neither disables it nor
+changes the last-use time of a table.
+
+The cleanup compares the last use of each table in `TEST_DATA_TABLE_CATALOG` with the retention period.
+`DEFAULT_TABLE_EXPIRATION_MONTHS` sets it (`default.table.expiration.months`, one month by default), and the settings of
+a project in `PROJECT_INFORMATION` override it. `TABLE_EXPIRATION_CRON` sets when the job runs (`table.expiration.cron`,
+every day at midnight by default). A job that missed its time runs when the service starts. In the spike, a restored
+database whose cleanup trigger was 19 days overdue lost 8 of its 11 tables during the first start, together with their
+import information and cleanup configurations, and 8 entries were added to `DELETED_TABLES_HISTORY`
+([spike S5](#spikes)).
+
+The people who use the transfer have to expect this. These cases need to be in the user documentation:
+
+1. **Export from a service with a short retention period.** The source has already deleted every table older than its
+   period, so the dump holds only what is left, and that can be little.
+2. **Import of a dump that was exported long ago.** A table last used more than the retention period before the import
+   is deleted on the first start after the restore, or at the next midnight at the latest. A dump that has been stored
+   for weeks may therefore bring back few tables or none.
+3. **Import into a service with different retention settings.** `PROJECT_INFORMATION` is part of the dump, so the
+   per-project timeouts of the source replace those of the target. The default period comes from the environment of the
+   target and is not part of the dump.
+4. **A staged dump that waits for approval.** Staging and approval do not change the last use of a table, so the time a
+   dump waits counts against its tables.
+5. **Rollback from `backup/`.** The database in a backup is old by the time of the rollback, so the first start after
+   it deletes the tables that expired in between.
 
 ## Recovery when the service does not start
 
@@ -436,8 +506,15 @@ available. The recovery therefore works on the volume. The implementation turns 
 - Rollback: stage a dump that fails in the middle of `RUNSCRIPT`, restart, and check that the old data is back and the
   status is `FAILED`.
 - Crash: kill the process between moving the backup and finishing the restore, restart, and check the rollback.
-- Validator: dumps that contain `CREATE ALIAS`, a trigger, `FILE_READ`, a nested `RUNSCRIPT`, and `INSERT ... SELECT`
-  are rejected. A real dump of a large database is accepted.
+- Validator: dumps that contain a `CREATE ALIAS` other than `UUID_GENERATE_V4`, a trigger, `FILE_READ`, a nested
+  `RUNSCRIPT`, and `INSERT ... SELECT` are rejected. A real dump of a large database is accepted. A dump of a freshly
+  migrated database is accepted, so a new migration cannot break the allowlist unnoticed.
+- Users: a dump with a `CREATE USER ... ADMIN` statement is accepted, the stored file has no user statements, and after
+  the import only the user from `TDM_DB_USER` can log in, with its own password and not with an empty one.
+- Consistency: export while several sessions write to two tables in one transaction, and check that both tables hold
+  the same rows in the dump.
+- Version: a dump from `1.0.13-SNAPSHOT` is parsed. A target on `0.0.1.LOCAL` accepts a dump from `1.0.13` with a
+  warning that names both versions, and a dump from `0.0.1.LOCAL` with no warning.
 - Key: no key, short key, wrong key, and right key, for each of the five operations, and the `404` while the feature is
   off. The key never appears in the log.
 - Unapproved dump: restart with a `STAGED` dump and check that nothing changes.
@@ -452,23 +529,27 @@ Documentation that the implementation updates:
 - `docs/troubleshooting.md`: the errors of the transfer, including a restore that ended in `FAILED`, and the
   [recovery runbook](#recovery-when-the-service-does-not-start).
 - `docs/architecture.md`: a short section that points to this page.
+- A user-facing page about the transfer that lists the cases of [Table expiry and transferred
+  data](#table-expiry-and-transferred-data), so that a deleted table after an import is no surprise.
 - `CHANGELOG.md`: an entry under the next version.
 - `deployments/charts/atp3-tdm-be`: the Secret, the `TDM_DB_TRANSFER_KEY` variable, and the default of
   `atp.logging.controller.headers.ignore`.
 
 ## Spikes
 
-Each spike runs against H2 2.2.224, the version in `parent/qubership-atp-tdm-parent-java/pom.xml`, before the
-implementation starts.
+The spikes ran against H2 2.2.224, the version in `parent/qubership-atp-tdm-parent-java/pom.xml`. They used a copy of a
+local development database, a copy of the database of a local 1.0.13 distribution (42 tables, 11 test data tables, no
+leftover tables), and synthetic tables. S5 started the real service on a restored copy of the second database. The
+scripts are not part of the repository.
 
-| # | Question | Why it matters |
+| # | Question | Result |
 | --- | --- | --- |
-| S1 | Does `SCRIPT` give a consistent snapshot while other sessions write, and does it block writers? For how long on a large database? | Decides whether the export can run on a live service. |
-| S2 | Which `SCRIPT` options does the dump need so that it does not carry the source's user and password hash, and does not override settings that come from the target URL? | The target database user and password come from `TDM_DB_USER` and `TDM_DB_PASSWORD`. |
-| S3 | Does a dump round trip for every column type the test data tables use, including large objects? Does a dump from another H2 2.x version load? | Decides the compatibility statement. |
-| S4 | Which statement kinds does a real dump contain? Does the live database define any alias or trigger? | Fixes the allowlist of `DumpValidator`. |
-| S5 | Which `TRIGGER_STATE` values does the Quartz version in use write for claimed triggers? Does the service start, keep its schedules, and run them after the cleanup of [Scheduler state](#scheduler-state)? Does `spring.quartz.jdbc.initialize-schema=ALWAYS` leave existing Quartz data intact? | Confirms the cleanup statements. |
-| S6 | How large is the restored database compared with the gzip dump, and how long does `RUNSCRIPT` take for a database of several gigabytes? | Sets the disk pre-check factor and the timeout advice. |
+| S1 | Does `SCRIPT` give a consistent snapshot while other sessions write, and does it block writers? | It does not block writers: with three writers, commits took 20 to 30 ms at most during an export, against 2 ms without it, and none failed. Under the default isolation level it is not consistent: two tables written in one transaction held 5033 and 5036 rows in the dump. In a transaction with `REPEATABLE_READ` or `SERIALIZABLE` and `autoCommit` off, both held the same rows in every run. See [Export](#export). |
+| S2 | Which `SCRIPT` options keep the user and password hash of the source out of the dump? | `NOPASSWORDS` replaces the hash with an empty password, and the user then logs in with an empty password and not with a wrong one. The dump has no `SET` rows, so `MODE=PostgreSQL` comes from the URL of the target. The staging step has to remove the user statement. See [Users and passwords](#users-and-passwords). |
+| S3 | Does a dump round trip for every column type, and does a dump from another H2 2.x version load? | After a round trip the 203 statements and every row count of the second database are equal. The types in use are VARCHAR, UUID, BOOLEAN, TIMESTAMP, BIGINT, INTEGER, DATE, VARBINARY, NUMERIC, SMALLINT, and one CLOB column. Dumps of 2.2.220 and 2.2.224 load into each other with the same content. Large LOB values were not tested. |
+| S4 | Which statement kinds does a real dump contain? | `ALTER TABLE`, `CREATE CACHED TABLE`, `CREATE INDEX`, `INSERT`, comments, one `CREATE USER`, and one alias, `UUID_GENERATE_V4`. No triggers, sequences, schemas, roles, or grants. See [The dump is executable SQL](#the-dump-is-executable-sql). |
+| S5 | Does the service start, keep its schedules, and run them after the cleanup of [Scheduler state](#scheduler-state)? | Quartz 2.3.2 writes `ACQUIRED`, `BLOCKED`, and `PAUSED_BLOCKED` for claimed triggers, as assumed. `spring.quartz.jdbc.initialize-schema=ALWAYS` leaves existing rows intact. The service started on a restored copy in about 20 seconds with no errors, created a new scheduler instance, kept both jobs and triggers, and moved the next fire times to the future. The first start also ran the overdue table cleanup; see [Table expiry and transferred data](#table-expiry-and-transferred-data). |
+| S6 | How large is the restored database compared with the gzip dump, and how long do the export and `RUNSCRIPT` take? | Measured on synthetic data only. A 421 MB file gave a 43 MB dump, a 9.9 second export under write load, a 6.4 second restore, and a 196 MB restored file. The second database gave a 54 KB dump and a 225 KB restored file from 741 KB. The restored file is 4.2 to 4.6 times the dump. The multi-gigabyte case is still unmeasured. |
 
 ## Decisions
 
@@ -488,4 +569,13 @@ implementation starts.
 6. **Version rule.** A dump from a newer version than the service is rejected. A dump from an older major version is
    accepted with a warning. See [Dump format](#dump-format-and-compatibility).
 
-No open questions remain. The [spikes](#spikes) hold the facts that the implementation has to establish first.
+7. **Retention after an import.** The cleanup of expired tables is part of the service and applies to imported tables
+   like any other. An import does not change the last use of a table. The user documentation lists the cases (see
+   [Table expiry and transferred data](#table-expiry-and-transferred-data)).
+
+8. **Development version.** A target on `0.0.1.LOCAL` counts as newer than any other version and accepts the import with
+   a warning that names both versions. A dump from `0.0.1.LOCAL` is accepted by a target with the same version. See
+   [Dump format](#dump-format-and-compatibility).
+
+No open questions remain. The [spikes](#spikes) leave two measurements for the implementation: large LOB values (S3) and
+a database of several gigabytes (S6).

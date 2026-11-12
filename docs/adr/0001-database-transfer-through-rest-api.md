@@ -51,7 +51,8 @@ We will add a database transfer feature to the backend, exposed as REST endpoint
   backup, the script is run into a new database, and a failure restores the backup. A restart without an approval never
   applies a staged script.
 - **Validation** treats the script as executable SQL. The import rejects a script that contains statements outside the
-  kinds a TDM3 dump holds, such as `CREATE ALIAS`, triggers, or file access functions.
+  kinds a TDM3 dump holds, such as triggers, file access functions, or an alias other than the one that Liquibase
+  creates.
 - **Access** is restricted by a transfer key, a secret that the deployer passes to the service through the environment.
   Without the key the endpoints answer `404`. With it, a request must carry the key in a header. The key protects the
   transfer endpoints only; it does not add access control to the rest of the service.
