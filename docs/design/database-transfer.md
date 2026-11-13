@@ -254,8 +254,10 @@ touched.
 ## Export
 
 The export runs the H2 `SCRIPT NOPASSWORDS` command on one connection from the pool and writes each returned row
-straight into the response through a `GZIPOutputStream`. It uses `StreamingResponseBody`, so neither the dump nor a
-temporary file sits in memory or on disk.
+straight into the response through a `GZIPOutputStream`, so neither the dump nor a temporary file sits in memory or on
+disk. The controller writes to the servlet response on the request thread. A `StreamingResponseBody` would run under
+the asynchronous request timeout of the servlet container, which cuts a long export, and it would let a slot of the
+single-export limit leak when the container never starts the body.
 
 The export runs in one transaction: `autoCommit` is off and the isolation level is `REPEATABLE_READ`. With H2's default
 `READ_COMMITTED`, `SCRIPT` reads each table at its own point in time, so a dump taken under write load can hold a
