@@ -60,14 +60,14 @@ a dump that nobody approved.
 
 The class names are proposals. The packages follow the existing layout of the backend module.
 
-| Component | Package | Responsibility |
-| --- | --- | --- |
-| `DatabaseTransferController` | `controllers` | The five REST operations under `/api/tdm/database`. |
-| `DatabaseTransferService` and its implementation | `service`, `service.impl` | Streams the export, stages and validates an upload, records the status, approves and cancels. |
-| `TransferKeyInterceptor` | `configuration` | Checks the transfer key for every request under `/api/tdm/database/**`. |
-| `DumpValidator` | `service.impl` | Reads a dump once and rejects it if it is not a TDM3 dump or contains a forbidden statement. |
-| `DatabaseRestoreInitializer` | `configuration` | Replaces the database files at startup. Called from `DbConfiguration.dataSource` before the pool is created. |
-| `TransferStatusStore` | `service.impl` | Reads and writes `status.json` in the staging directory. |
+| Component                                        | Package                   | Responsibility                                                                                               |
+|--------------------------------------------------|---------------------------|--------------------------------------------------------------------------------------------------------------|
+| `DatabaseTransferController`                     | `controllers`             | The five REST operations under `/api/tdm/database`.                                                          |
+| `DatabaseTransferService` and its implementation | `service`, `service.impl` | Streams the export, stages and validates an upload, records the status, approves and cancels.                |
+| `TransferKeyInterceptor`                         | `configuration`           | Checks the transfer key for every request under `/api/tdm/database/**`.                                      |
+| `DumpValidator`                                  | `service.impl`            | Reads a dump once and rejects it if it is not a TDM3 dump or contains a forbidden statement.                 |
+| `DatabaseRestoreInitializer`                     | `configuration`           | Replaces the database files at startup. Called from `DbConfiguration.dataSource` before the pool is created. |
+| `TransferStatusStore`                            | `service.impl`            | Reads and writes `status.json` in the staging directory.                                                     |
 
 `DbConfiguration.dataSource` creates a `HikariDataSource` with a minimum idle size of at least one connection, so the
 pool opens the database file as soon as the bean exists. The restore step therefore runs first, inside that method,
@@ -76,12 +76,12 @@ them touches the database before the restore step finishes.
 
 ## Configuration
 
-| Property | Environment variable | Default | Meaning |
-| --- | --- | --- | --- |
-| `tdm.db.transfer.key` | `TDM_DB_TRANSFER_KEY` | unset | The transfer key. At least 32 characters. The feature is off while the key is unset or shorter. |
-| `tdm.db.transfer.max-size` | `TDM_DB_TRANSFER_MAX_SIZE` | `100MB` | Largest compressed dump the service accepts, as a Spring data size. `100MB` is 104857600 bytes. Independent of `MAX_FILE_SIZE` and `MAX_REQUEST_SIZE`. |
-| `tdm.db.transfer.staging-dir` | `TDM_DB_TRANSFER_DIR` | `transfer` next to the database files | Directory for the staged dump, the status file, and the backups. It must be on the same volume as the database. |
-| `tdm.db.transfer.backups` | `TDM_DB_TRANSFER_BACKUPS` | `2` | Number of database backups to keep after a successful import. |
+| Property                      | Environment variable       | Default                               | Meaning                                                                                                                                                |
+|-------------------------------|----------------------------|---------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `tdm.db.transfer.key`         | `TDM_DB_TRANSFER_KEY`      | unset                                 | The transfer key. At least 32 characters. The feature is off while the key is unset or shorter.                                                        |
+| `tdm.db.transfer.max-size`    | `TDM_DB_TRANSFER_MAX_SIZE` | `100MB`                               | Largest compressed dump the service accepts, as a Spring data size. `100MB` is 104857600 bytes. Independent of `MAX_FILE_SIZE` and `MAX_REQUEST_SIZE`. |
+| `tdm.db.transfer.staging-dir` | `TDM_DB_TRANSFER_DIR`      | `transfer` next to the database files | Directory for the staged dump, the status file, and the backups. It must be on the same volume as the database.                                        |
+| `tdm.db.transfer.backups`     | `TDM_DB_TRANSFER_BACKUPS`  | `2`                                   | Number of database backups to keep after a successful import.                                                                                          |
 
 The Helm chart in `deployments/charts/atp3-tdm-be` passes `TDM_DB_TRANSFER_KEY` from a Kubernetes Secret and can
 generate the key at deployment. See [Deploying the key with Helm](#deploying-the-key-with-helm).
@@ -92,12 +92,12 @@ The chart takes the key from one of three sources, in this order. Every source i
 `atp3tdm.dbTransfer.enabled` is `true`. While it is `false`, the chart renders no Secret and no
 `TDM_DB_TRANSFER_KEY` variable, and the transfer endpoints answer `404`.
 
-| Value | Meaning |
-| --- | --- |
-| `atp3tdm.dbTransfer.enabled` | `false` by default. Turns the feature on for the deployment. |
+| Value                               | Meaning                                                                                                                                                   |
+|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `atp3tdm.dbTransfer.enabled`        | `false` by default. Turns the feature on for the deployment.                                                                                              |
 | `atp3tdm.dbTransfer.existingSecret` | Name of a Secret that the deployer manages. It must hold the key under the entry `TDM_DB_TRANSFER_KEY`. The chart creates nothing and only references it. |
-| `atp3tdm.dbTransfer.key` | A key the deployer supplies. The chart stores it in its own Secret. |
-| (both empty) | The chart generates a key of 48 random alphanumeric characters (`randAlphaNum 48`) and stores it in its own Secret. |
+| `atp3tdm.dbTransfer.key`            | A key the deployer supplies. The chart stores it in its own Secret.                                                                                       |
+| (both empty)                        | The chart generates a key of 48 random alphanumeric characters (`randAlphaNum 48`) and stores it in its own Secret.                                       |
 
 The chart-owned Secret is named `<SERVICE_NAME>-db-transfer` and has one entry, `TDM_DB_TRANSFER_KEY`. The Deployment
 reads it with a `secretKeyRef`, like the other secret variables, so the key never appears in the pod specification.
@@ -203,13 +203,13 @@ because every dump the export writes contains one. The database user and passwor
 All paths are relative to the service root, as in [docs/api.md](../api.md#base-path-and-the-atp-gateway). Every
 operation needs the `X-TDM-Transfer-Key` header.
 
-| Operation | Method and path | Success | Errors |
-| --- | --- | --- | --- |
-| Export | `GET /api/tdm/database/export` | `200`, `application/gzip` | `404` feature off, `403` wrong key, `409` not a file database or an export already running |
-| Stage a dump | `POST /api/tdm/database/import` | `202`, status body | `400` invalid dump with the reason, `403`, `404`, `409` not a file database, `413` over the size limit, `507` not enough free disk space |
-| Read the status | `GET /api/tdm/database/import` | `200`, status body | `403`, `404` |
-| Cancel | `DELETE /api/tdm/database/import` | `204` | `403`, `404` |
-| Approve and restart | `POST /api/tdm/database/import/apply?confirm=REPLACE_ALL_DATA&restart=true` | `202`, status body | `400` missing or wrong `confirm`, `403`, `404`, `409` nothing is staged |
+| Operation           | Method and path                                                             | Success                   | Errors                                                                                                                                   |
+|---------------------|-----------------------------------------------------------------------------|---------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| Export              | `GET /api/tdm/database/export`                                              | `200`, `application/gzip` | `404` feature off, `403` wrong key, `409` not a file database or an export already running                                               |
+| Stage a dump        | `POST /api/tdm/database/import`                                             | `202`, status body        | `400` invalid dump with the reason, `403`, `404`, `409` not a file database, `413` over the size limit, `507` not enough free disk space |
+| Read the status     | `GET /api/tdm/database/import`                                              | `200`, status body        | `403`, `404`                                                                                                                             |
+| Cancel              | `DELETE /api/tdm/database/import`                                           | `204`                     | `403`, `404`                                                                                                                             |
+| Approve and restart | `POST /api/tdm/database/import/apply?confirm=REPLACE_ALL_DATA&restart=true` | `202`, status body        | `400` missing or wrong `confirm`, `403`, `404`, `409` nothing is staged                                                                  |
 
 Details:
 
@@ -441,16 +441,16 @@ database/
 
 ## Failure handling
 
-| Failure | What happens |
-| --- | --- |
-| Upload interrupted | `incoming.sql.gz.part` is deleted on the next upload or at startup. The previous staged dump stays. |
-| Dump fails validation | `400` with the reason. Nothing is staged. |
-| Disk full during upload | `507` where the pre-check catches it. Otherwise the part file is deleted and the request fails. |
-| Wrong or missing key | `403`. The attempt is logged with the client address and no key value. |
-| Restore fails | Rollback to the backup, status `FAILED`, service starts with the old data. |
-| Process dies during the restore | Next start rolls back (`APPLYING` found), status `FAILED: interrupted`. |
+| Failure                                                            | What happens                                                                                                                                                                                  |
+|--------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Upload interrupted                                                 | `incoming.sql.gz.part` is deleted on the next upload or at startup. The previous staged dump stays.                                                                                           |
+| Dump fails validation                                              | `400` with the reason. Nothing is staged.                                                                                                                                                     |
+| Disk full during upload                                            | `507` where the pre-check catches it. Otherwise the part file is deleted and the request fails.                                                                                               |
+| Wrong or missing key                                               | `403`. The attempt is logged with the client address and no keyvalue.                                                                                                                         |
+| Restore fails                                                      | Rollback to the backup, status `FAILED`, service starts with the old data.                                                                                                                    |
+| Process dies during the restore                                    | Next start rolls back (`APPLYING` found), status `FAILED: interrupted`.                                                                                                                       |
 | Liquibase or a later startup step fails after a successful restore | The service does not start, as it does not start for any broken database. The API is not available, so the [recovery runbook](#recovery-when-the-service-does-not-start) works on the volume. |
-| Platform does not restart the service after `apply` | The dump stays `APPROVED` until someone restarts the service. `GET` shows it. |
+| Platform does not restart the service after `apply`                | The dump stays `APPROVED` until someone restarts the service. `GET` shows it.                                                                                                                 |
 
 ## Dump format and compatibility
 
@@ -459,12 +459,12 @@ database/
   `-SNAPSHOT` is ignored when the versions are compared. The upload compares it with the version of the running
   service:
 
-  | Dump version | Outcome |
-  | --- | --- |
-  | Newer than the service | Rejected with `400`. Downgrades are not supported. |
-  | Same major version, equal or older | Accepted. Liquibase brings the schema forward on the next start. |
-  | Older major version | Accepted with an entry in `warnings`, for example a dump from 1.0.5 loaded into 5.10.20. |
-  | Missing or not a version | Rejected with `400`. |
+  | Dump version                       | Outcome                                                                                  |
+  |------------------------------------|------------------------------------------------------------------------------------------|
+  | Newer than the service             | Rejected with `400`. Downgrades are not supported.                                       |
+  | Same major version, equal or older | Accepted. Liquibase brings the schema forward on the next start.                         |
+  | Older major version                | Accepted with an entry in `warnings`, for example a dump from 1.0.5 loaded into 5.10.20. |
+  | Missing or not a version           | Rejected with `400`.                                                                     |
 
   The warning is information, not a block: the approval is a separate request, and the person who sends it sees the
   warning in the status. A version gap inside one major version, such as 1.0.5 into 1.5.10, gives no warning.
@@ -595,14 +595,14 @@ local development database, a copy of the database of a local 1.0.13 distributio
 leftover tables), and synthetic tables. S5 started the real service on a restored copy of the second database. The
 scripts are not part of the repository.
 
-| # | Question | Result |
-| --- | --- | --- |
-| S1 | Does `SCRIPT` give a consistent snapshot while other sessions write, and does it block writers? | It does not block writers: with three writers, commits took 20 to 30 ms at most during an export, against 2 ms without it, and none failed. Under the default isolation level it is not consistent: two tables written in one transaction held 5033 and 5036 rows in the dump. In a transaction with `REPEATABLE_READ` or `SERIALIZABLE` and `autoCommit` off, both held the same rows in every run. See [Export](#export). |
-| S2 | Which `SCRIPT` options keep the user and password hash of the source out of the dump? | `NOPASSWORDS` replaces the hash with an empty password, and the user then logs in with an empty password and not with a wrong one. The dump has no `SET` rows, so `MODE=PostgreSQL` comes from the URL of the target. The staging step has to remove the user statement. See [Users and passwords](#users-and-passwords). |
-| S3 | Does a dump round trip for every column type, and does a dump from another H2 2.x version load? | After a round trip the 203 statements and every row count of the second database are equal. The types in use are VARCHAR, UUID, BOOLEAN, TIMESTAMP, BIGINT, INTEGER, DATE, VARBINARY, NUMERIC, SMALLINT, and one CLOB column. Dumps of 2.2.220 and 2.2.224 load into each other with the same content. Large LOB values were not tested. |
-| S4 | Which statement kinds does a real dump contain? | `ALTER TABLE`, `CREATE CACHED TABLE`, `CREATE INDEX`, `INSERT`, comments, one `CREATE USER`, and one alias, `UUID_GENERATE_V4`. No triggers, sequences, schemas, roles, or grants. See [The dump is executable SQL](#the-dump-is-executable-sql). |
-| S5 | Does the service start, keep its schedules, and run them after the cleanup of [Scheduler state](#scheduler-state)? | Quartz 2.3.2 writes `ACQUIRED`, `BLOCKED`, and `PAUSED_BLOCKED` for claimed triggers, as assumed. `spring.quartz.jdbc.initialize-schema=ALWAYS` leaves existing rows intact. The service started on a restored copy in about 20 seconds with no errors, created a new scheduler instance, kept both jobs and triggers, and moved the next fire times to the future. The first start also ran the overdue table cleanup; see [Table expiry and transferred data](#table-expiry-and-transferred-data). |
-| S6 | How large is the restored database compared with the gzip dump, and how long do the export and `RUNSCRIPT` take? | Measured on synthetic data only. A 421 MB file gave a 43 MB dump, a 9.9 second export under write load, a 6.4 second restore, and a 196 MB restored file. The second database gave a 54 KB dump and a 225 KB restored file from 741 KB. The restored file is 4.2 to 4.6 times the dump. The multi-gigabyte case is still unmeasured. |
+| #   | Question                                                                                                           | Result                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+|-----|--------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| S1  | Does `SCRIPT` give a consistent snapshot while other sessions write, and does it block writers?                    | It does not block writers: with three writers, commits took 20 to 30 ms at most during an export, against 2 ms without it, and none failed. Under the default isolation level it is not consistent: two tables written in one transaction held 5033 and 5036 rows in the dump. In a transaction with `REPEATABLE_READ` or `SERIALIZABLE` and `autoCommit` off, both held the same rows in every run. See [Export](#export).                                                                          |
+| S2  | Which `SCRIPT` options keep the user and password hash of the source out of the dump?                              | `NOPASSWORDS` replaces the hash with an empty password, and the user then logs in with an empty password and not with a wrong one. The dump has no `SET` rows, so `MODE=PostgreSQL` comes from the URL of the target. The staging step has to remove the user statement. See [Users and passwords](#users-and-passwords).                                                                                                                                                                            |
+| S3  | Does a dump round trip for every column type, and does a dump from another H2 2.x version load?                    | After a round trip the 203 statements and every row count of the second database are equal. The types in use are VARCHAR, UUID, BOOLEAN, TIMESTAMP, BIGINT, INTEGER, DATE, VARBINARY, NUMERIC, SMALLINT, and one CLOB column. Dumps of 2.2.220 and 2.2.224 load into each other with the same content. Large LOB values were not tested.                                                                                                                                                             |
+| S4  | Which statement kinds does a real dump contain?                                                                    | `ALTER TABLE`, `CREATE CACHED TABLE`, `CREATE INDEX`, `INSERT`, comments, one `CREATE USER`, and one alias, `UUID_GENERATE_V4`. No triggers, sequences, schemas, roles, or grants. See [The dump is executable SQL](#the-dump-is-executable-sql).                                                                                                                                                                                                                                                    |
+| S5  | Does the service start, keep its schedules, and run them after the cleanup of [Scheduler state](#scheduler-state)? | Quartz 2.3.2 writes `ACQUIRED`, `BLOCKED`, and `PAUSED_BLOCKED` for claimed triggers, as assumed. `spring.quartz.jdbc.initialize-schema=ALWAYS` leaves existing rows intact. The service started on a restored copy in about 20 seconds with no errors, created a new scheduler instance, kept both jobs and triggers, and moved the next fire times to the future. The first start also ran the overdue table cleanup; see [Table expiry and transferred data](#table-expiry-and-transferred-data). |
+| S6  | How large is the restored database compared with the gzip dump, and how long do the export and `RUNSCRIPT` take?   | Measured on synthetic data only. A 421 MB file gave a 43 MB dump, a 9.9 second export under write load, a 6.4 second restore, and a 196 MB restored file. The second database gave a 54 KB dump and a 225 KB restored file from 741 KB. The restored file is 4.2 to 4.6 times the dump. The multi-gigabyte case is still unmeasured.                                                                                                                                                                 |
 
 ## Decisions
 
