@@ -2,10 +2,12 @@
 
 ## Status
 
-Proposed
+Accepted
 
 <!-- markdownlint-disable MD001 -->
 #### Date
+
+2026-11-13
 
 #### Owner
 
@@ -13,7 +15,8 @@ Proposed
 
 #### Participants and approvers
 
-TBD: the TDM3 maintainers and the teams that deploy TDM3 per project.
+- [kagw95](https://github.com/kagw95)
+- QSTP Team
 
 #### Related ADRs
 
