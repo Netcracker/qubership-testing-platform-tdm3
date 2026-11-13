@@ -155,15 +155,15 @@ object on success. `GET` returns the connections themselves (see [Get connection
 
 These endpoints do not report every failure the same way:
 
-| Code  | When                                                                                                | Body                                                                                     |
-|-------|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
-| `400` | A validation error: a duplicate system, an invalid connection type, a missing or invalid parameter. | `ResponseMessage` with `type: "ERROR"`.                                                  |
-| `400` | `GET` with a missing `projectName` or `envName`, or a project that does not exist.                  | `ResponseMessage` with `type: "ERROR"`.                                                  |
-| `404` | The environment does not exist (`GET`, `PUT`, `DELETE`).                                            | `ResponseMessage` with `type: "ERROR"`.                                                  |
-| `404` | The system does not exist (`GET` when `systemName` is set, and `PUT`).                              | `GET`: `ResponseMessage` with `type: "ERROR"`. `PUT`: the [generic error body](#errors). |
+| Code  | When                                                                                                | Body                                    |
+|-------|-----------------------------------------------------------------------------------------------------|-----------------------------------------|
+| `400` | A validation error: a duplicate system, an invalid connection type, a missing or invalid parameter. | `ResponseMessage` with `type: "ERROR"`. |
+| `400` | `GET` with a missing `projectName` or `envName`, or a project that does not exist.                  | `ResponseMessage` with `type: "ERROR"`. |
+| `404` | The environment does not exist (`GET`, `PUT`, `DELETE`).                                            | `ResponseMessage` with `type: "ERROR"`. |
+| `404` | The system does not exist (`GET` when `systemName` is set, and `PUT`).                              | `ResponseMessage` with `type: "ERROR"`. |
 
-Validation errors and a missing environment return `ResponseMessage`. A missing system on `PUT` still uses the generic
-error body. Check the shape you get against the table above, or against [Errors](#errors) for anything not listed in it.
+Every failure listed here returns `ResponseMessage`. Check the shape you get against [Errors](#errors) for anything
+not listed in it.
 
 ### Request body
 

@@ -1,0 +1,12 @@
+# pylint settings for the Python scripts of the agent packages.
+#
+# Every script of a skill starts with the same three lines that make the shared module
+# importable, and the scripts take similar command-line arguments. A script must be
+# a single file that runs on its own, so these lines cannot be shared. Report a block
+# of similar lines only when it is long enough to be worth sharing.
+[SIMILARITIES]
+min-similarity-lines=10
+ignore-comments=yes
+ignore-docstrings=yes
+ignore-imports=yes
+ignore-signatures=yes

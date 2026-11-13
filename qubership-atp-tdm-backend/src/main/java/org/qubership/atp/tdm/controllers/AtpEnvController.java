@@ -39,6 +39,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Nonnull;
 
@@ -66,17 +67,16 @@ public class AtpEnvController {
     @AuditAction(auditAction = "ATP Action. Get connections for environment {{#envName}} "
             + "in project {{#projectName}}")
     @GetMapping
-    public ResponseEntity<Object> getConnections(@RequestParam("projectName") String projectName,
-                                                 @RequestParam("envName") String envName,
+    public ResponseEntity<Object> getConnections(@Parameter(required = true)
+                                                 @RequestParam(value = "projectName", required = false)
+                                                 String projectName,
+                                                 @Parameter(required = true)
+                                                 @RequestParam(value = "envName", required = false)
+                                                 String envName,
                                                  @RequestParam(value = "systemName", required = false)
                                                  String systemName) {
-        try {
-            EnvironmentConnectionsResponse body = service.getConnections(projectName, envName, systemName);
-            return ResponseEntity.ok(body);
-        } catch (SystemNotFoundException ex) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ResponseMessage(ResponseType.ERROR, ex.getMessage()));
-        }
+        EnvironmentConnectionsResponse body = service.getConnections(projectName, envName, systemName);
+        return ResponseEntity.ok(body);
     }
 
     /**
@@ -129,12 +129,20 @@ public class AtpEnvController {
     }
 
     /**
-     * Environment-not-found on GET, PUT, and DELETE. {@code SystemNotFoundException} on PUT still falls through
-     * to Spring Boot's default error page; GET handles that exception itself.
+     * Environment-not-found on GET, PUT, and DELETE.
      */
     @ExceptionHandler(EnvironmentNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseMessage handleEnvironmentNotFound(EnvironmentNotFoundException ex) {
+        return new ResponseMessage(ResponseType.ERROR, ex.getMessage());
+    }
+
+    /**
+     * System-not-found on GET and PUT.
+     */
+    @ExceptionHandler(SystemNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseMessage handleSystemNotFound(SystemNotFoundException ex) {
         return new ResponseMessage(ResponseType.ERROR, ex.getMessage());
     }
 

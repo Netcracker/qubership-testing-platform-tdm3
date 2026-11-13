@@ -22,3 +22,6 @@ dist
 coverage
 /application.pid
 /db/
+
+# Local runtime config for agent-packages/tdm-test-data-assistant skills (see its README#configuration)
+/.tdm-assistant/

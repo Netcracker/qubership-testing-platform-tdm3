@@ -1,0 +1,46 @@
+---
+
+name: Test Data Assistant Sync Check
+
+# Warns when a pull request changes REST controllers or request/response models but leaves
+# agent-packages/tdm-test-data-assistant untouched. The check never fails the build: a change can
+# leave the package unaffected. See AGENTS.md, "Keep Test Data Assistant in sync with the REST API".
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
+
+jobs:
+  assistant-sync:
+    name: Check Test Data Assistant sync
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Compare changed files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          files=$(gh api --paginate "repos/${REPOSITORY}/pulls/${PR_NUMBER}/files" --jq '.[].filename')
+
+          api_files=$(echo "${files}" | grep -E '^qubership-atp-tdm-(backend|env-configurator)/src/main/java/.*/(controllers|model)/' || true)
+          package_files=$(echo "${files}" | grep -E '^agent-packages/tdm-test-data-assistant/' || true)
+
+          if [ -z "${api_files}" ]; then
+            echo "No controller or model file changed."
+            exit 0
+          fi
+
+          echo "Changed controller and model files:"
+          echo "${api_files}"
+
+          if [ -n "${package_files}" ]; then
+            echo "The package agent-packages/tdm-test-data-assistant changed too."
+            exit 0
+          fi
+
+          echo "::warning title=Test Data Assistant not updated::This pull request changes REST controllers or request and response models, but not agent-packages/tdm-test-data-assistant. If the endpoints, parameters, or response types changed, update the package. Otherwise say in the description why it is unaffected. See AGENTS.md."
