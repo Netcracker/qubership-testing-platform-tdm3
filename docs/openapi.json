@@ -22,6 +22,10 @@
       "name" : "atp-action-controller"
     },
     {
+      "description" : "Exports and imports the whole database.",
+      "name" : "database-transfer-controller"
+    },
+    {
       "description" : "Versions of test data operations that take their parameters in the request body.",
       "name" : "test-data-controller-v2"
     },
@@ -489,6 +493,21 @@
         "summary" : "Run a refresh now",
         "tags" : [
           "data-refresh-controller"
+        ]
+      }
+    },
+    "/api/tdm/database/export" : {
+      "get" : {
+        "description" : "Returns the whole database as a gzip-compressed SQL dump. Needs the X-TDM-Transfer-Key header. Answers 404 while the transfer is off, 403 for a wrong key, and 409 when the database is not a file database or another export is running.",
+        "operationId" : "export",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Export the whole database",
+        "tags" : [
+          "database-transfer-controller"
         ]
       }
     },
