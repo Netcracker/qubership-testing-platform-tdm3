@@ -83,7 +83,55 @@ them touches the database before the restore step finishes.
 | `tdm.db.transfer.staging-dir` | `TDM_DB_TRANSFER_DIR` | `transfer` next to the database files | Directory for the staged dump, the status file, and the backups. It must be on the same volume as the database. |
 | `tdm.db.transfer.backups` | `TDM_DB_TRANSFER_BACKUPS` | `2` | Number of database backups to keep after a successful import. |
 
-The Helm chart in `deployments/charts/atp3-tdm-be` passes `TDM_DB_TRANSFER_KEY` from a Kubernetes Secret.
+The Helm chart in `deployments/charts/atp3-tdm-be` passes `TDM_DB_TRANSFER_KEY` from a Kubernetes Secret and can
+generate the key at deployment. See [Deploying the key with Helm](#deploying-the-key-with-helm).
+
+### Deploying the key with Helm
+
+The chart takes the key from one of three sources, in this order. Every source is off until
+`atp3tdm.dbTransfer.enabled` is `true`. While it is `false`, the chart renders no Secret and no
+`TDM_DB_TRANSFER_KEY` variable, and the transfer endpoints answer `404`.
+
+| Value | Meaning |
+| --- | --- |
+| `atp3tdm.dbTransfer.enabled` | `false` by default. Turns the feature on for the deployment. |
+| `atp3tdm.dbTransfer.existingSecret` | Name of a Secret that the deployer manages. It must hold the key under the entry `TDM_DB_TRANSFER_KEY`. The chart creates nothing and only references it. |
+| `atp3tdm.dbTransfer.key` | A key the deployer supplies. The chart stores it in its own Secret. |
+| (both empty) | The chart generates a key of 48 random alphanumeric characters (`randAlphaNum 48`) and stores it in its own Secret. |
+
+The chart-owned Secret is named `<SERVICE_NAME>-db-transfer` and has one entry, `TDM_DB_TRANSFER_KEY`. The Deployment
+reads it with a `secretKeyRef`, like the other secret variables, so the key never appears in the pod specification.
+
+Generating the key at every render would change it at every upgrade, and a key that changes under a running client is
+useless. The template therefore calls `lookup` for the Secret first and reuses its value when the Secret exists. The
+Secret is an ordinary resource and not a hook, unlike `<SERVICE_NAME>-secrets`, whose `before-hook-creation` policy
+deletes it before each upgrade. It carries `helm.sh/resource-policy: keep`, so `helm uninstall` leaves it in place, and
+a reinstall then finds the old key.
+
+The deployer reads the generated key from the cluster. The chart never prints it, because Helm output ends up in CI
+logs:
+
+```bash
+kubectl get secret <SERVICE_NAME>-db-transfer -n <namespace> -o jsonpath='{.data.TDM_DB_TRANSFER_KEY}' | base64 -d
+```
+
+To rotate a generated key, delete the Secret, upgrade the release, and restart the pod. To rotate through the chart
+alone, set `atp3tdm.dbTransfer.key` or `existingSecret` instead.
+
+Limits of this approach:
+
+- `lookup` returns nothing under `helm template` and `helm install --dry-run`, and in tools that render the chart
+  without cluster access, such as Argo CD. A render without cluster access generates a different key every time. A
+  deployment that renders this way must set `key` or `existingSecret`. The chart cannot detect this case.
+- The key in the Secret is not read again while the pod runs. After a change of the key, the pod has to restart. The
+  Deployment already uses the `Recreate` strategy, and the chart adds a `checksum/db-transfer` annotation to the pod
+  template, computed from the key a deployer supplies, so that an upgrade with a new `key` restarts the pod. A generated
+  key does not change during an upgrade, so it needs no annotation. A rotated generated key and a change inside an
+  `existingSecret` need a manual restart.
+- The `COMPOSE` platform renders environment lines and has no Secret and no `lookup`. There the deployer sets
+  `atp3tdm.dbTransfer.key`, and the chart does not generate one.
+- A generated key is as private as the namespace. Anyone who can read Secrets in the namespace can read it, which
+  matches the trust that [the key already carries](#the-dump-is-executable-sql).
 
 ## Access: the transfer key
 
@@ -517,6 +565,9 @@ available. The recovery therefore works on the volume. The implementation turns 
   warning that names both versions, and a dump from `0.0.1.LOCAL` with no warning.
 - Key: no key, short key, wrong key, and right key, for each of the five operations, and the `404` while the feature is
   off. The key never appears in the log.
+- Chart: `helm template` with the feature off renders no Secret and no variable. With it on and no key, a render
+  against a cluster generates a 48-character key, and a second upgrade keeps it. With `key` or `existingSecret` set,
+  nothing is generated, and the Deployment references the right Secret.
 - Unapproved dump: restart with a `STAGED` dump and check that nothing changes.
 - Size: an upload over the limit gets `413`, and the part file is removed.
 
@@ -532,8 +583,10 @@ Documentation that the implementation updates:
 - A user-facing page about the transfer that lists the cases of [Table expiry and transferred
   data](#table-expiry-and-transferred-data), so that a deleted table after an import is no surprise.
 - `CHANGELOG.md`: an entry under the next version.
-- `deployments/charts/atp3-tdm-be`: the Secret, the `TDM_DB_TRANSFER_KEY` variable, and the default of
-  `atp.logging.controller.headers.ignore`.
+- `deployments/charts/atp3-tdm-be`: the `atp3tdm.dbTransfer` values, the key Secret with its generated key, the
+  `TDM_DB_TRANSFER_KEY` variable, the `checksum/db-transfer` annotation, and the default of
+  `atp.logging.controller.headers.ignore`. The chart documentation lists the three key sources and the command that
+  reads a generated key.
 
 ## Spikes
 
@@ -562,7 +615,9 @@ scripts are not part of the repository.
    other table. It clears the runtime state of the source: the scheduler instance, the fired triggers, the claimed
    trigger states, and the ShedLock rows. Definitions are project data, and runtime state belongs to the process that
    wrote it. See [Scheduler state](#scheduler-state).
-4. **The key.** A shared secret is acceptable for now.
+4. **The key.** A shared secret is acceptable for now. The Helm chart can generate it at deployment when
+   `atp3tdm.dbTransfer.enabled` is `true` and the deployer supplies no key. See
+   [Deploying the key with Helm](#deploying-the-key-with-helm).
 5. **Liquibase failure.** After the replacement, startup continues as an ordinary start, and Liquibase runs as it always
    does. If it fails, the service does not start. The administrators and the support team get the
    [recovery runbook](#recovery-when-the-service-does-not-start), which includes putting the previous database back.
