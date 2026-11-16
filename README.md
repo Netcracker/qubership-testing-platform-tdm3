@@ -152,12 +152,15 @@ helm install atp3-tdm-be deployments/charts/atp3-tdm-be \
   --set atp3tdm.storageClassName=<storage class>
 ```
 
-| Value                      | Description                                                                                                                           |
-|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `DOCKER_TAG`               | Full image reference, including the registry and the tag.                                                                             |
-| `CLOUD_PUBLIC_HOST`        | Domain for the Ingress host `<SERVICE_NAME>-<namespace>.<CLOUD_PUBLIC_HOST>`. Set `ATP3_TDM_BE_URL` instead to choose the whole host. |
-| `atp3tdm.storageClassName` | Storage class of the database volume. The chart default is `csi-sc-cinderplugin`.                                                     |
-| `ATP_TDM_URL`              | Public URL of the service. `run.sh` requires it for the UI unless `atp3tdm.identityProviderUrl` is set.                               |
+| Value                               | Description                                                                                                                                                                                                             |
+|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `DOCKER_TAG`                        | Full image reference, including the registry and the tag.                                                                                                                                                               |
+| `CLOUD_PUBLIC_HOST`                 | Domain for the Ingress host `<SERVICE_NAME>-<namespace>.<CLOUD_PUBLIC_HOST>`. Set `ATP3_TDM_BE_URL` instead to choose the whole host.                                                                                   |
+| `atp3tdm.storageClassName`          | Storage class of the database volume. The chart default is `csi-sc-cinderplugin`.                                                                                                                                       |
+| `ATP_TDM_URL`                       | Public URL of the service. `run.sh` requires it for the UI unless `atp3tdm.identityProviderUrl` is set.                                                                                                                 |
+| `atp3tdm.dbTransfer.enabled`        | `false` by default. Turns on the export and import of the whole database through REST. Then the chart keeps the transfer key in a Secret: see the next two values.                                                      |
+| `atp3tdm.dbTransfer.existingSecret` | Name of a Secret that you manage, with the key in the entry `TDM_DB_TRANSFER_KEY`. The chart then creates no Secret.                                                                                                    |
+| `atp3tdm.dbTransfer.key`            | A key of at least 32 characters, which the chart stores in the Secret `<SERVICE_NAME>-db-transfer`. While this and `existingSecret` are empty, the chart generates a key of 48 characters and keeps it across upgrades. |
 
 [`.github/deploy_templates/values-dev.yaml`](.github/deploy_templates/values-dev.yaml) is the values file of the CI
 test deployment. The chart passes most other values to the service as environment variables; see the

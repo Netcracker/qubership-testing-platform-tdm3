@@ -90,11 +90,22 @@ atp3tdm:
   lockRetryPaceSec: "3"
   atpHttpLogging: 'true'
   atpHttpLoggingHeaders: 'true'
-  atpHttpLoggingHeadersIgnore: "Authorization"
+  atpHttpLoggingHeadersIgnore: "Authorization X-TDM-Transfer-Key"
   atpHttpLoggingUriIgnore: "/rest/deployment/readiness /rest/deployment/liveness /api/tdm/download/csv"
   logLevel: "INFO"
   nodeSelector: {}
   heapDumpEnabled: false
   extraEnvs: []
+  # Export and import of the whole database through REST. While "enabled" is false, the chart renders no Secret and
+  # no TDM_DB_TRANSFER_KEY variable, and the transfer endpoints answer 404.
+  dbTransfer:
+    enabled: false
+    # Name of a Secret that you manage. It must hold the key under the entry TDM_DB_TRANSFER_KEY. The chart then
+    # creates no Secret and ignores "key".
+    existingSecret: ""
+    # A key of at least 32 characters, which the chart stores in the Secret <SERVICE_NAME>-db-transfer. While
+    # "existingSecret" and "key" are both empty, the chart generates a key of 48 random characters and keeps it
+    # across upgrades. Required on the COMPOSE platform, which has no Secrets.
+    key: ""
   storageSize: "1Gi"
   storageClassName: "csi-sc-cinderplugin"
