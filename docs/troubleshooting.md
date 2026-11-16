@@ -43,6 +43,64 @@ for an environment or system change, `projectId`) in the logging context. Filter
 that operation's log lines from concurrent ones; see
 [Logging correlation](architecture.md#logging-correlation) for where they come from and when they are set.
 
+## Database transfer
+
+The steps of the transfer are in [Database transfer](database-transfer.md). An error of the five operations comes back
+as plain text with the reason. The state of the last import is in `GET /api/tdm/database/import`.
+
+| Answer                                                                                                             | Cause                                                                                                             | Action                                                                                                                             |
+|--------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| `404` with no body                                                                                                 | `TDM_DB_TRANSFER_KEY` is unset or shorter than 32 characters.                                                     | Set a key of at least 32 characters and restart the service. The startup log says `The database transfer is off`.                  |
+| `403` `The transfer key is missing or wrong.`                                                                      | The `X-TDM-Transfer-Key` header is missing, or it differs from the key of this service.                           | Send the key of the service that you call. The log has a `WARN` with your address and the path.                                    |
+| `409` `The database transfer needs an H2 file database, and jdbc.Url does not point to one.`                       | `JDBC_URL` is not an H2 file URL, for example an in-memory database.                                              | The transfer works only on an H2 file database.                                                                                    |
+| `409` `Another export is already running.`                                                                         | An export has not finished.                                                                                       | Wait for it. A closed download releases the slot.                                                                                  |
+| `409` `Another import operation is running.`, or `A restore is running.`                                           | An upload, an approval, or a cancel is in progress.                                                               | Repeat the call when the first one ends.                                                                                           |
+| `409` `No dump is staged.`                                                                                         | The approval found no `STAGED` or `APPROVED` dump.                                                                | Upload the dump first.                                                                                                             |
+| `400` `Pass confirm=REPLACE_ALL_DATA to replace all data of this service.`                                         | The `confirm` parameter is missing or has another value.                                                          | Pass exactly `confirm=REPLACE_ALL_DATA`.                                                                                           |
+| `400` `The upload is not a complete gzip-compressed UTF-8 text: <cause>`                                           | The body is not a gzip file, is cut short, or is not UTF-8.                                                       | Upload the file that the export wrote. With `curl`, write `--data-binary "@<file>"` with the `@`.                                  |
+| `400` `Invalid dump: <cause>`                                                                                      | The dump has no header line, or holds a statement that a TDM3 dump never contains.                                | Upload an unmodified export. The cause names the statement, for example `The statement "CALL 1..." is not allowed in a TDM3 dump.` |
+| `400` `The dump comes from <version>, which is newer than this service (<version>). Downgrades are not supported.` | The source runs a newer version than the target.                                                                  | Update the target to the version of the source, or export from an older service.                                                   |
+| `413` `The dump is larger than the limit of <bytes> bytes (tdm.db.transfer.max-size).`                             | The upload is larger than `TDM_DB_TRANSFER_MAX_SIZE`.                                                             | Raise `TDM_DB_TRANSFER_MAX_SIZE` and restart the service. A proxy in front of the service can also answer `413`.                   |
+| `415` `Unsupported Media Type`                                                                                     | The upload has a content type other than `application/gzip`, `application/x-gzip`, or `application/octet-stream`. | Set the `Content-Type` of the upload.                                                                                              |
+| `507` `The volume of the staging directory has <n> bytes free, and the import needs <m> bytes.`                    | The volume has too little free space for the upload and the restore.                                              | Free space or enlarge the volume.                                                                                                  |
+
+### An import ended in FAILED
+
+`GET /api/tdm/database/import` shows `"state": "FAILED"` and the reason in `error`. The service started with the data it
+had before. The dump of the failed import is in `transfer/failed/`.
+
+| `error` starts with                                                    | Cause                                                                                                                                  |
+|------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| `The approved dump is not usable:`                                     | The stored dump changed after the upload (`The staged dump changed after it was validated.`) or no longer passes the check at startup. |
+| `The restore failed and the previous database was put back:`           | The database rejected the dump, or it lacks a table that the service needs. The text after the colon is the message of the database.   |
+| `The restore was interrupted, and the previous database was put back.` | The process stopped during an earlier restore. The next start rolled it back.                                                          |
+
+The startup log has the details: `The database restore failed: <message>` at `ERROR` level, then `Put the previous
+database back from <directory>`. Upload a new export of the source to try again.
+
+### Recovery when the service does not start
+
+After a successful replacement the service starts as it always does, and Liquibase runs on the new database. If
+Liquibase or another startup step fails, the service does not start, and the REST API is not available. Put the
+previous database back on the volume:
+
+1. Stop the service. In Kubernetes, scale the Deployment to zero replicas.
+2. Find the newest directory under `transfer/backup/` next to the database files. It holds the files that the import
+   replaced. The log of the last start has the line `The database was replaced with the imported dump. The previous
+   database is in <directory>` at `WARN` level.
+3. Move the current database files (`<database>.mv.db` and `<database>.trace.db`) out of the database directory. Keep
+   them for the analysis of the failure.
+4. Copy the files from the backup directory into the database directory. Leave the file `MOVED` behind.
+5. Start the service. It runs on the previous data. `status.json` still says `APPLIED`, which does no harm, because only
+   an `APPROVED` dump is applied.
+
+The imported dump is not kept after a successful restore. To analyze the failure, use the files that you moved aside in
+step 3, or export the source again.
+
+If the log says `Cannot put the previous database back`, the rollback itself failed and the service refuses to start on
+files in an unknown state. The message names the backup directory and the database directory. Move the files as in
+steps 3 and 4 by hand.
+
 ## Metrics
 
 `GET http://localhost:8090/metrics` (see [Monitoring and logging](configuration.md#monitoring-and-logging)) serves

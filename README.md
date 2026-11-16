@@ -127,8 +127,13 @@ Dynamic Environment API, see [docs/api.md](docs/api.md).
 
 [docs/architecture.md](docs/architecture.md) describes the design behind the backend module: how a test data table is
 stored, where projects and environments come from, and how scheduled and bulk operations run.
-[docs/troubleshooting.md](docs/troubleshooting.md) covers a failing health check, a common REST error, and the
-service's custom metrics.
+[docs/troubleshooting.md](docs/troubleshooting.md) covers a failing health check, a common REST error, the errors of the
+database transfer, and the service's custom metrics.
+
+## Database transfer
+
+[docs/database-transfer.md](docs/database-transfer.md) explains how to move the whole database of one TDM3 service into
+another through the REST API, and what the target loses to the retention period on the way.
 
 ## Deploy with Helm
 
