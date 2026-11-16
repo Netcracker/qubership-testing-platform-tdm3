@@ -551,7 +551,7 @@ available. The recovery therefore works on the volume. The implementation turns 
 
 1. Stop the service.
 2. In the staging directory, find the newest directory under `backup/`. It holds the database files that the import
-   replaced. The service logs its path at `INFO` level when the replacement finishes.
+   replaced. The service logs its path at `WARN` level when the replacement finishes.
 3. Move the current database files out of the database directory, and keep them for the analysis of the failure.
 4. Copy the files from the backup directory into the database directory.
 5. Start the service. It starts with the previous data. `status.json` still says `APPLIED`, which does no harm: only an
