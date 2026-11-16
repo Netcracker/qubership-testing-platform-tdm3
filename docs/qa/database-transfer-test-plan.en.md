@@ -42,8 +42,8 @@ How an import works:
 
 - Copy the database folder before you start: an import replaces the whole database.
 - For the two-service scenarios, start a second instance (B) with **different** data and a different database password.
-- In the commands below `<KEY>` is the key, `<HOST>` is for example `localhost:8080`, `<FILE>` is a dump file name.
-  Write `--data-binary "@<FILE>"` with the `@`. Without it curl sends the file name as the request body.
+- In the commands below `<KEY>` is the key, `<HOST>` is for example `localhost:8080`, `<FILE>` is a dump filename.
+  Write `--data-binary "@<FILE>"` with the `@`. Without it cURL sends the filename as the request body.
 - `curl.exe -OJ` saves a response under the name from `Content-Disposition`.
 
 ## 3. Already verified by the developer
@@ -75,7 +75,7 @@ filter for the key. Repeat these briefly as acceptance checks. Section 4 lists t
 | A string value that contains `SELECT`, `CALL`, `--`, `;`, or `FILE_READ` | Accepted and kept (`202`) |
 | Approved dump changed on disk after approval | After the restart: `FAILED`, "The staged dump changed after it was validated."; the dump moves to `failed/`; the data stays the same; a leftover `incoming.sql.gz.part` is deleted |
 | Dump that passes validation but cannot be loaded (duplicate primary key) | After the restart: `FAILED` with the database error; the old database is put back; the data stays the same; the dump moves to `failed/` |
-| Header value in the logs | The key value does not appear in `console.log` or in the start logs |
+| Key in the logs | The key does not appear in `console.log` or in the start logs |
 | Rebuilt service: no key, `POST /import` with `text/plain`, `GET /import/apply`, `DELETE /export`, `PUT /import`, `POST /export` | `403` "The transfer key is missing or wrong.", no stack trace. With the right key the same requests answer `415` or `405` |
 | Rebuilt service: paths `/../`, `/./`, `;x=1`, `%65xport`, a trailing `/`, and the bare `/api/tdm/database`, no key | `403`. `//api/tdm/database/export` answers `400` from the web server before the filter |
 | Rebuilt service with a 13-character key (transfer off): ten requests (five kinds, with and without the key) | `404` for all of them |
@@ -110,7 +110,7 @@ Observations from that run, and what the build under test changes:
 | 1.4 | Key set, header with a wrong value (one character off, other case, extra space) | `403`, the same text as in 1.3 |
 | 1.5 | Key set, right value | The request is processed |
 | 1.6 | Several wrong requests in a row | Each one is logged as `WARN` with the client address and path. Neither the configured key nor the key a client sent appears in the log |
-| 1.7 | Search every request log on the stand (ingress, gateway, if any) for the key value | Not found |
+| 1.7 | Search every request log on the stand (ingress, gateway, if any) for the key | Not found |
 | 1.8 | No key in the request, and a wrong `Content-Type` (`POST /import` with `text/plain`) or a wrong HTTP method (`GET /import/apply`, `DELETE /export`) | `403` with a key set, `404` while the transfer is off; no stack trace in the body. With the right key the same requests answer `415` or `405` |
 | 1.9 | Paths that try to dodge the match: `curl --path-as-is` with `/api/tdm/database/../database/export`, `//api/tdm/database/export`, `/api/tdm/database;x=1/export`, `/api/tdm/database/export/` | Each answers `403` or `404` without the key. None reaches a controller |
 
@@ -211,7 +211,7 @@ Use two services: A (the source) and B (the target), with different data, databa
 | 7.8 | The `QRTZ_SCHEDULER_STATE` and `SHEDLOCK` tables of B | They hold no row of the scheduler instance that created the dump |
 | 7.9 | A dump from an older major version, applied | `APPLIED`, the warning stays in `warnings`, and Liquibase applies the missing migrations at start |
 | 7.10 | Start B once more | The database is not replaced again; the log has no replacement messages |
-| 7.11 | Export from B after the import and compare with the dump of A | The data is equal, except for the time stamps and the scheduler state |
+| 7.11 | Export from B after the import and compare with the dump of A | The data is equal, except for the timestamps and the scheduler state |
 | 7.12 | Four imports in a row with `TDM_DB_TRANSFER_BACKUPS=2` | `transfer/backup/` keeps the two newest folders |
 
 ### 4.8. Failure and rollback
@@ -240,5 +240,5 @@ Use two services: A (the source) and B (the target), with different data, databa
 - The build version and the transfer variables (never the key itself).
 - The response code and body for every step that expects an error.
 - The service log from the start to the line "Started Main" for sections 4.7 and 4.8.
-- The content of `transfer/` (file names and `status.json`) after each stage.
+- The content of `transfer/` (filenames and `status.json`) after each stage.
 - For a defect: the dump when it holds no sensitive data, the exact command, and the time of the request.
