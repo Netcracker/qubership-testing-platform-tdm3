@@ -82,6 +82,21 @@ In the Helm chart, the database file lives on a persistent volume:
 | `atp3tdm.storageSize`      | `1Gi`                 | Size of the persistent volume claim `<SERVICE_NAME>-pvc`.                                                                                                |
 | `atp3tdm.storageClassName` | `csi-sc-cinderplugin` | Storage class of the persistent volume claim.                                                                                                            |
 
+## Database transfer
+
+These variables control the export and import of the whole database, described in
+[Database transfer](database-transfer.md). The feature is off until `TDM_DB_TRANSFER_KEY` holds a key.
+
+| Variable                   | Default                               | Helm                                                           | Description                                                                                                                                                                                                                                                                                                                    |
+|----------------------------|---------------------------------------|----------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `TDM_DB_TRANSFER_KEY`      | unset, which means off                | `atp3tdm.dbTransfer.enabled`: `false`, `key`, `existingSecret` | The transfer key, at least 32 characters. A request sends it in the `X-TDM-Transfer-Key` header. While the key is unset or shorter, every transfer operation answers `404`, and the service logs `The database transfer is off: tdm.db.transfer.key (TDM_DB_TRANSFER_KEY) is unset or shorter than 32 characters.` at startup. |
+| `TDM_DB_TRANSFER_MAX_SIZE` | `100MB`                               | -                                                              | Largest compressed dump that an upload accepts, as a Spring data size: `100MB` is 104857600 bytes. A larger upload gets `413`. Independent of `MAX_FILE_SIZE` and `MAX_REQUEST_SIZE`.                                                                                                                                          |
+| `TDM_DB_TRANSFER_DIR`      | `transfer` next to the database files | -                                                              | Directory for the staged dump, the status file, and the backups. It must be on the same volume as the database. The Helm chart keeps it on the volume of the database, in `/atp-tdm/database/transfer`.                                                                                                                        |
+| `TDM_DB_TRANSFER_BACKUPS`  | `2`                                   | -                                                              | Number of backups of replaced databases that stay after a successful import. Each is as large as the database it replaced.                                                                                                                                                                                                     |
+
+The Helm values of the key, and how the chart generates one, are in
+[Deploy the key with Helm](database-transfer.md#deploy-the-key-with-helm).
+
 ## Data retention
 
 The service deletes test data tables that nobody uses, and later deletes the history records of those tables. Cron
