@@ -69,7 +69,7 @@ class DatabaseTransferServiceImplTest {
                     + "'it''s; a note\nwith a line break')");
             statement.execute("INSERT INTO CATALOG VALUES ('22222222-2222-2222-2222-222222222222', 'second', NULL)");
         }
-        service = new DatabaseTransferServiceImpl(dataSource, url, "1.0.13");
+        service = new DatabaseTransferServiceImpl(dataSource, url, "1.0.13", "", "100MB", () -> { });
     }
 
     @Test
@@ -166,7 +166,7 @@ class DatabaseTransferServiceImplTest {
     @Test
     void beginExport_inMemoryDatabase_isRefusedWith409() {
         DatabaseTransferServiceImpl inMemory =
-                new DatabaseTransferServiceImpl(dataSource, "jdbc:h2:mem:test", "1.0.13");
+                new DatabaseTransferServiceImpl(dataSource, "jdbc:h2:mem:test", "1.0.13", "", "100MB", () -> { });
 
         DatabaseTransferException exception =
                 assertThrows(DatabaseTransferException.class, inMemory::beginExport);

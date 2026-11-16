@@ -16,6 +16,8 @@
 
 package org.qubership.atp.tdm.utils;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -62,6 +64,28 @@ public final class H2Url {
         }
         int separator = Math.max(location.lastIndexOf('/'), location.lastIndexOf('\\'));
         return location.substring(separator + 1);
+    }
+
+    /**
+     * Returns the path of the database files without the {@code file:} prefix, the file extensions, and the settings
+     * that follow {@code ;}.
+     *
+     * <p>A leading {@code ~} stands for the home directory of the user, as in H2. A relative path is resolved against
+     * the working directory of the process.</p>
+     *
+     * @param url a JDBC URL of an H2 file database
+     * @return the absolute, normalized path, for example {@code /app/database/atptdm} for
+     *         {@code jdbc:h2:file:./database/atptdm;MODE=...} started in {@code /app}
+     */
+    public static Path databasePath(String url) {
+        String location = location(url);
+        if (location.startsWith(FILE_PREFIX)) {
+            location = location.substring(FILE_PREFIX.length());
+        }
+        if (location.equals("~") || location.startsWith("~/") || location.startsWith("~\\")) {
+            location = System.getProperty("user.home") + location.substring(1);
+        }
+        return Paths.get(location).toAbsolutePath().normalize();
     }
 
     private static String location(String url) {

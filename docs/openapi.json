@@ -511,6 +511,104 @@
         ]
       }
     },
+    "/api/tdm/database/import" : {
+      "delete" : {
+        "description" : "Deletes a staged or approved dump. The result of the last restore stays.",
+        "operationId" : "cancelImport",
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "summary" : "Cancel the database import",
+        "tags" : [
+          "database-transfer-controller"
+        ]
+      },
+      "get" : {
+        "description" : "Returns the state of the staged dump, or the result of the last restore.",
+        "operationId" : "importStatus",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TransferStatus"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Read the state of the database import",
+        "tags" : [
+          "database-transfer-controller"
+        ]
+      },
+      "post" : {
+        "description" : "Validates the request body, a gzip-compressed dump from the export operation, and stores it. Nothing changes in the database until the dump is approved. Send the file with Content-Type application/gzip. Answers 400 for an invalid dump with the reason, 409 when the database is not a file database, 413 over the size limit, and 507 when the volume lacks space.",
+        "operationId" : "stageImport",
+        "responses" : {
+          "202" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TransferStatus"
+                }
+              }
+            },
+            "description" : "Accepted"
+          }
+        },
+        "summary" : "Stage a database dump",
+        "tags" : [
+          "database-transfer-controller"
+        ]
+      }
+    },
+    "/api/tdm/database/import/apply" : {
+      "post" : {
+        "description" : "Approves the staged dump. The next start of the service replaces all data with it. With restart=true the service exits after the response, and the platform starts it again. Answers 400 unless confirm is REPLACE_ALL_DATA, and 409 when no dump is staged.",
+        "operationId" : "applyImport",
+        "parameters" : [
+          {
+            "description" : "Must be REPLACE_ALL_DATA.",
+            "in" : "query",
+            "name" : "confirm",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "Exit after the response so that the platform restarts the service.",
+            "in" : "query",
+            "name" : "restart",
+            "required" : false,
+            "schema" : {
+              "type" : "boolean",
+              "default" : true
+            }
+          }
+        ],
+        "responses" : {
+          "202" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TransferStatus"
+                }
+              }
+            },
+            "description" : "Accepted"
+          }
+        },
+        "summary" : "Approve the database import",
+        "tags" : [
+          "database-transfer-controller"
+        ]
+      }
+    },
     "/api/tdm/delete/rows" : {
       "put" : {
         "operationId" : "deleteTestDataTableRows",
@@ -4761,6 +4859,72 @@
           }
         },
         "description" : "Users-occupation-report schedule of one project: a periodic email of who occupied which rows."
+      },
+      "TransferStatus" : {
+        "type" : "object",
+        "properties" : {
+          "approvedAt" : {
+            "type" : "string",
+            "description" : "When the import was approved.",
+            "format" : "date-time"
+          },
+          "backup" : {
+            "type" : "string",
+            "description" : "Name of the directory under backup/ that holds the database files the restore replaced."
+          },
+          "dumpH2Version" : {
+            "type" : "string",
+            "description" : "Version of H2 that wrote the dump."
+          },
+          "dumpServiceVersion" : {
+            "type" : "string",
+            "description" : "Version of the service that wrote the dump."
+          },
+          "error" : {
+            "type" : "string",
+            "description" : "Why the last restore failed."
+          },
+          "finishedAt" : {
+            "type" : "string",
+            "description" : "When the last restore ended.",
+            "format" : "date-time"
+          },
+          "sha256" : {
+            "type" : "string",
+            "description" : "SHA-256 of the stored dump, in hexadecimal."
+          },
+          "sizeBytes" : {
+            "type" : "integer",
+            "description" : "Size of the stored dump in bytes.",
+            "format" : "int64"
+          },
+          "state" : {
+            "type" : "string",
+            "description" : "Where the import stands.",
+            "enum" : [
+              "NONE",
+              "STAGED",
+              "APPROVED",
+              "APPLYING",
+              "APPLIED",
+              "FAILED"
+            ]
+          },
+          "uploadedAt" : {
+            "type" : "string",
+            "description" : "When the dump was uploaded.",
+            "format" : "date-time"
+          },
+          "warnings" : {
+            "type" : "array",
+            "description" : "Problems that do not stop the import.",
+            "items" : {
+              "type" : "string",
+              "description" : "Problems that do not stop the import."
+            }
+          }
+        },
+        "description" : "The state of a database import."
       },
       "UpdateRowRequest" : {
         "type" : "object",

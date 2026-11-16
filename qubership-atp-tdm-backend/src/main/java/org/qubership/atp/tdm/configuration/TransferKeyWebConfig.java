@@ -16,23 +16,35 @@
 
 package org.qubership.atp.tdm.configuration;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import lombok.RequiredArgsConstructor;
+import org.springframework.core.Ordered;
 
 /**
- * Registers {@link TransferKeyInterceptor} for the database transfer endpoints.
+ * Registers {@link TransferKeyFilter} for the database transfer endpoints.
  */
 @Configuration
-@RequiredArgsConstructor
-public class TransferKeyWebConfig implements WebMvcConfigurer {
+public class TransferKeyWebConfig {
 
-    private final TransferKeyInterceptor transferKeyInterceptor;
+    /** URL pattern of every database transfer endpoint, including the path itself without a trailing slash. */
+    static final String TRANSFER_URL_PATTERN = "/api/tdm/database/*";
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(transferKeyInterceptor).addPathPatterns("/api/tdm/database/**");
+    /**
+     * Registers the filter ahead of every other filter, so that no request to a transfer endpoint, including one that
+     * matches no controller method, reaches another component without the key.
+     *
+     * @param key the configured transfer key, may be empty
+     * @return the registration of the filter
+     */
+    @Bean
+    public FilterRegistrationBean<TransferKeyFilter> transferKeyFilter(
+            @Value("${tdm.db.transfer.key:}") String key) {
+        FilterRegistrationBean<TransferKeyFilter> registration = new FilterRegistrationBean<>(
+                new TransferKeyFilter(key));
+        registration.addUrlPatterns(TRANSFER_URL_PATTERN);
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return registration;
     }
 }

@@ -21,13 +21,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.filter.OncePerRequestFilter;
 
-import jakarta.annotation.PostConstruct;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -38,10 +37,13 @@ import lombok.extern.slf4j.Slf4j;
  * <p>While the key is unset or shorter than {@value #MIN_KEY_LENGTH} characters, every request gets {@code 404}.
  * With a key configured, a request must carry it in the {@value #KEY_HEADER} header. A missing and a wrong key get
  * the same {@code 403} answer.</p>
+ *
+ * <p>This is a servlet filter and not a Spring MVC interceptor, because an interceptor runs only after a controller
+ * method matched the request. A request with an unsupported content type or HTTP method fails that match, and the
+ * answer ({@code 415} or {@code 405}) would then reach a client that holds no key.</p>
  */
-@Component
 @Slf4j
-public class TransferKeyInterceptor implements HandlerInterceptor {
+public class TransferKeyFilter extends OncePerRequestFilter {
 
     public static final String KEY_HEADER = "X-TDM-Transfer-Key";
     public static final int MIN_KEY_LENGTH = 32;
@@ -51,19 +53,13 @@ public class TransferKeyInterceptor implements HandlerInterceptor {
     private final byte[] keyDigest;
 
     /**
-     * Creates the interceptor.
+     * Creates the filter and logs why the transfer endpoints answer {@code 404} when the key is unusable, without
+     * printing the key.
      *
      * @param key the configured transfer key, may be empty
      */
-    public TransferKeyInterceptor(@Value("${tdm.db.transfer.key:}") String key) {
+    public TransferKeyFilter(String key) {
         this.keyDigest = key != null && key.length() >= MIN_KEY_LENGTH ? digest(key) : null;
-    }
-
-    /**
-     * Logs why the transfer endpoints answer {@code 404}, without printing the key.
-     */
-    @PostConstruct
-    void warnWhenOff() {
         if (keyDigest == null) {
             log.warn("The database transfer is off: tdm.db.transfer.key (TDM_DB_TRANSFER_KEY) is unset or shorter "
                     + "than {} characters.", MIN_KEY_LENGTH);
@@ -71,16 +67,17 @@ public class TransferKeyInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-            throws IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+            throws ServletException, IOException {
         if (keyDigest == null) {
             response.setStatus(HttpStatus.NOT_FOUND.value());
-            return false;
+            return;
         }
         String supplied = request.getHeader(KEY_HEADER);
         // Comparing digests keeps the comparison time independent of how many leading characters match.
         if (supplied != null && MessageDigest.isEqual(keyDigest, digest(supplied))) {
-            return true;
+            chain.doFilter(request, response);
+            return;
         }
         log.warn("Rejected a database transfer request from {} to {}: the transfer key is missing or wrong.",
                 request.getRemoteAddr(), request.getRequestURI());
@@ -88,7 +85,6 @@ public class TransferKeyInterceptor implements HandlerInterceptor {
         response.setContentType(MediaType.TEXT_PLAIN_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.getWriter().write(FORBIDDEN_BODY);
-        return false;
     }
 
     private static byte[] digest(String value) {
