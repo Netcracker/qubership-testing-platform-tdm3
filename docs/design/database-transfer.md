@@ -64,7 +64,7 @@ The class names are proposals. The packages follow the existing layout of the ba
 |--------------------------------------------------|---------------------------|--------------------------------------------------------------------------------------------------------------|
 | `DatabaseTransferController`                     | `controllers`             | The five REST operations under `/api/tdm/database`.                                                          |
 | `DatabaseTransferService` and its implementation | `service`, `service.impl` | Streams the export, stages and validates an upload, records the status, approves and cancels.                |
-| `TransferKeyInterceptor`                         | `configuration`           | Checks the transfer key for every request under `/api/tdm/database/**`.                                      |
+| `TransferKeyFilter`                              | `configuration`           | Checks the transfer key for every request under `/api/tdm/database/`.                                        |
 | `DumpValidator`                                  | `service.impl`            | Reads a dump once and rejects it if it is not a TDM3 dump or contains a forbidden statement.                 |
 | `DatabaseRestoreInitializer`                     | `configuration`           | Replaces the database files at startup. Called from `DbConfiguration.dataSource` before the pool is created. |
 | `TransferStatusStore`                            | `service.impl`            | Reads and writes `status.json` in the staging directory.                                                     |
@@ -138,8 +138,11 @@ Limits of this approach:
 The service has no user model and runs with the `disable-security` profile, so the transfer endpoints cannot reuse a
 role check. They use a shared secret instead.
 
-- A `HandlerInterceptor` registered for `/api/tdm/database/**` checks the key. It works the same way in every Spring
-  profile, so it does not depend on the security stack.
+- A servlet filter registered for `/api/tdm/database/*` checks the key. It works the same way in every Spring
+  profile, so it does not depend on the security stack. It is a filter and not a `HandlerInterceptor`, because an
+  interceptor runs only after a controller method matched the request. A request with an unsupported content type or
+  HTTP method fails that match and would get `415` or `405` without a key. The filter runs ahead of every other filter,
+  so such a request gets `403`, or `404` while the feature is off.
 - While the key is unset or shorter than 32 characters, every transfer endpoint answers `404`. At startup the service
   logs one warning that says why the feature is off, without printing the key.
 - With a key configured, a request must carry it in the `X-TDM-Transfer-Key` header. A missing or wrong key gets `403`
@@ -178,6 +181,14 @@ It rejects the dump when:
 - a statement is of any other kind, including `TRIGGER`, `AGGREGATE`, `RUNSCRIPT`, `CALL`, `SCRIPT`, `CSVREAD`,
   `CSVWRITE`, `FILE_READ`, `FILE_WRITE`, `LINK_SCHEMA`, `SHUTDOWN`, and `INSERT ... SELECT`;
 - the first line is not the TDM3 dump header (see [Dump format](#dump-format-and-compatibility)).
+
+The tokenizer also refuses every construct where it could disagree with H2 about where a statement or a quoted text
+ends: a `--` comment inside a statement, a `/* */` or `//` comment, and a `$$` string. A `--` comment between two
+statements is skipped and is not stored. A statement longer than 16 million characters is rejected, because the
+validator buffers one statement. The validator judges a statement by the words outside quotes. Besides the statement
+kinds above, it rejects a statement that uses `SELECT`, `CALL`, `FILE_READ`, `FILE_WRITE`, `CSVREAD`, `CSVWRITE`,
+`LINK_SCHEMA`, `RUNSCRIPT`, `SCRIPT`, `ALIAS`, `TRIGGER`, `AGGREGATE`, `SHUTDOWN`, `EXECUTE`, `ENGINE`, or
+`JAVA_OBJECT`, and an `INSERT` that has a quoted name after `VALUES`, which could call a function.
 
 The filter lowers the risk and does not remove it, because H2 is a large SQL dialect. A migration that adds a statement
 kind to the schema adds it to the allowlist in the same change, and a test that dumps a freshly migrated database fails
@@ -237,9 +248,14 @@ The status body:
   "warnings": [],
   "approvedAt": null,
   "finishedAt": null,
-  "error": null
+  "error": null,
+  "backup": null
 }
 ```
+
+`backup` is the name of the directory under `backup/` that holds the database files that the last restore replaced. It
+is empty until a restore starts, and empty again after a failed restore, because the rollback moves those files back
+and removes the directory.
 
 `warnings` lists problems that do not stop the import, such as a large version gap (see
 [Dump format](#dump-format-and-compatibility)). The upload response and every later status response carry it.
@@ -267,7 +283,7 @@ shows the same snapshot, and writers are not blocked.
 ```mermaid
 sequenceDiagram
     actor User
-    participant Guard as TransferKeyInterceptor
+    participant Guard as TransferKeyFilter
     participant API as DatabaseTransferController
     participant Svc as DatabaseTransferService
     participant DB as H2 (pool connection)
@@ -303,7 +319,7 @@ the stream, and feeds it to `DumpValidator`, so a large file is read once. Only 
 ```mermaid
 sequenceDiagram
     actor User
-    participant Guard as TransferKeyInterceptor
+    participant Guard as TransferKeyFilter
     participant Svc as DatabaseTransferService
     participant FS as Staging directory
 
@@ -351,7 +367,7 @@ flowchart TD
     RB --> POOL
     G -- ok --> H["Clear scheduler runtime state, run sanity checks"]
     H -- error --> RB
-    H -- ok --> I["Close the connection, mark APPLIED, move the dump to applied/, prune old backups"]
+    H -- ok --> I["Close the connection, mark APPLIED, delete the dump, prune old backups"]
     I --> POOL
 ```
 
@@ -434,11 +450,11 @@ database/
     incoming.sql.gz.part            an upload in progress
     pending.sql.gz                  the staged or approved dump
     backup/<yyyyMMdd-HHmmss>/       database files replaced by an import
-    applied/<yyyyMMdd-HHmmss>.sql.gz
     failed/<yyyyMMdd-HHmmss>.sql.gz
 ```
 
-`applied/` and `failed/` hold the dump of the last restore only, to keep disk use bounded. The
+A dump holds the data of the source service in plain text, so a successful restore deletes it: no copy of an applied
+dump stays on the disk. `failed/` holds the dump of the last failed restore only, for the analysis of the failure. The
 `tdm.db.transfer.backups` property limits `backup/`.
 
 ## Failure handling
@@ -540,7 +556,8 @@ available. The recovery therefore works on the volume. The implementation turns 
 4. Copy the files from the backup directory into the database directory.
 5. Start the service. It starts with the previous data. `status.json` still says `APPLIED`, which does no harm: only an
    `APPROVED` dump is applied.
-6. Keep the dump in `applied/` for the analysis. A new upload replaces it.
+6. The dump itself is gone after a successful restore. To analyze the failure, use the replaced database files that you
+   kept in step 3, and ask the owner of the source service for a new export if you need the dump.
 
 ## Tests
 

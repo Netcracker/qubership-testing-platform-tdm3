@@ -37,7 +37,12 @@ public class DbConfiguration {
                                  @Value("${jdbc.Password}") String password,
                                  @Value("${jdbc.MinIdle:1}") int minIdle,
                                  @Value("${jdbc.MaxPoolSize:4}") int maxPoolSize,
-                                 @Value("${jdbc.Debug:false}") boolean debug) {
+                                 @Value("${jdbc.Debug:false}") boolean debug,
+                                 @Value("${tdm.db.transfer.staging-dir:}") String transferStagingDir,
+                                 @Value("${tdm.db.transfer.backups:2}") int transferBackups) {
+        // The pool opens the database file as soon as it exists, so an approved import has to run first.
+        new DatabaseRestoreInitializer(url, user, password, transferStagingDir, transferBackups)
+                .restoreIfApproved();
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(url);
         config.setUsername(user);
