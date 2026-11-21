@@ -127,8 +127,13 @@ Dynamic Environment API, see [docs/api.md](docs/api.md).
 
 [docs/architecture.md](docs/architecture.md) describes the design behind the backend module: how a test data table is
 stored, where projects and environments come from, and how scheduled and bulk operations run.
-[docs/troubleshooting.md](docs/troubleshooting.md) covers a failing health check, a common REST error, and the
-service's custom metrics.
+[docs/troubleshooting.md](docs/troubleshooting.md) covers a failing health check, a common REST error, the errors of the
+database transfer, and the service's custom metrics.
+
+## Database transfer
+
+[docs/database-transfer.md](docs/database-transfer.md) explains how to move the whole database of one TDM3 service into
+another through the REST API, and what the target loses to the retention period on the way.
 
 ## Deploy with Helm
 
@@ -152,12 +157,15 @@ helm install atp3-tdm-be deployments/charts/atp3-tdm-be \
   --set atp3tdm.storageClassName=<storage class>
 ```
 
-| Value                      | Description                                                                                                                           |
-|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `DOCKER_TAG`               | Full image reference, including the registry and the tag.                                                                             |
-| `CLOUD_PUBLIC_HOST`        | Domain for the Ingress host `<SERVICE_NAME>-<namespace>.<CLOUD_PUBLIC_HOST>`. Set `ATP3_TDM_BE_URL` instead to choose the whole host. |
-| `atp3tdm.storageClassName` | Storage class of the database volume. The chart default is `csi-sc-cinderplugin`.                                                     |
-| `ATP_TDM_URL`              | Public URL of the service. `run.sh` requires it for the UI unless `atp3tdm.identityProviderUrl` is set.                               |
+| Value                               | Description                                                                                                                                                                                                             |
+|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `DOCKER_TAG`                        | Full image reference, including the registry and the tag.                                                                                                                                                               |
+| `CLOUD_PUBLIC_HOST`                 | Domain for the Ingress host `<SERVICE_NAME>-<namespace>.<CLOUD_PUBLIC_HOST>`. Set `ATP3_TDM_BE_URL` instead to choose the whole host.                                                                                   |
+| `atp3tdm.storageClassName`          | Storage class of the database volume. The chart default is `csi-sc-cinderplugin`.                                                                                                                                       |
+| `ATP_TDM_URL`                       | Public URL of the service. `run.sh` requires it for the UI unless `atp3tdm.identityProviderUrl` is set.                                                                                                                 |
+| `atp3tdm.dbTransfer.enabled`        | `false` by default. Turns on the export and import of the whole database through REST. Then the chart keeps the transfer key in a Secret: see the next two values.                                                      |
+| `atp3tdm.dbTransfer.existingSecret` | Name of a Secret that you manage, with the key in the entry `TDM_DB_TRANSFER_KEY`. The chart then creates no Secret.                                                                                                    |
+| `atp3tdm.dbTransfer.key`            | A key of at least 32 characters, which the chart stores in the Secret `<SERVICE_NAME>-db-transfer`. While this and `existingSecret` are empty, the chart generates a key of 48 characters and keeps it across upgrades. |
 
 [`.github/deploy_templates/values-dev.yaml`](.github/deploy_templates/values-dev.yaml) is the values file of the CI
 test deployment. The chart passes most other values to the service as environment variables; see the

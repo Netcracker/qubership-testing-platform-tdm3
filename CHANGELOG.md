@@ -11,6 +11,13 @@ release commit, not by when they were written.
 
 ### Added
 
+- Database transfer: `GET /api/tdm/database/export` streams the whole H2 database as a gzip-compressed SQL dump, and
+  `POST /api/tdm/database/import`, `GET`, `DELETE`, and `POST /api/tdm/database/import/apply` stage, check, approve,
+  and cancel an import that replaces all data of the service at its next start. Every operation needs the key
+  `TDM_DB_TRANSFER_KEY` (at least 32 characters) in the `X-TDM-Transfer-Key` header, and answers `404` while the key is
+  not set. The Helm chart can keep the key in a Secret, or generate one, with `atp3tdm.dbTransfer.enabled`; the chart
+  also adds the header to `atpHttpLoggingHeadersIgnore`. See [Database transfer](docs/database-transfer.md).
+
 - `docs/architecture.md`: the design behind the backend module, including how a test data table is stored, where
   projects and environments come from, and how scheduled and bulk operations run.
 - `docs/troubleshooting.md`: a failing health check, common REST errors, and the service's custom Prometheus

@@ -20,6 +20,10 @@ spec:
       servicetype: '{{ .Values.SERVICE_TYPE }}'
   template:
     metadata:
+      {{- if and .Values.atp3tdm.dbTransfer.enabled (not .Values.atp3tdm.dbTransfer.existingSecret) (include "atp3tdm.dbTransfer.suppliedKey" .) }}
+      annotations:
+        checksum/db-transfer: {{ include "atp3tdm.dbTransfer.suppliedKey" . | sha256sum }}
+      {{- end }}
       labels:
         name: '{{ .Values.SERVICE_NAME }}'
         app: '{{ .Values.SERVICE_NAME }}'
@@ -107,6 +111,13 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: metadata.namespace
+          {{- if and .Values.atp3tdm.dbTransfer.enabled (ne .Values.PAAS_PLATFORM "COMPOSE") }}
+            - name: TDM_DB_TRANSFER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "atp3tdm.dbTransfer.secretName" . | quote }}
+                  key: TDM_DB_TRANSFER_KEY
+          {{- end }}
           {{- if .Values.atp3tdm.extraEnvs }}
           {{- toYaml .Values.atp3tdm.extraEnvs | nindent 12 }}
           {{- end }}
