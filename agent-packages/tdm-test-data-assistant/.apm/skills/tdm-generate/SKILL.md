@@ -4,7 +4,6 @@ description: Use only when the user types /tdm-generate. Starts the project's Gi
 disable-model-invocation: true
 argument-hint: "test=<name> | scope=<name> [env=<environment>] [branch=<branch>] [VARIABLE=value ...] | help"
 metadata:
-  opencode/slash: "true"
   opencode/autoinvoke: "false"
 ---
 

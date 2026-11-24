@@ -162,10 +162,11 @@ doesn't matter; the examples use one order: `table=`, `return=`, the `Column=val
 The slash menu shows a short argument hint next to each command. Each command also answers `help`, `--help`, `-h`,
 or `?` with its syntax and the table of its arguments, without sending any request to TDM3.
 
-OpenCode lists a skill as a slash command only when its frontmatter has `metadata` with `opencode/slash: "true"`,
-so each command carries it, together with `opencode/autoinvoke: "false"`, which keeps the agent from picking a
-command on its own. Claude Code ignores these keys. OpenCode shows no argument hint, so `help` is the way to see the
-arguments there.
+OpenCode lists commands in its slash menu, not skills. This package alone gives OpenCode the skills, which the agent
+loads by name, as in `@tdm-reserve`. To get the commands in the `/` menu, install the companion package
+[tdm-test-data-assistant-opencode](../tdm-test-data-assistant-opencode/README.md) instead. Each command skill carries
+`opencode/autoinvoke: "false"`, which keeps the OpenCode agent from picking a command on its own. OpenCode shows no
+argument hint for a skill, so `help` is the way to see the arguments there.
 
 Codex starts a skill when the user types `$` and its name, or picks it from `/skills`. Each command skill carries
 `agents/openai.yaml` with `policy.allow_implicit_invocation: false`, so Codex does not start a command from the

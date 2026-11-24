@@ -4,7 +4,6 @@ description: Use only when the user types /tdm-release. Releases reserved rows o
 disable-model-invocation: true
 argument-hint: "table=<title> return=<col> Column=value ... [all] | table=<title> all | help"
 metadata:
-  opencode/slash: "true"
   opencode/autoinvoke: "false"
 ---
 

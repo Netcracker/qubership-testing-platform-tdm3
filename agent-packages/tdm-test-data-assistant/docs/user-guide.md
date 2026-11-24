@@ -65,6 +65,13 @@ several with commas, as in `--target claude,codex`. Without `--target`, APM pick
 for example a `.claude` folder, and stops with a message when it finds none. APM saves the choice in the `targets` list
 of `apm.yml`, so you give it once.
 
+For OpenCode, install the companion package instead. It depends on this one, so one command installs both, and OpenCode
+shows the commands in its `/` menu:
+
+```bash
+apm install --target opencode Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant-opencode#main
+```
+
 The command does four things:
 
 1. Creates `apm.yml` if the folder has none, and adds the package to its dependencies.

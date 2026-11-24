@@ -4,7 +4,6 @@ description: Use only when the user types /tdm-list-tables-script. Pilot of a sc
 disable-model-invocation: true
 argument-hint: "[--whole-project]"
 metadata:
-  opencode/slash: "true"
   opencode/autoinvoke: "false"
 ---
 
