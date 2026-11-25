@@ -42,9 +42,34 @@ How an import works:
 
 - Copy the database folder before you start: an import replaces the whole database.
 - For the two-service scenarios, start a second instance (B) with **different** data and a different database password.
-- In the commands below `<KEY>` is the key, `<HOST>` is for example `localhost:8080`, `<FILE>` is a dump filename.
-  Write `--data-binary "@<FILE>"` with the `@`. Without it cURL sends the filename as the request body.
-- `curl.exe -OJ` saves a response under the name from `Content-Disposition`.
+
+### Shell setup for the commands
+
+The commands in section 4 are for Bash with `curl`, `gzip`, and `sed`. On Windows, run them in Git Bash. A comment
+such as `# 3.2` names the step that a command belongs to. Run these lines once in each new shell, from an empty working
+directory, and replace the values:
+
+```bash
+export BASE=http://localhost:8080                  # the service under test
+export KEY='<the value of TDM_DB_TRANSFER_KEY>'    # the key of that service
+export TRANSFER_DIR='<database folder>/transfer'   # the transfer folder of that service
+export LOG='<log file of the service>'
+
+# Upload the file given as the argument. Keep the "@": without it cURL sends the filename as the request body.
+upload() {
+  curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" -H "Content-Type: application/gzip" \
+    --data-binary "@$1" "$BASE/api/tdm/database/import"
+  echo
+}
+
+# Print the import status.
+status() {
+  curl -sS -i -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/import"
+  echo
+}
+```
+
+`curl -i` prints the status line and the headers before the body.
 
 ## 3. Already verified by the developer
 
@@ -114,6 +139,52 @@ Observations from that run, and what the build under test changes:
 | 1.8 | No key in the request, and a wrong `Content-Type` (`POST /import` with `text/plain`) or a wrong HTTP method (`GET /import/apply`, `DELETE /export`) | `403` with a key set, `404` while the transfer is off; no stack trace in the body. With the right key the same requests answer `415` or `405` |
 | 1.9 | Paths that try to dodge the match: `curl --path-as-is` with `/api/tdm/database/../database/export`, `//api/tdm/database/export`, `/api/tdm/database;x=1/export`, `/api/tdm/database/export/` | Each answers `403` or `404` without the key. None reaches a controller |
 
+```bash
+# 1.1 and 1.2: restart the service without the key, then with a short key. Every request answers 404.
+curl -sS -i "$BASE/api/tdm/database/export"
+curl -sS -i "$BASE/api/tdm/database/import"
+curl -sS -i -X DELETE "$BASE/api/tdm/database/import"
+curl -sS -i -X POST "$BASE/api/tdm/database/import/apply"
+curl -sS -i -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/export"
+curl -sS -i -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/import"
+curl -sS -i -H "X-TDM-Transfer-Key: $KEY" -X DELETE "$BASE/api/tdm/database/import"
+curl -sS -i -H "X-TDM-Transfer-Key: $KEY" -X POST "$BASE/api/tdm/database/import/apply"
+grep -a "The database transfer is off" "$LOG"                                            # 1.2
+
+# 1.3: no header
+curl -sS -i "$BASE/api/tdm/database/import"
+
+# 1.4: one character off, other case, extra space inside the value
+curl -sS -i -H "X-TDM-Transfer-Key: ${KEY%?}#" "$BASE/api/tdm/database/import"
+curl -sS -i -H "X-TDM-Transfer-Key: ${KEY^^}" "$BASE/api/tdm/database/import"
+curl -sS -i -H "X-TDM-Transfer-Key: ${KEY:0:5} ${KEY:5}" "$BASE/api/tdm/database/import"
+
+# 1.5: the right value
+status
+
+# 1.6: several wrong requests, then the log
+for i in 1 2 3; do curl -sS -i -H "X-TDM-Transfer-Key: wrong-key-$i" "$BASE/api/tdm/database/import"; echo; done
+grep -a "Rejected a database transfer request" "$LOG" | tail -n 3
+grep -a -c -F -e "$KEY" -e "wrong-key-" "$LOG"                                           # expect 0
+
+# 1.8: wrong content type and wrong method, first without the key, then with it
+curl -sS -i -X POST -H "Content-Type: text/plain" --data "x" "$BASE/api/tdm/database/import"
+curl -sS -i "$BASE/api/tdm/database/import/apply"
+curl -sS -i -X DELETE "$BASE/api/tdm/database/export"
+curl -sS -i -H "X-TDM-Transfer-Key: $KEY" -X POST -H "Content-Type: text/plain" --data "x" \
+  "$BASE/api/tdm/database/import"
+curl -sS -i -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/import/apply"
+curl -sS -i -H "X-TDM-Transfer-Key: $KEY" -X DELETE "$BASE/api/tdm/database/export"
+
+# 1.9: no key
+for p in '/api/tdm/database/../database/export' '//api/tdm/database/export' \
+         '/api/tdm/database;x=1/export' '/api/tdm/database/export/'; do
+  echo "== $p"
+  curl -sS -i --path-as-is "$BASE$p"
+  echo
+done
+```
+
 ### 4.2. Export
 
 | # | Step | Expect |
@@ -127,6 +198,40 @@ Observations from that run, and what the build under test changes:
 | 2.7 | Close the download in the middle, then start a new export | The new export is accepted (`409` does not appear) |
 | 2.8 | Service with an in-memory database | `409` "The database transfer needs an H2 file database, and jdbc.Url does not point to one." |
 | 2.9 | Look for sensitive data in the dump (connection settings of external systems, tokens) | Note the findings. The dump carries all application data, including the connection settings stored in the tables, so protect the file like the database |
+
+```bash
+# 2.1: -D - prints the response headers, -o saves the body
+curl -sS -D - -o dump.sql.gz -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/export"
+
+# 2.2
+gzip -t dump.sql.gz && echo "valid gzip"
+gzip -dc dump.sql.gz > dump.sql
+head -n 1 dump.sql
+
+# 2.3: use the password of the database. The first command is meaningless when the password equals the database user.
+grep -n -F -e '<database password>' dump.sql
+grep -n "PASSWORD" dump.sql
+
+# 2.4
+grep -E '^CREATE CACHED TABLE' dump.sql
+
+# 2.5: run the export while you create and change data in the UI
+curl -sS -i -o busy.sql.gz -w 'HTTP %{http_code}\n' -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/export"
+
+# 2.6: the first export must still run when the second one starts. This needs a database of many megabytes,
+# because the service finishes the export of a small database at once, however slowly the client reads it.
+curl -sS -o first.sql.gz --limit-rate 100k -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/export" &
+sleep 1
+curl -sS -i -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/export"
+wait
+
+# 2.7: break off the download after 2 seconds, then export again
+curl -sS -o broken.sql.gz --limit-rate 100k --max-time 2 -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/export"
+curl -sS -o again.sql.gz -w 'HTTP %{http_code}\n' -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/export"
+
+# 2.8: against a service with an in-memory database
+curl -sS -i -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/export"
+```
 
 ### 4.3. Upload (state `STAGED`)
 
@@ -152,6 +257,96 @@ Start with the status `NONE` (the `transfer/` folder is empty or missing) and a 
 | 3.16 | Two uploads at the same time. Throttle the first one with `curl --limit-rate 6k` | The second upload, and an approve and a cancel sent meanwhile, answer `409` "Another import operation is running."; the first upload ends with `202` |
 | 3.17 | Upload over a `STAGED` dump, and over an `APPROVED` dump | `202`; the new dump replaces the old one; the state is `STAGED` and the earlier approval no longer applies |
 | 3.18 | Upload with less free disk space than the upload plus five times its size | `507`; `transfer/` is unchanged |
+| 3.19 | Upload a dump larger than 2 MB, the default request size limit of the web server | `202`, `state=STAGED`, `sizeBytes` above 2097152 |
+
+The commands below use `dump.sql.gz` and `dump.sql` from steps 2.1 and 2.2.
+
+```bash
+curl -sS -i -X DELETE -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/import"   # start from NONE
+status                                                                                # 3.1
+
+# 3.2
+curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" -H "Content-Type: application/gzip" \
+  --data-binary "@dump.sql.gz" "$BASE/api/tdm/database/import"
+
+# 3.3
+ls -l "$TRANSFER_DIR"
+cat "$TRANSFER_DIR/status.json"
+gzip -t "$TRANSFER_DIR/pending.sql.gz" && echo "valid gzip"
+sha256sum "$TRANSFER_DIR/pending.sql.gz"
+
+# 3.5 and 3.6
+for type in application/octet-stream application/x-gzip text/plain application/json; do
+  echo "== $type"
+  curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" -H "Content-Type: $type" \
+    --data-binary "@dump.sql.gz" "$BASE/api/tdm/database/import"
+  echo
+done
+
+# 3.7
+upload dump.sql.gz
+
+# 3.8 to 3.10 and 3.12: change service= in the header line. Pick versions that fit the version under test.
+with_version() { sed "1s/service=[^ ]*/service=$1/" dump.sql | gzip > version.sql.gz; upload version.sql.gz; }
+with_version 1.0.0      # 3.8: older, same major version
+with_version 0.9.0      # 3.9: older major version
+with_version 99.0.0     # 3.10: newer
+with_version unknown    # 3.12
+
+# 3.11
+tail -n +2 dump.sql | gzip > noheader.sql.gz && upload noheader.sql.gz
+
+# 3.13: not gzip, then a truncated gzip
+upload dump.sql
+head -c 1000 dump.sql.gz > truncated.sql.gz && upload truncated.sql.gz
+
+# 3.14: bytes that are not valid UTF-8
+{ head -n 1 dump.sql; printf '\377\376\n'; } | gzip > badutf8.sql.gz && upload badutf8.sql.gz
+
+# 3.15: restart the service with TDM_DB_TRANSFER_MAX_SIZE=10KB. The dump of a nearly empty database is smaller than
+# that, so check the size first and set a lower limit, for example 1KB, when needed.
+ls -l dump.sql.gz
+upload dump.sql.gz
+ls -l "$TRANSFER_DIR"
+
+# 3.16: a larger file keeps the first upload running for about 40 seconds. Do not approve this file.
+{ cat dump.sql
+  printf 'INSERT INTO "PUBLIC"."QA_FILLER" VALUES (\047'
+  head -c 300000 /dev/urandom | base64 -w 0
+  printf '\047);\n'
+} | gzip > big.sql.gz
+curl -sS -i --limit-rate 6k -X POST -H "X-TDM-Transfer-Key: $KEY" -H "Content-Type: application/gzip" \
+  --data-binary "@big.sql.gz" "$BASE/api/tdm/database/import" > first-upload.txt &
+sleep 3
+upload dump.sql.gz
+curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" \
+  "$BASE/api/tdm/database/import/apply?confirm=REPLACE_ALL_DATA&restart=false"
+curl -sS -i -X DELETE -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/import"
+wait
+cat first-upload.txt
+
+# 3.17: over a STAGED dump, then over an APPROVED one
+upload dump.sql.gz
+upload dump.sql.gz
+curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" \
+  "$BASE/api/tdm/database/import/apply?confirm=REPLACE_ALL_DATA&restart=false"
+upload dump.sql.gz
+status
+
+# 3.18: with the volume of the transfer folder nearly full
+df -h "$TRANSFER_DIR"
+upload dump.sql.gz
+
+# 3.19: a file of about 4 MB. Cancel it afterwards, because it cannot be restored.
+{ cat dump.sql
+  printf 'INSERT INTO "PUBLIC"."QA_FILLER" VALUES (\047'
+  head -c 4000000 /dev/urandom | base64 -w 0
+  printf '\047);\n'
+} | gzip > large.sql.gz
+ls -l large.sql.gz
+upload large.sql.gz
+curl -sS -i -X DELETE -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/import"
+```
 
 ### 4.4. Dump content filter
 
@@ -174,6 +369,49 @@ starts "Invalid dump:". The stored dump and the status stay as they were.
 | 4.12 | A string value that contains `SELECT`, `CALL`, `--`, `;`, or `FILE_READ` inside the quotes | `202`, the value is kept unchanged |
 | 4.13 | `CREATE USER "EVIL" PASSWORD 'x' ADMIN;`, `CREATE ROLE …;`, `GRANT … TO "EVIL";` | `202`; the lines are absent from `pending.sql.gz`. After the restart the user `EVIL` does not exist and the service uses its own configured password |
 
+`try_line` appends its argument to `dump.sql`, compresses the result, and uploads it. Run `status` before the first
+case and after the last rejected one: the answers must be equal.
+
+```bash
+try_line() { { cat dump.sql; printf '%s\n' "$1"; } | gzip > case.sql.gz; upload case.sql.gz; }
+
+try_line 'CALL 1;'                                                          # 4.1
+try_line 'SELECT 1;'
+try_line "CREATE ALIAS EVIL FOR 'java.lang.System.exit';"                   # 4.2
+try_line "CREATE TRIGGER T BEFORE INSERT ON \"PUBLIC\".\"T\" CALL 'x.Y';"
+try_line "RUNSCRIPT FROM '/tmp/x.sql';"                                     # 4.3
+try_line 'SHUTDOWN;'
+try_line "EXECUTE IMMEDIATE 'SHUTDOWN';"
+try_line 'DROP TABLE "PUBLIC"."T";'                                         # 4.4
+try_line 'DELETE FROM "PUBLIC"."T";'
+try_line 'UPDATE "PUBLIC"."T" SET "A" = 1;'
+try_line 'TRUNCATE TABLE "PUBLIC"."T";'
+try_line 'CREATE SCHEMA EVIL;'
+try_line 'INSERT INTO "PUBLIC"."T" VALUES (1 -- comment'                    # 4.5
+try_line '/* comment */'                                                    # 4.6
+try_line '// comment'
+try_line 'INSERT INTO "PUBLIC"."T" VALUES ($$x$$);'
+try_line "INSERT INTO \"PUBLIC\".\"T\" VALUES (FILE_READ('/etc/passwd'));"  # 4.7
+try_line "INSERT INTO \"PUBLIC\".\"T\" SELECT * FROM CSVREAD('x.csv');"     # 4.8
+try_line 'INSERT INTO "PUBLIC"."T" VALUES ("CALL");'                        # 4.9
+try_line "INSERT INTO \"PUBLIC\".\"T\" VALUES (CAST(X'00' AS JAVA_OBJECT));"  # 4.10
+try_line 'cAlL 1;'                                                          # 4.11
+try_line 'C/**/ALL 1;'
+status
+
+# 4.12: accepted, and the value is unchanged in the stored dump. Do not approve it: table T does not exist.
+try_line "INSERT INTO \"PUBLIC\".\"T\" VALUES ('SELECT CALL -- ; FILE_READ');"
+gzip -dc "$TRANSFER_DIR/pending.sql.gz" | tail -n 1
+
+# 4.13: accepted, and the stored dump holds no EVIL line. Approve and restart (5.3) to check the users.
+{ cat dump.sql
+  echo "CREATE USER \"EVIL\" PASSWORD 'x' ADMIN;"
+  echo 'CREATE ROLE "EVIL_ROLE";'
+  echo 'GRANT "EVIL_ROLE" TO "EVIL";'
+} | gzip > accounts.sql.gz && upload accounts.sql.gz
+gzip -dc "$TRANSFER_DIR/pending.sql.gz" | grep EVIL                         # expect no output
+```
+
 ### 4.5. Approval (state `APPROVED`)
 
 | # | Step | Expect |
@@ -186,6 +424,39 @@ starts "Invalid dump:". The stored dump and the status stay as they were.
 | 5.6 | `restart` omitted | Same as `restart=true`: the service exits after about 1.5 seconds. Run this only where the platform restarts the container |
 | 5.7 | `restart=true` in Kubernetes | The pod restarts by itself; the log of the new start shows the database replacement; the status is `APPLIED` |
 
+```bash
+upload dump.sql.gz                                                          # state STAGED
+
+# 5.1 and 5.2
+curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/import/apply"
+curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" \
+  "$BASE/api/tdm/database/import/apply?confirm=replace_all_data"
+status
+
+# 5.3. Run it a second time for 5.5.
+curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" \
+  "$BASE/api/tdm/database/import/apply?confirm=REPLACE_ALL_DATA&restart=false"
+cat "$TRANSFER_DIR/status.json"
+grep -a "is approved" "$LOG" | tail -n 1
+
+# 5.4: with nothing staged
+curl -sS -i -X DELETE -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/import"
+curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" \
+  "$BASE/api/tdm/database/import/apply?confirm=REPLACE_ALL_DATA&restart=false"
+
+# 5.6: restart omitted. The service exits and the database is replaced at the next start.
+upload dump.sql.gz
+curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" \
+  "$BASE/api/tdm/database/import/apply?confirm=REPLACE_ALL_DATA"
+
+# 5.7: in Kubernetes
+upload dump.sql.gz
+curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" \
+  "$BASE/api/tdm/database/import/apply?confirm=REPLACE_ALL_DATA&restart=true"
+kubectl get pods -n '<namespace>' -w
+status                                                                      # after the pod is ready again
+```
+
 ### 4.6. Cancel
 
 | # | Step | Expect |
@@ -194,6 +465,28 @@ starts "Invalid dump:". The stored dump and the status stay as they were.
 | 6.2 | `DELETE /import` while `APPROVED`, then restart the service | `204`; after the restart the database is not replaced and no backup folder appears |
 | 6.3 | `DELETE /import` while `NONE` | `204`, no error |
 | 6.4 | `DELETE /import` while `APPLIED` or `FAILED` | `204`; the status stays as it was |
+
+```bash
+# 6.1
+upload dump.sql.gz
+curl -sS -i -X DELETE -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/import"
+status
+ls "$TRANSFER_DIR"
+
+# 6.2: cancel an APPROVED dump, then restart the service and compare the backup folders
+upload dump.sql.gz
+curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" \
+  "$BASE/api/tdm/database/import/apply?confirm=REPLACE_ALL_DATA&restart=false"
+ls "$TRANSFER_DIR/backup"
+curl -sS -i -X DELETE -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/import"
+# restart the service here
+status
+ls "$TRANSFER_DIR/backup"
+
+# 6.3 and 6.4: the same request in the states NONE, APPLIED, and FAILED
+curl -sS -i -X DELETE -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/import"
+status
+```
 
 ### 4.7. Apply at start (state `APPLIED`)
 
@@ -214,6 +507,43 @@ Use two services: A (the source) and B (the target), with different data, databa
 | 7.11 | Export from B after the import and compare with the dump of A | The data is equal, except for the timestamps and the scheduler state |
 | 7.12 | Four imports in a row with `TDM_DB_TRANSFER_BACKUPS=2` | `transfer/backup/` keeps the two newest folders |
 
+In this section and in section 4.8, `BASE`, `KEY`, `TRANSFER_DIR`, and `LOG` describe service B. Set two more
+variables for service A:
+
+```bash
+export SRC='http://<host of A>:<port>'
+export SRC_KEY='<the key of A>'
+
+# 7.1: export from A, upload to B, approve, then stop and start B
+curl -sS -o a.sql.gz -w 'HTTP %{http_code}\n' -H "X-TDM-Transfer-Key: $SRC_KEY" "$SRC/api/tdm/database/export"
+upload a.sql.gz
+curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" \
+  "$BASE/api/tdm/database/import/apply?confirm=REPLACE_ALL_DATA&restart=false"
+# stop B and start it here
+grep -a -E "Replacing the database|The database was replaced|Hikari" "$LOG"
+
+status                                                                      # 7.2
+ls -R "$TRANSFER_DIR"                                                       # 7.4
+grep -a -E "ERROR|Starting jobs for" "$LOG"                                    # 7.6
+curl -sS -i "$BASE/api/tdm/versions/backend"                                # 7.6
+
+# 7.9: a dump of A that claims an older major version
+gzip -dc a.sql.gz | sed '1s/service=[^ ]*/service=0.9.0/' | gzip > old.sql.gz && upload old.sql.gz
+curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" \
+  "$BASE/api/tdm/database/import/apply?confirm=REPLACE_ALL_DATA&restart=false"
+# restart B, then run: status
+
+# 7.11: compare the data statements of the two dumps
+curl -sS -o b.sql.gz -w 'HTTP %{http_code}\n' -H "X-TDM-Transfer-Key: $KEY" "$BASE/api/tdm/database/export"
+diff <(gzip -dc a.sql.gz) <(gzip -dc b.sql.gz)
+
+# 7.12: repeat four times, restarting B after each approval
+upload a.sql.gz
+curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" \
+  "$BASE/api/tdm/database/import/apply?confirm=REPLACE_ALL_DATA&restart=false"
+ls "$TRANSFER_DIR/backup"
+```
+
 ### 4.8. Failure and rollback
 
 | # | Step | Expect |
@@ -226,6 +556,54 @@ Use two services: A (the source) and B (the target), with different data, databa
 | 8.6 | Kill the process (`kill -9`) in the middle of the replacement, with a large dump | At the next start the `APPLYING` state counts as an interrupted replacement: the old database is restored and the status is `FAILED`. (Hard to hit by hand; unit tests cover it) |
 | 8.7 | Make `transfer/` read-only, then upload | An error answer (`5xx`) with a clear text; the service keeps working |
 
+Each case ends the same way: `approve`, restart the service, and run `status`. `dump.sql` is an export of the service
+under test (steps 2.1 and 2.2).
+
+```bash
+approve() {
+  curl -sS -i -X POST -H "X-TDM-Transfer-Key: $KEY" \
+    "$BASE/api/tdm/database/import/apply?confirm=REPLACE_ALL_DATA&restart=false"
+  echo
+}
+
+# 8.1: a repeated primary key
+{ cat dump.sql
+  echo 'INSERT INTO "PUBLIC"."DATABASECHANGELOGLOCK" VALUES (1, FALSE, NULL, NULL);'
+} | gzip > duplicate.sql.gz && upload duplicate.sql.gz && approve
+# restart the service, then:
+status
+ls "$TRANSFER_DIR/failed"
+grep -a -E "The database restore failed|Put the previous database back" "$LOG"
+
+# 8.2: remove one required table. Run the cycle again with DATABASECHANGELOG as the table.
+table=TEST_DATA_TABLE_CATALOG
+awk -v t="\"PUBLIC\".\"$table\"" '
+  (/^CREATE CACHED TABLE / || /^INSERT INTO / || /^ALTER TABLE /) && index($0, t) { skip = 1 }
+  !skip
+  /;\r?$/ { skip = 0 }
+' dump.sql | gzip > missing.sql.gz && upload missing.sql.gz && approve
+
+# 8.3
+upload dump.sql.gz && approve
+
+# 8.4: replace the approved dump before the restart
+upload dump.sql.gz && approve
+echo "-- changed" | gzip > "$TRANSFER_DIR/pending.sql.gz"
+
+# 8.5
+touch "$TRANSFER_DIR/incoming.sql.gz.part"
+# restart the service, then:
+ls "$TRANSFER_DIR"
+
+# 8.6: with a large dump, approve, start the service, and kill it while the log shows the replacement
+kill -9 '<process id of the service>'
+
+# 8.7: Linux. Restore the permissions afterwards.
+chmod a-w "$TRANSFER_DIR"
+upload dump.sql.gz
+chmod u+w "$TRANSFER_DIR"
+```
+
 ### 4.9. The service around the transfer
 
 | # | Step | Expect |
@@ -234,6 +612,11 @@ Use two services: A (the source) and B (the target), with different data, databa
 | 9.2 | Check `docs/openapi.json` and Swagger | All five operations are described and the descriptions match the behavior |
 | 9.3 | Check the audit log | The transfer operations are recorded with their action names |
 | 9.4 | Helm deployment | Covered after stage 3 (the chart and the secret with the key); not part of this plan |
+
+```bash
+# 9.2: the paths in the OpenAPI description of the running service
+curl -sS "$BASE/v3/api-docs" | grep -oE '"/api/tdm/database[^"]*"'
+```
 
 ## 5. What to attach to the results
 
