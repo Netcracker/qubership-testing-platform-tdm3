@@ -288,7 +288,10 @@ reports an entry that failed even when TDM3 answered with HTTP 200.
 `/tdm-generate` starts the GitLab pipeline of your project, which runs test cases that fill TDM3 tables. It needs the
 GitLab settings in the config file and a token in the `GITLAB_TOKEN` environment variable. See
 [Generating test data](../README.md#generating-test-data) in the `README` for the keys. The agent shows the pipeline
-variables and asks you to confirm before it starts the pipeline, then waits up to 30 minutes for the result.
+variables and asks you to confirm before it starts the pipeline, then waits up to 30 minutes for the result. When the
+config also has the settings for the
+[search for business identifiers](../README.md#business-identifiers-while-the-pipeline-runs), the agent tells you each
+identifier, such as a customer ID, as soon as the logs show it, without waiting for the pipeline to end.
 
 ### Show a request instead of sending it
 

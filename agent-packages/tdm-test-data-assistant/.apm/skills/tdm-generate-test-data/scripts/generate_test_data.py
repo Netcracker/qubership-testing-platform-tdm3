@@ -23,19 +23,33 @@ variable; ATP_TESTS_GIT_REPO_URL, EXECUTION_TYPE, and EXECUTION_NAME are not
 empty; ENABLE_JIRA_INTEGRATION and SEND_WEBEX_NOTIFICATION are true or false. The
 values of EXECUTION_TYPE and EXECUTION_NAME are not checked.
 
+While it waits, the script can also search the logs for business identifiers and
+report each one as soon as it appears, with a progress line "FOUND <name>=<value>".
+The search is described in downstream_ids.py, and the config keys that switch it on
+are ORCHESTRATOR_URL, DOWNSTREAM_STAGE, RUN_ID_PATTERN, and BUSINESS_ID_PATTERNS.
+A search that cannot go on never stops the wait for the pipeline.
+
 Without --yes:
   {"ok": true, "started": false, "ref": "main", "variables": {...},
-   "changed": ["EXECUTION_NAME"]}
+   "changed": ["EXECUTION_NAME"],
+   "discovery": {"enabled": true, "searches": ["customerId"], "timeout_seconds": 420}}
 With --yes, when the pipeline ends:
   {"ok": true, "started": true, "succeeded": false,
    "pipeline": {"id": 7, "status": "failed", "web_url": "..."},
    "variables": {...}, "waited_seconds": 190,
-   "failed_jobs": [{"name": "...", "stage": "...", "web_url": "..."}]}
+   "failed_jobs": [{"name": "...", "stage": "...", "web_url": "..."}],
+   "found": {"customerId": ["9177834604613948718"]},
+   "discovery": {"reached": "runner_log", "downstream_pipeline_id": 8,
+                 "run_id": "bed125d0-..."}}
+The last two fields are there only when the search is on. "reached" is the last step
+that worked: start, downstream_pipeline, job, run_id, or runner_log. A search that
+stopped adds "stopped" (timeout or errors) and "message" to "discovery".
 
-Error codes: config_missing, config_incomplete, bad_argument,
+Error codes: config_missing, config_incomplete, invalid_pattern, bad_argument,
 invalid_variables (with "problems"), token_missing, http_error (with "status"),
-server_unreachable, timeout (with "pipeline"; the pipeline keeps running),
-poll_failed (with "pipeline"). Python 3.9+, standard library only.
+server_unreachable, timeout and poll_failed (both with "pipeline", and with "found"
+and "discovery" when the search is on; the pipeline keeps running).
+Python 3.9+, standard library only.
 """
 
 import importlib
@@ -45,11 +59,13 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from dataclasses import dataclass
 from pathlib import Path
 
 sys.dont_write_bytecode = True  # keep __pycache__ out of the skill folder
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tdm-common" / "scripts"))
 tdm = importlib.import_module("tdm_common")
+ids = importlib.import_module("downstream_ids")
 
 REQUIRED_KEYS = (
     "GITLAB_URL",
@@ -96,8 +112,8 @@ def read_token(config):
     return token
 
 
-def gitlab(config, token, method, path, body=None):
-    """Send one request to GitLab and return the decoded JSON; raise GitLabError."""
+def gitlab_raw(config, token, method, path, body=None):
+    """Send one request to GitLab and return the answer as bytes; raise GitLabError."""
     base = f"{config['GITLAB_URL'].rstrip('/')}/api/v4/projects"
     url = f"{base}/{config['GITLAB_PROJECT_ID']}{path}"
     data = None if body is None else json.dumps(body).encode("utf-8")
@@ -107,7 +123,7 @@ def gitlab(config, token, method, path, body=None):
     request = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
         with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT) as response:
-            return json.loads(response.read().decode("utf-8"))
+            return response.read()
     except urllib.error.HTTPError as exc:
         raise GitLabError(
             "http_error",
@@ -120,11 +136,37 @@ def gitlab(config, token, method, path, body=None):
             "server_unreachable",
             f"Cannot reach GitLab at {config['GITLAB_URL']}: {exc}",
         ) from exc
+
+
+def gitlab(config, token, method, path, body=None):
+    """Send one request to GitLab and return the decoded JSON; raise GitLabError."""
+    answer = gitlab_raw(config, token, method, path, body)
+    try:
+        return json.loads(answer.decode("utf-8"))
     except ValueError as exc:
         raise GitLabError(
             "http_error",
             f"The GitLab response is not JSON: {exc}",
         ) from exc
+
+
+def gitlab_reader(config, token):
+    """Return the GET function that the scout of downstream_ids uses.
+
+    The function takes a path, the project to read (the configured one when None), and
+    text=True for a job log. It raises downstream_ids.SourceError.
+    """
+
+    def read(path, project=None, text=False):
+        scoped = config if project is None else {**config, "GITLAB_PROJECT_ID": project}
+        try:
+            if text:
+                return gitlab_raw(scoped, token, "GET", path).decode("utf-8", "replace")
+            return gitlab(scoped, token, "GET", path)
+        except GitLabError as exc:
+            raise ids.SourceError(exc.message, exc.extra.get("status")) from exc
+
+    return read
 
 
 def as_text(value):
@@ -237,37 +279,99 @@ def start_pipeline(config, token, variables):
     }
 
 
-def poll_status(config, token, pipeline, variables, args):
-    """Poll until the pipeline ends; return the seconds waited, or fail."""
-    started, failures = time.monotonic(), 0
-    while pipeline["status"] not in FINISHED:
-        waited = time.monotonic() - started
-        if waited >= args.timeout:
+def read_status(run, failures, started):
+    """Ask GitLab for the status of the pipeline; return the count of failed asks.
+
+    The count is reset by an answer. It fails with poll_failed when it reaches
+    POLL_FAILURES_ALLOWED.
+    """
+    pipeline = run.pipeline
+    try:
+        answer = gitlab(run.config, run.token, "GET", f"/pipelines/{pipeline['id']}")
+        pipeline["status"] = answer.get("status", "unknown")
+        failures = 0
+    except GitLabError as exc:
+        failures += 1
+        progress(f"Status request failed ({exc.message}), attempt {failures}")
+        if failures >= POLL_FAILURES_ALLOWED:
+            tdm.fail(
+                "poll_failed",
+                f"{exc.message}. The pipeline may still be running.",
+                pipeline=pipeline,
+                variables=run.variables,
+                **scout_fields(run.scout),
+            )
+    elapsed = int(time.monotonic() - started)
+    progress(f"Pipeline {pipeline['id']}: {pipeline['status']} after {elapsed} s")
+    return failures
+
+
+def scout_fields(scout):
+    """Return the result fields of the scout, or {} when the search is off."""
+    return scout.report() if scout else {}
+
+
+def poll_status(run, args):
+    """Poll until the pipeline ends; return the seconds waited, or fail.
+
+    The status is read every args.interval seconds. The scout, when there is one, is
+    called at its own shorter rate, so that an identifier is reported soon after it
+    appears in a log.
+    """
+    started = time.monotonic()
+    next_status, failures = started + args.interval, 0
+    while run.pipeline["status"] not in FINISHED:
+        now = time.monotonic()
+        if now - started >= args.timeout:
             tdm.fail(
                 "timeout",
                 f"The pipeline did not end in {int(args.timeout)} s. It keeps running.",
-                pipeline=pipeline,
-                variables=variables,
+                pipeline=run.pipeline,
+                variables=run.variables,
+                **scout_fields(run.scout),
             )
-        time.sleep(min(args.interval, max(args.timeout - waited, 0)))
-        try:
-            answer = gitlab(config, token, "GET", f"/pipelines/{pipeline['id']}")
-            pipeline["status"] = answer.get("status", "unknown")
-            failures = 0
-        except GitLabError as exc:
-            failures += 1
-            note = f"Status request failed ({exc.message}), attempt {failures}"
-            progress(note)
-            if failures >= POLL_FAILURES_ALLOWED:
-                tdm.fail(
-                    "poll_failed",
-                    f"{exc.message}. The pipeline may still be running.",
-                    pipeline=pipeline,
-                    variables=variables,
-                )
-        elapsed = int(time.monotonic() - started)
-        progress(f"Pipeline {pipeline['id']}: {pipeline['status']} after {elapsed} s")
+        wake = next_status
+        if run.scout and run.scout.active():
+            wake = min(wake, now + run.scout.wait_seconds())
+        time.sleep(max(min(wake, started + args.timeout) - now, 0))
+        if run.scout and run.scout.active():
+            run.scout.advance()
+        if time.monotonic() >= next_status:
+            failures = read_status(run, failures, started)
+            next_status = time.monotonic() + args.interval
+    if run.scout:
+        run.scout.finish()
     return int(time.monotonic() - started)
+
+
+def read_discovery(config):
+    """Return the settings of the search for identifiers, or None when it is off."""
+    try:
+        return ids.read_settings(config)
+    except ids.SettingsError as exc:
+        return tdm.fail(exc.code, str(exc))
+
+
+def describe_discovery(settings):
+    """Return the plan of the search for the result without --yes."""
+    if settings is None:
+        return {"enabled": False}
+    return {
+        "enabled": True,
+        "searches": list(settings.business),
+        "timeout_seconds": settings.timeout,
+    }
+
+
+@dataclass
+class Run:
+    """The pipeline that is running, and what is needed to follow it."""
+
+    config: dict
+    token: str
+    pipeline: dict
+    variables: dict
+    scout: object = None
 
 
 def main():
@@ -276,6 +380,7 @@ def main():
     overrides = tdm.parse_filters(args.sets)
     config = tdm.load_config(REQUIRED_KEYS)
     variables, changed = load_variables(config, overrides)
+    settings = read_discovery(config)
 
     if not args.yes:
         tdm.succeed(
@@ -283,12 +388,17 @@ def main():
             ref=config["GITLAB_REF"],
             variables=variables,
             changed=changed,
+            discovery=describe_discovery(settings),
         )
 
     token = read_token(config)
     pipeline = start_pipeline(config, token, variables)
     progress(f"Pipeline {pipeline['id']} started: {pipeline['web_url']}")
-    waited = poll_status(config, token, pipeline, variables, args)
+    run = Run(config, token, pipeline, variables)
+    if settings:
+        reader = gitlab_reader(config, token)
+        run.scout = ids.Scout(settings, pipeline["id"], reader, progress)
+    waited = poll_status(run, args)
 
     result = {
         "started": True,
@@ -296,6 +406,7 @@ def main():
         "pipeline": pipeline,
         "variables": variables,
         "waited_seconds": waited,
+        **scout_fields(run.scout),
     }
     if pipeline["status"] == "failed":
         result["failed_jobs"] = failed_jobs(config, token, pipeline["id"])
