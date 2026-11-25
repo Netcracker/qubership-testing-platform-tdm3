@@ -4,4 +4,4 @@ description: Slash commands of tdm-test-data-assistant for OpenCode, which lists
 author: Qubership
 dependencies:
   apm:
-    - Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant#feat/opencode-commands-package
+    - Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant#feat/generate-early-business-ids
