@@ -197,6 +197,11 @@ It also tells the agent how to read a response on Windows without corrupting non
 name, and fixes the layout of the rows it shows: `OCCUPIED_BY` and `OCCUPIED_DATE` first, and column headers either
 always in TDM3's names or always in the user's language.
 
+The instruction also tells the agent to choose a skill by what the user wants done, not by the exact words. A request
+can be in any language and register, slang included. When the user says outright to reserve, insert, or delete, the
+agent uses the matching skill. When the wording does not say whether to write or only to read, the agent picks the
+read-only skill or asks.
+
 For Codex and OpenCode, `apm install` does not put the instruction into the agent context. Run `apm compile` in the
 project, which writes it into `AGENTS.md`.
 

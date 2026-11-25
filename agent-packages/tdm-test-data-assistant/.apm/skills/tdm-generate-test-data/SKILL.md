@@ -1,6 +1,6 @@
 ---
 name: tdm-generate-test-data
-description: Use when the user wants to generate test data, that is, to run the project's GitLab pipeline that executes the test cases which fill the business tables and the TDM3 tables. Starts the pipeline with parameters and waits until it ends.
+description: Use when the user wants to generate test data, that is, to run the project's GitLab pipeline that executes the test cases which fill the business tables and the TDM3 tables. Starts the pipeline with parameters and waits until it ends. Also use when the user asks, in any wording, formal or slangy, to run, start, kick off, or trigger a named test case on an environment.
 user-invocable: false
 ---
 
