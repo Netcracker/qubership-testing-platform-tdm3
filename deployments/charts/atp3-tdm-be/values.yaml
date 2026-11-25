@@ -72,6 +72,7 @@ atp3tdm:
   localeResolver: "en"
   maxFileSize: "100MB"
   maxRequestSize: "100MB"
+  maxHttpPostSize: "101MB"
   podSecurityContext:
     runAsUser: 1000
     fsGroup: 1000
@@ -107,5 +108,7 @@ atp3tdm:
     # "existingSecret" and "key" are both empty, the chart generates a key of 48 random characters and keeps it
     # across upgrades. Required on the COMPOSE platform, which has no Secrets.
     key: ""
+    # Largest compressed dump that an upload accepts. To raise it above maxHttpPostSize, raise that value too.
+    maxSize: "100MB"
   storageSize: "1Gi"
   storageClassName: "csi-sc-cinderplugin"

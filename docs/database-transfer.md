@@ -151,6 +151,9 @@ specification. While `atp3tdm.dbTransfer.enabled` is `false`, the chart renders 
 | `atp3tdm.dbTransfer.key`            | A key that you supply, of at least 32 characters. The chart stores it in the Secret `<SERVICE_NAME>-db-transfer`.                         |
 | both empty                          | The chart generates a key of 48 random characters and stores it in the Secret `<SERVICE_NAME>-db-transfer`. Later upgrades keep that key. |
 
+`atp3tdm.dbTransfer.maxSize`, `100MB` by default, sets `TDM_DB_TRANSFER_MAX_SIZE`. To raise it above
+`atp3tdm.maxHttpPostSize`, raise that value too.
+
 The chart never prints a generated key, because Helm output reaches CI logs. Read it from the cluster:
 
 ```bash
@@ -183,4 +186,6 @@ log.
 - **Restart.** `restart=true` ends the process with status 0. A Kubernetes Deployment starts the container again. A
   plain `docker run` without a restart policy does not, so restart it yourself.
 - **Upload size.** [`TDM_DB_TRANSFER_MAX_SIZE`](configuration.md#database-transfer) limits the compressed file. It is
-  independent of `MAX_FILE_SIZE` and `MAX_REQUEST_SIZE`.
+  independent of `MAX_FILE_SIZE` and `MAX_REQUEST_SIZE`. A body over
+  [`MAX_HTTP_POST_SIZE`](configuration.md), 101 MB by default, gets `400` with no body, so raise both to accept a
+  larger dump.

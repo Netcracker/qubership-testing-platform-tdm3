@@ -228,7 +228,9 @@ Details:
   The body is streamed, so the response has no `Content-Length`.
 - **Stage a dump.** The request body is the raw `.sql.gz` file with `Content-Type: application/gzip`, not a multipart
   form. This avoids the global `spring.servlet.multipart` limit (`MAX_FILE_SIZE`, 100 MB by default), which also applies
-  to the table import. A new upload replaces a staged or approved dump and sets the state back to `STAGED`.
+  to the table import. Undertow checks `server.undertow.max-http-post-size` (`MAX_HTTP_POST_SIZE`, 101 MB by default)
+  before any of these limits, for every request. A new upload replaces a staged or approved dump and sets the state back
+  to `STAGED`.
 - **Approve and restart.** `confirm` must be exactly `REPLACE_ALL_DATA`. With `restart=true` (the default) the service
   exits cleanly after the response is sent and relies on the platform to start it again. With `restart=false` the
   dump is approved and waits for the next restart, which the deployer triggers.

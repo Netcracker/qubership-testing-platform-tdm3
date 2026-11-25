@@ -89,6 +89,9 @@ the render, because the service would treat it as no key and switch the transfer
 {{- end }}
 TDM_DB_TRANSFER_KEY: "{{ include "atp3tdm.dbTransfer.suppliedKey" . }}"
 {{- end }}
+{{- if .Values.atp3tdm.dbTransfer.enabled }}
+TDM_DB_TRANSFER_MAX_SIZE: "{{ .Values.atp3tdm.dbTransfer.maxSize }}"
+{{- end }}
 ATP_HTTP_LOGGING: "{{ .Values.atp3tdm.atpHttpLogging }}"
 ATP_HTTP_LOGGING_HEADERS: "{{ .Values.atp3tdm.atpHttpLoggingHeaders }}"
 ATP_HTTP_LOGGING_HEADERS_IGNORE: "{{ .Values.atp3tdm.atpHttpLoggingHeadersIgnore }}"
@@ -138,6 +141,7 @@ MAIL_SENDER_ENDPOINT: "{{ .Values.MAIL_SENDER_ENDPOINT }}"
 MAIL_SENDER_PORT: "{{ .Values.MAIL_SENDER_PORT }}"
 MAIL_SENDER_URL: "{{ .Values.MAIL_SENDER_URL }}"
 MAX_FILE_SIZE: "{{ .Values.atp3tdm.maxFileSize }}"
+MAX_HTTP_POST_SIZE: "{{ .Values.atp3tdm.maxHttpPostSize }}"
 MAX_RAM: "{{ .Values.MAX_RAM }}"
 MAX_REQUEST_SIZE: "{{ .Values.atp3tdm.maxRequestSize }}"
 MICROSERVICE_NAME: "{{ .Values.SERVICE_NAME }}"
