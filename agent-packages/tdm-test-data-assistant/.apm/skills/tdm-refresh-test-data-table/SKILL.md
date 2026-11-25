@@ -1,6 +1,6 @@
 ---
 name: tdm-refresh-test-data-table
-description: Use when the user wants to re-run a TDM3 table's saved import query on demand, outside its schedule, to pick up current data from the source system. Calls the TDM3 REST API directly.
+description: Use when the user wants to re-run a TDM3 table's saved import query on demand, outside its schedule, to pick up current data from the source system, for example "pull fresh data into the table" for a table that already has an import query. A new Excel file or a new SQL query is tdm-import-test-data. Calls the TDM3 REST API directly.
 user-invocable: false
 ---
 
