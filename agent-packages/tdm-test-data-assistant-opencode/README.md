@@ -9,7 +9,7 @@ adds one command file for each command skill, and it depends on `tdm-test-data-a
 Run `apm install` in your project folder:
 
 ```bash
-apm install --target opencode Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant-opencode#feat/opencode-commands-package
+apm install --target opencode Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant-opencode#main
 ```
 
 APM writes the commands to `.opencode/commands/` and the skills to `.agents/skills/`. Run `apm compile` once, so that
