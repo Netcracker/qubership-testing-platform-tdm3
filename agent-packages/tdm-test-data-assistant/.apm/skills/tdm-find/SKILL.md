@@ -4,7 +4,6 @@ description: Use only when the user types /tdm-find. Shows the rows of an explic
 disable-model-invocation: true
 argument-hint: "table=<title> [return=<cols>] [Column=value ...] [occupied] | help"
 metadata:
-  opencode/slash: "true"
   opencode/autoinvoke: "false"
 ---
 

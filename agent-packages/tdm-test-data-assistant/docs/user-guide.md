@@ -54,7 +54,7 @@ Run `apm install` in the folder, with the package and the agent that you use:
 
 ```bash
 cd <your folder>
-apm install --target claude Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant#main
+apm install --target claude Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant#feat/opencode-commands-package
 ```
 
 The part after `#` is the branch or tag of the repository to follow. Use a tag to stay on one version until you decide
@@ -64,6 +64,13 @@ to move.
 several with commas, as in `--target claude,codex`. Without `--target`, APM picks the agent from the folder it finds,
 for example a `.claude` folder, and stops with a message when it finds none. APM saves the choice in the `targets` list
 of `apm.yml`, so you give it once.
+
+For OpenCode, install the companion package instead. It depends on this one, so one command installs both, and OpenCode
+shows the commands in its `/` menu:
+
+```bash
+apm install --target opencode Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant-opencode#feat/opencode-commands-package
+```
 
 The command does four things:
 

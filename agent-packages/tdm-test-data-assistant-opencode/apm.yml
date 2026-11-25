@@ -1,0 +1,7 @@
+name: tdm-test-data-assistant-opencode
+version: 1.0.0
+description: Slash commands of tdm-test-data-assistant for OpenCode, which lists commands but not skills in its slash menu.
+author: Qubership
+dependencies:
+  apm:
+    - Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant#feat/opencode-commands-package

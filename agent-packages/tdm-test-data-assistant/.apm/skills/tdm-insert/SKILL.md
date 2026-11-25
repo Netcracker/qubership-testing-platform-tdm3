@@ -4,7 +4,6 @@ description: Use only when the user types /tdm-insert. Inserts one row with expl
 disable-model-invocation: true
 argument-hint: "table=<title> Column=value ... [new] | help"
 metadata:
-  opencode/slash: "true"
   opencode/autoinvoke: "false"
 ---
 

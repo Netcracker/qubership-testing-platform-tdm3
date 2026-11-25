@@ -4,7 +4,6 @@ description: Use only when the user types /tdm-tables. Lists the test data table
 disable-model-invocation: true
 argument-hint: "(no arguments) | help"
 metadata:
-  opencode/slash: "true"
   opencode/autoinvoke: "false"
 ---
 

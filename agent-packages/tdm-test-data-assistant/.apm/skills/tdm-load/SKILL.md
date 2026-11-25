@@ -4,7 +4,6 @@ description: Use only when the user types /tdm-load. Loads an Excel file or the 
 disable-model-invocation: true
 argument-hint: "table=<title> file=<path> | query=<SELECT> [timeout=<s>] [new] | help"
 metadata:
-  opencode/slash: "true"
   opencode/autoinvoke: "false"
 ---
 

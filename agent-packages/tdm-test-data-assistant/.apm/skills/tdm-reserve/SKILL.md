@@ -4,7 +4,6 @@ description: Use only when the user types /tdm-reserve. Reserves test data rows 
 disable-model-invocation: true
 argument-hint: "table=<title> return=<col> [Column=value ...] [all] | help"
 metadata:
-  opencode/slash: "true"
   opencode/autoinvoke: "false"
 ---
 

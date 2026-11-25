@@ -4,7 +4,6 @@ description: Use only when the user types /tdm-delete. Deletes the rows of an ex
 disable-model-invocation: true
 argument-hint: "table=<title> Column=value ... [all] | help"
 metadata:
-  opencode/slash: "true"
   opencode/autoinvoke: "false"
 ---
 
