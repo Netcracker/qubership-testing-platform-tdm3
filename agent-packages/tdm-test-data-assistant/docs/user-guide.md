@@ -17,7 +17,7 @@ You need:
   0.29.1.
 - Access to `github.com`, because APM downloads the package from the repository.
 - Python 3.9 or later, available as `python`, `python3`, or `py -3`. Some skills run a Python script instead of
-  building a request by hand, for example `/tdm-generate` and the requests of
+  building a request by hand, for example the requests of
   [tdm-show-request](#show-a-request-instead-of-sending-it).
 
 ## Choose a folder
@@ -220,7 +220,6 @@ Every command answers `help`, `--help`, `-h`, or `?` with its syntax and sends n
 | `/tdm-update`   | Changes column values of the rows that match `where`.                  | `/tdm-update table=Agents where agent_code=A013 set country=IT`              |
 | `/tdm-delete`   | Deletes the matching rows after you confirm.                           | `/tdm-delete table=Agents agent_code=A013`                                   |
 | `/tdm-load`     | Loads rows from an `.xlsx` file or a `SELECT` query.                   | `/tdm-load table=Agents file="C:\data\agents.xlsx" new`                      |
-| `/tdm-generate` | Starts the GitLab pipeline that generates test data, and waits for it. | `/tdm-generate test="Generate domestic customers" env=environments/dev.yaml` |
 
 Arguments are named, so their order does not matter. Put a name or a value with spaces in double quotes, for example
 `"Operator ID"=2502`. The filters compare for equality only. For another comparison, such as `Contains` or a range, ask
@@ -282,16 +281,6 @@ Give `file=` or `query=`, not both. Only `.xlsx` files are read. The query must 
 runs on the external database of the current system. `new` means that the table must not exist yet; without it, the
 agent asks you to confirm before it loads into an existing table. The agent reports the number of rows loaded, and
 reports an entry that failed even when TDM3 answered with HTTP 200.
-
-### Generate test data
-
-`/tdm-generate` starts the GitLab pipeline of your project, which runs test cases that fill TDM3 tables. It needs the
-GitLab settings in the config file and a token in the `GITLAB_TOKEN` environment variable. See
-[Generating test data](../README.md#generating-test-data) in the `README` for the keys. The agent shows the pipeline
-variables and asks you to confirm before it starts the pipeline, then waits up to 30 minutes for the result. When the
-config also has the settings for the
-[search for business identifiers](../README.md#business-identifiers-while-the-pipeline-runs), the agent tells you each
-identifier, such as a customer ID, as soon as the logs show it, without waiting for the pipeline to end.
 
 ### Show a request instead of sending it
 

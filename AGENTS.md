@@ -38,7 +38,7 @@ grep -rn "<endpoint path>" agent-packages/tdm-test-data-assistant
 | `TestDataControllerV2` | `/api/tdm/v2` | `tdm-import-test-data-v2` |
 | `StatisticsController` | `/api/tdm/statistics` | `tdm-view-test-data-statistics`, `tdm-manage-statistics-schedule`, `tdm-manage-available-data-by-column-stats` |
 | `DataCleanupController` | `/api/tdm/cleanup` | `tdm-manage-cleanup-config` |
-| `EnvironmentsController` (env configurator) | `/api/tdm/projects`, `/api/tdm/environments` | `tdm-select-context`, `tdm-generate-test-data` |
+| `EnvironmentsController` (env configurator) | `/api/tdm/projects`, `/api/tdm/environments` | `tdm-select-context` |
 | `DataRefreshController`, `VersionsController`, `ChartController` | | no skill calls them today |
 
 The table is a starting point, not a guarantee. A skill can call an endpoint that is not in its row, and the grep is
