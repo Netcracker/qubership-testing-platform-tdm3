@@ -43,6 +43,11 @@ release commit, not by when they were written.
   (`O''Brien`) when rows were occupied through `PUT /api/tdm/occupy` or the `atp-action-controller` occupy
   operations. The name is now stored as sent.
 
+### Removed
+
+- The distribution ZIP no longer contains `atp-tdm/resources/swagger`. It held Handlebars templates for a Swagger
+  Maven plugin that the build does not use.
+
 ## [1.0.10] - 2026-09-07
 
 ### Added

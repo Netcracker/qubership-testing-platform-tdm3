@@ -59,10 +59,6 @@
             <lineEnding>unix</lineEnding>
         </fileSet>
         <fileSet>
-            <directory>src/main/swagger</directory>
-            <outputDirectory>resources/swagger</outputDirectory>
-        </fileSet>
-        <fileSet>
             <directory>target/scripts</directory>
             <outputDirectory>scripts</outputDirectory>
             <includes>
