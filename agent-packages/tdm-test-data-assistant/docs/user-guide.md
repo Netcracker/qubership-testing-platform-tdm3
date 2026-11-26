@@ -54,11 +54,11 @@ Run `apm install` in the folder, with the package and the agent that you use:
 
 ```bash
 cd <your folder>
-apm install --target claude Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant#feat/generate-early-business-ids
+apm install --target claude Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant
 ```
 
-The part after `#` is the branch or tag of the repository to follow. Use a tag to stay on one version until you decide
-to move.
+The command installs from the default branch. To install a release, add `#<tag>` to the end of the command: you then
+stay on that version until you decide to move.
 
 `--target` names the agent. The values include `claude`, `codex`, `copilot`, `cursor`, `gemini`, and `opencode`; join
 several with commas, as in `--target claude,codex`. Without `--target`, APM picks the agent from the folder it finds,
@@ -69,7 +69,7 @@ For OpenCode, install the companion package instead. It depends on this one, so 
 shows the commands in its `/` menu:
 
 ```bash
-apm install --target opencode Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant-opencode#feat/generate-early-business-ids
+apm install --target opencode Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant-opencode
 ```
 
 The command does four things:

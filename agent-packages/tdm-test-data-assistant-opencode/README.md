@@ -9,8 +9,11 @@ adds one command file for each command skill, and it depends on `tdm-test-data-a
 Run `apm install` in your project folder:
 
 ```bash
-apm install --target opencode Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant-opencode#feat/generate-early-business-ids
+apm install --target opencode Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant-opencode
 ```
+
+The command installs from the default branch. To install a release, add `#<tag>` to the end of the command. The main
+package then comes from the same tag.
 
 APM writes the commands to `.opencode/commands/` and the skills to `.agents/skills/`. Run `apm compile` once, so that
 the instruction of the main package reaches `AGENTS.md`. Restart OpenCode, then type `/tdm-context help` to check the
