@@ -45,4 +45,6 @@ the value from the project's variables file.
   it or change it.
 - Map the arguments to `--set` options as the table says, run the script without `--yes`, show the variables, and ask
   for the confirmation, as tdm-generate-test-data describes. Start the pipeline only after a yes.
+- While the script runs, read its output and report each business identifier (`FOUND <name>=<value>`) as soon as it
+  appears, as tdm-generate-test-data describes.
 - Report the result, the failures, and the errors as tdm-generate-test-data describes.

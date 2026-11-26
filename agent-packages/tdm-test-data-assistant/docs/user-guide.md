@@ -54,11 +54,11 @@ Run `apm install` in the folder, with the package and the agent that you use:
 
 ```bash
 cd <your folder>
-apm install --target claude Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant#main
+apm install --target claude Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant
 ```
 
-The part after `#` is the branch or tag of the repository to follow. Use a tag to stay on one version until you decide
-to move.
+The command installs from the default branch. To install a release, add `#<tag>` to the end of the command: you then
+stay on that version until you decide to move.
 
 `--target` names the agent. The values include `claude`, `codex`, `copilot`, `cursor`, `gemini`, and `opencode`; join
 several with commas, as in `--target claude,codex`. Without `--target`, APM picks the agent from the folder it finds,
@@ -69,7 +69,7 @@ For OpenCode, install the companion package instead. It depends on this one, so 
 shows the commands in its `/` menu:
 
 ```bash
-apm install --target opencode Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant-opencode#main
+apm install --target opencode Netcracker/qubership-testing-platform-tdm3/agent-packages/tdm-test-data-assistant-opencode
 ```
 
 The command does four things:
@@ -288,7 +288,10 @@ reports an entry that failed even when TDM3 answered with HTTP 200.
 `/tdm-generate` starts the GitLab pipeline of your project, which runs test cases that fill TDM3 tables. It needs the
 GitLab settings in the config file and a token in the `GITLAB_TOKEN` environment variable. See
 [Generating test data](../README.md#generating-test-data) in the `README` for the keys. The agent shows the pipeline
-variables and asks you to confirm before it starts the pipeline, then waits up to 30 minutes for the result.
+variables and asks you to confirm before it starts the pipeline, then waits up to 30 minutes for the result. When the
+config also has the settings for the
+[search for business identifiers](../README.md#business-identifiers-while-the-pipeline-runs), the agent tells you each
+identifier, such as a customer ID, as soon as the logs show it, without waiting for the pipeline to end.
 
 ### Show a request instead of sending it
 

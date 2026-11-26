@@ -80,6 +80,19 @@ PIPELINE_VARIABLES = {
     "ENABLE_JIRA_INTEGRATION": "false",
     "SEND_WEBEX_NOTIFICATION": "true",
 }
+DISCOVERY_STAGE = "1. Run ATP3 tests"
+RUN_ID_PATTERN = r"Run submitted: id=(?P<value>[^,\s]+)"
+CUSTOMER_ID_PATTERN = r"^customerId:[ \t]*(?P<value>\d+)[ \t]*$"
+RUN_ID = "bed125d0-ba78-4b20-872b-a845c3560032"
+JOB_LOG = f"[INFO] [exec_logger.py:55] Run submitted: id={RUN_ID}, phase=Pending\n"
+BRIDGE = {"name": "run", "downstream_pipeline": {"id": 43, "project_id": 7}}
+STAGE_JOBS = [
+    {"id": 502, "name": "second", "stage": DISCOVERY_STAGE},
+    {"id": 400, "name": "other stage", "stage": "2. Report"},
+    {"id": 501, "name": "first", "stage": DISCOVERY_STAGE},
+]
+LOG_ONE = "######## createBca ########\ncustomerId: 9177834604613948718\nname: x\n"
+LOG_TWO = LOG_ONE + "customerId: 123\ncustomerId: " + "9" * 300 + "\n"
 
 results: list[tuple[str, bool]] = []
 
@@ -897,6 +910,21 @@ def env_scenarios(config, env):
     env_delete_scenarios(config, base)
 
 
+def answer_text(handler, status, text):
+    """Send a plain text answer from a fake server."""
+    data = text.encode("utf-8")
+    handler.send_response(status)
+    handler.send_header("Content-Type", "text/plain; charset=utf-8")
+    handler.send_header("Content-Length", str(len(data)))
+    handler.end_headers()
+    handler.wfile.write(data)
+
+
+def next_answer(answers):
+    """Return the first answer of a list and drop it, but keep the last one."""
+    return answers.pop(0) if len(answers) > 1 else answers[0]
+
+
 class FakeGitLab(ThreadingHTTPServer):
     """Answer the GitLab requests of the generate script, and record them."""
 
@@ -906,20 +934,64 @@ class FakeGitLab(ThreadingHTTPServer):
         self.jobs = []
         self.post_status = 201
         self.requests = []
+        self.chain = {}
 
     def start(self):
         """Serve in a thread and return the base URL."""
         threading.Thread(target=self.serve_forever, daemon=True).start()
         return f"http://127.0.0.1:{self.server_address[1]}"
 
-    def reset(self, statuses, jobs=(), post_status=201):
-        """Set the answers of the next run and forget the recorded requests."""
+    def reset(self, statuses, jobs=(), post_status=201, **chain):
+        """Set the answers of the next run and forget the recorded requests.
+
+        chain holds lists of answers, one per call, for "bridges" (JSON),
+        "downstream_jobs" (JSON), and "trace" (a pair of status and text). The last
+        answer of a list repeats. Without them the downstream pipeline never appears.
+        """
         self.statuses, self.jobs, self.post_status = (
             list(statuses),
             list(jobs),
             post_status,
         )
+        self.chain = {
+            "bridges": [[]],
+            "downstream_jobs": [[]],
+            "trace": [(404, "")],
+            **{key: list(value) for key, value in chain.items()},
+        }
         self.requests.clear()
+
+
+class FakeOrchestrator(ThreadingHTTPServer):
+    """Answer the runner log requests of the generate script, and record them."""
+
+    def __init__(self):
+        super().__init__(("127.0.0.1", 0), FakeOrchestratorHandler)
+        self.answers = [(404, "")]
+        self.requests = []
+        self.url = f"http://127.0.0.1:{self.server_address[1]}"
+
+    def start(self):
+        """Serve in a thread and return the base URL."""
+        threading.Thread(target=self.serve_forever, daemon=True).start()
+        return self.url
+
+    def reset(self, *answers):
+        """Set the answers, as pairs of status and text, and forget the requests."""
+        self.answers = list(answers) or [(404, "")]
+        self.requests.clear()
+
+
+class FakeOrchestratorHandler(BaseHTTPRequestHandler):
+    """Handle one runner log request."""
+
+    def log_message(self, *args):
+        """Keep the console quiet."""
+
+    def do_GET(self):  # pylint: disable=invalid-name
+        """Answer the next prepared log."""
+        self.server.requests.append(self.path)
+        answer_text(self, *next_answer(self.server.answers))
 
 
 class FakeGitLabHandler(BaseHTTPRequestHandler):
@@ -957,8 +1029,14 @@ class FakeGitLabHandler(BaseHTTPRequestHandler):
         """Answer a status or a jobs request."""
         token = self.headers.get("PRIVATE-TOKEN")
         self.server.requests.append(("GET", self.path, token, None))
-        statuses = self.server.statuses
-        if "/jobs" in self.path:
+        statuses, chain = self.server.statuses, self.server.chain
+        if self.path.endswith("/pipelines/42/bridges?per_page=100"):
+            self.reply(200, next_answer(chain["bridges"]))
+        elif "/pipelines/43/jobs" in self.path:
+            self.reply(200, next_answer(chain["downstream_jobs"]))
+        elif self.path.endswith("/trace"):
+            answer_text(self, *next_answer(chain["trace"]))
+        elif "/jobs" in self.path:
             self.reply(200, self.server.jobs)
         else:
             status = statuses.pop(0) if len(statuses) > 1 else statuses[0]
@@ -968,15 +1046,15 @@ class FakeGitLabHandler(BaseHTTPRequestHandler):
 class GenerateHarness:
     """Run the generate script in a temporary project against a fake GitLab."""
 
-    def __init__(self, folder, server):
-        self.folder, self.server = folder, server
+    def __init__(self, folder, server, orchestrator):
+        self.folder, self.server, self.orchestrator = folder, server, orchestrator
         (Path(folder) / "vars.json").write_text(
             json.dumps({"variables": PIPELINE_VARIABLES}),
             encoding="utf-8",
         )
 
-    def configure(self, gitlab_url):
-        """Write the config of the temporary project."""
+    def configure(self, gitlab_url, **more):
+        """Write the config of the temporary project; more adds or replaces keys."""
         config_dir = Path(self.folder) / ".tdm-assistant"
         config_dir.mkdir(exist_ok=True)
         config = {
@@ -984,8 +1062,21 @@ class GenerateHarness:
             "GITLAB_PROJECT_ID": "7",
             "GITLAB_REF": "main",
             "GENERATE_VARIABLES_FILE": "vars.json",
+            **more,
         }
         (config_dir / "config.json").write_text(json.dumps(config), encoding="utf-8")
+
+    def discovery(self, gitlab_url, **more):
+        """Write a config with the search for identifiers on, at a fast pace."""
+        keys = {
+            "ORCHESTRATOR_URL": self.orchestrator.url,
+            "DOWNSTREAM_STAGE": DISCOVERY_STAGE,
+            "RUN_ID_PATTERN": RUN_ID_PATTERN,
+            "BUSINESS_ID_PATTERNS": {"customerId": CUSTOMER_ID_PATTERN},
+            "DISCOVERY_INTERVAL": 0.05,
+            "DISCOVERY_SLOW_INTERVAL": 0.05,
+        }
+        self.configure(gitlab_url, **{**keys, **more})
 
     def generate(self, *args, with_token=True):
         """Run the script; return (exit code, JSON or None, stdout and stderr)."""
@@ -1109,19 +1200,165 @@ class GenerateHarness:
             out,
         )
 
+    def discovery_config_scenarios(self, url):
+        """Check the settings of the search for identifiers, and the plan."""
+        self.configure(url)
+        self.server.reset(["success"])
+        status, out, _ = self.generate()
+        check(
+            "the plan says the search is off without its settings",
+            status == 0 and out["discovery"] == {"enabled": False},
+            shorten(out),
+        )
+        self.server.reset(["success"])
+        status, out, text = self.generate("--yes", "--interval", "0.05")
+        check(
+            "a run without the search has no found or discovery field",
+            status == 0 and "found" not in out and "discovery" not in out,
+            text[:300],
+        )
+        self.discovery(url)
+        status, out, _ = self.generate()
+        plan = {"enabled": True, "searches": ["customerId"], "timeout_seconds": 420.0}
+        check("the plan lists the searches", status == 0 and out["discovery"] == plan, shorten(out))
+        self.discovery(url, RUN_ID_PATTERN="Run submitted: id=(unclosed")
+        status, out, _ = self.generate()
+        self.error("a pattern that is not a regular expression", "invalid_pattern", status, out)
+        self.discovery(url, RUN_ID_PATTERN="Run submitted")
+        status, out, _ = self.generate()
+        self.error("a pattern without a group", "invalid_pattern", status, out)
+        self.discovery(url, BUSINESS_ID_PATTERNS=["customerId"])
+        status, out, _ = self.generate()
+        self.error("patterns that are not an object", "invalid_pattern", status, out)
+        self.discovery(url, DISCOVERY_TIMEOUT=0)
+        status, out, _ = self.generate()
+        self.error("a timeout of zero", "config_incomplete", status, out)
+        self.configure(url, ORCHESTRATOR_URL=self.orchestrator.url)
+        status, out, _ = self.generate()
+        good = status == 1 and out and out["error"] == "config_incomplete"
+        good = good and "DOWNSTREAM_STAGE" in out["message"]
+        check("a partial set of settings is refused", good, shorten(out))
+        self.discovery(url, ORCHESTRATOR_URL="file:///etc/passwd")
+        status, out, _ = self.generate()
+        self.error("an orchestrator URL that is not http", "config_incomplete", status, out)
+
+    def discovery_scenarios(self, url):
+        """Check the search against a fake pipeline, orchestrator, and job log."""
+        self.discovery(url)
+        self.server.reset(
+            ["running"] * 6 + ["success"],
+            bridges=[[], [BRIDGE]],
+            downstream_jobs=[[], STAGE_JOBS],
+            trace=[(404, ""), (200, "starting\n"), (200, JOB_LOG)],
+        )
+        self.orchestrator.reset((404, ""), (200, LOG_ONE), (200, LOG_TWO))
+        status, out, text = self.generate("--yes", "--interval", "0.3")
+        found = out and out.get("found", {}).get("customerId")
+        check(
+            "the search reports the identifiers, and ignores a value that is too long",
+            status == 0 and found == ["9177834604613948718", "123"],
+            text[:400],
+        )
+        info = out and out.get("discovery")
+        check(
+            "the result says how far the search got",
+            info
+            and info["reached"] == "runner_log"
+            and info["run_id"] == RUN_ID
+            and info["downstream_pipeline_id"] == 43,
+            shorten(out),
+        )
+        early = text.find("FOUND customerId=9177834604613948718")
+        check(
+            "an identifier is reported before the pipeline ends",
+            0 <= early < text.find("success after"),
+            text[:600],
+        )
+        asked = f"/atp3/api/v1/runs/{RUN_ID}/logs?tail_lines=5000"
+        check(
+            "the runner log is asked for with the run ID and a long tail",
+            self.orchestrator.requests and self.orchestrator.requests[0] == asked,
+            str(self.orchestrator.requests[:2]),
+        )
+        job_asked = [r[1] for r in self.server.requests if r[1].endswith("/trace")]
+        check(
+            "the first job of the stage is read",
+            job_asked and job_asked[0].endswith("/jobs/501/trace"),
+            str(job_asked[:1]),
+        )
+
+    def discovery_failure_scenarios(self, url):
+        """Check that a search that cannot go on never stops the wait."""
+        self.discovery(url)
+        self.server.reset(
+            ["running"] * 8 + ["success"],
+            bridges=[[BRIDGE]],
+            downstream_jobs=[STAGE_JOBS],
+            trace=[(200, JOB_LOG)],
+        )
+        self.orchestrator.reset((500, "broken"))
+        status, out, text = self.generate("--yes", "--interval", "0.1")
+        info = out and out.get("discovery")
+        good = status == 0 and out["succeeded"] and out["found"] == {"customerId": []}
+        good = good and info["stopped"] == "errors"
+        check("a failing orchestrator stops the search and not the wait", good, text[:400])
+        self.discovery(url, DISCOVERY_TIMEOUT=0.2)
+        self.server.reset(["running"] * 9 + ["success"])
+        status, out, text = self.generate("--yes", "--interval", "0.1")
+        info = out and out.get("discovery")
+        good = status == 0 and out["succeeded"] and info["stopped"] == "timeout"
+        good = good and info["reached"] == "start"
+        check("a search with no downstream pipeline stops at its timeout", good, text[:400])
+        self.discovery(url)
+        self.server.reset(
+            ["running"],
+            bridges=[[BRIDGE]],
+            downstream_jobs=[STAGE_JOBS],
+            trace=[(200, JOB_LOG)],
+        )
+        self.orchestrator.reset((200, LOG_ONE))
+        status, out, _ = self.generate("--yes", "--interval", "0.1", "--timeout", "0.6")
+        good = status == 1 and out["error"] == "timeout"
+        good = good and out["found"] == {"customerId": ["9177834604613948718"]}
+        check("a timeout of the pipeline still reports the identifiers", good, shorten(out))
+
+    def discovery_input_scenarios(self, url):
+        """Check what the search does with text from a log."""
+        self.discovery(url, RUN_ID_PATTERN="Run submitted: id=(?P<value>[^,]+),")
+        self.server.reset(
+            ["running"] * 4 + ["success"],
+            bridges=[[BRIDGE]],
+            downstream_jobs=[STAGE_JOBS],
+            trace=[(200, "Run submitted: id=a/b?c d, phase=Pending\n")],
+        )
+        self.orchestrator.reset((200, LOG_ONE))
+        status, _, text = self.generate("--yes", "--interval", "0.1")
+        asked = self.orchestrator.requests[:1]
+        check(
+            "a run ID from a log is quoted in the path of the request",
+            status == 0 and asked == ["/atp3/api/v1/runs/a%2Fb%3Fc%20d/logs?tail_lines=5000"],
+            f"{asked} {text[:200]}",
+        )
+
 
 def generate_scenarios():
     """Run the generate script against a fake GitLab; it needs no TDM3."""
     print("\n-- generate (fake GitLab)")
-    server = FakeGitLab()
+    server, orchestrator = FakeGitLab(), FakeOrchestrator()
     url = server.start()
+    orchestrator.start()
     with tempfile.TemporaryDirectory() as folder:
-        harness = GenerateHarness(folder, server)
+        harness = GenerateHarness(folder, server, orchestrator)
         harness.configure(url)
         harness.validation_scenarios()
         harness.success_scenarios()
         harness.failure_scenarios()
+        harness.discovery_config_scenarios(url)
+        harness.discovery_scenarios(url)
+        harness.discovery_failure_scenarios(url)
+        harness.discovery_input_scenarios(url)
     server.shutdown()
+    orchestrator.shutdown()
 
 
 def main():
