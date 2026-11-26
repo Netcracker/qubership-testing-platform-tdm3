@@ -78,6 +78,20 @@ run over a WebSocket connection instead: a handler under `org.qubership.atp.tdm.
 matching tables one at a time and pushes a message per table as it finishes, plus a final `FINISHED` message. See
 [WebSocket bulk operations](api.md#websocket-bulk-operations) for the message shapes.
 
+## Database transfer
+
+`DatabaseTransferController` exports and imports the whole H2 database; the user steps are in
+[Database transfer](database-transfer.md), and the design, with its rejected alternatives, is in
+[docs/design/database-transfer.md](design/database-transfer.md). `TransferKeyFilter` checks the transfer key before
+the request reaches Spring MVC.
+
+The export streams the result of the H2 `SCRIPT NOPASSWORDS` command, compressed, into the response from a
+repeatable-read transaction, so every table shows one snapshot. An upload is checked while it streams to disk, by
+`DumpValidator`, and the service records its state in `transfer/status.json` next to the database. The database is not
+touched until the next start: `DatabaseRestoreInitializer` runs inside `DbConfiguration.dataSource`, before the
+connection pool exists, moves the old files to `transfer/backup/`, loads the dump with `RUNSCRIPT`, and puts the old
+files back if anything fails.
+
 ## Logging correlation
 
 `TdmMdcHelper` adds `environmentId`, `systemId`, and, for an environment or system change notification, `projectId` to

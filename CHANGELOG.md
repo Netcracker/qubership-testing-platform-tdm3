@@ -11,6 +11,14 @@ release commit, not by when they were written.
 
 ### Added
 
+- Database transfer: `GET /api/tdm/database/export` streams the whole H2 database as a gzip-compressed SQL dump, and
+  `POST /api/tdm/database/import`, `GET`, `DELETE`, and `POST /api/tdm/database/import/apply` stage, check, approve,
+  and cancel an import that replaces all data of the service at its next start. Every operation needs the key
+  `TDM_DB_TRANSFER_KEY` (at least 32 characters) in the `X-TDM-Transfer-Key` header, and answers `404` while the key is
+  not set. The Helm chart can keep the key in a Secret, or generate one, with `atp3tdm.dbTransfer.enabled`; the chart
+  also adds the header to `atpHttpLoggingHeadersIgnore`. The size limit of a dump is `atp3tdm.dbTransfer.maxSize`. See
+  [Database transfer](docs/database-transfer.md).
+
 - `docs/architecture.md`: the design behind the backend module, including how a test data table is stored, where
   projects and environments come from, and how scheduled and bulk operations run.
 - `docs/troubleshooting.md`: a failing health check, common REST errors, and the service's custom Prometheus
@@ -30,6 +38,10 @@ release commit, not by when they were written.
 
 ### Fixed
 
+- An upload over 2 MB, such as an Excel file sent to `POST /api/tdm/import/excel`, failed with HTTP 400 and an empty
+  body, although `MAX_FILE_SIZE` and `MAX_REQUEST_SIZE` allow 100 MB. A multipart request is now limited by
+  `MAX_REQUEST_SIZE`. The new `MAX_HTTP_POST_SIZE` (`101MB` by default, Helm value `atp3tdm.maxHttpPostSize`) limits
+  every request body of the web server. If you raised `MAX_REQUEST_SIZE` above 101 MB, raise it too.
 - Rows occupied through `occupy-records` and `occupy-records-full-row` were missing from the occupation statistics.
   They are now recorded the way `PUT /api/tdm/occupy` records them.
 - Swagger UI and `/v3/api-docs` returned HTTP 500 instead of the API description, because the build pulled in a

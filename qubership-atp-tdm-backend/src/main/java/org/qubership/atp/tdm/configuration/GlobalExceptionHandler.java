@@ -16,6 +16,7 @@
 
 package org.qubership.atp.tdm.configuration;
 
+import org.qubership.atp.tdm.exceptions.transfer.DatabaseTransferException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -37,6 +38,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(exception.getMessage());
+    }
+
+    /**
+     * Answers a refused database transfer request with the status that the exception carries.
+     */
+    @ExceptionHandler(DatabaseTransferException.class)
+    protected ResponseEntity<Object> handleDatabaseTransfer(DatabaseTransferException ex) {
+        log.warn(ex.getMessage());
+        return ResponseEntity.status(ex.getStatus()).body(ex.getMessage());
     }
 
     /**

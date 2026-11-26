@@ -17,18 +17,19 @@ behind the ATP gateway, prepend the configured gateway prefix
 Each REST controller is one Swagger tag. `docs/openapi.json` and Swagger UI group operations by tag; this table gives
 each tag's base path and purpose. For what an individual operation does, see its entry there.
 
-| Tag                       | Base path                                              | Purpose                                                                                                   |
-|---------------------------|--------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| `test-data-controller`    | `/api/tdm`                                             | Test data tables: import, read, occupy and release rows, export, maintenance.                             |
-| `test-data-controller-v2` | `/api/tdm/v2`                                          | The same import-by-SQL operation as `test-data-controller`, with its parameters in the request body.      |
-| `atp-action-controller`   | `/api/tdm/rest`                                        | The operations ATP actions call on a test data table, addressed by project, environment, and system name. |
-| `atp-env-controller`      | `/api/tdm/rest/create-env`                             | The [Dynamic Environment API](#dynamic-environment-api).                                                  |
-| `data-refresh-controller` | `/api/tdm/data/refresh`                                | Refresh settings and manual refresh runs of test data tables.                                             |
-| `data-cleanup-controller` | `/api/tdm/cleanup`                                     | Cleanup settings and manual cleanup runs of test data tables.                                             |
-| `statistics-controller`   | `/api/tdm/statistics`                                  | Statistics on test data tables and the scheduled email reports.                                           |
-| `environments-controller` | under `/api/tdm/` (`environments`, `envs`, `projects`) | Projects, dynamic environments, and their systems.                                                        |
-| `versions-controller`     | `/api/tdm/versions`                                    | Service name and version.                                                                                 |
-| `route-info-controller`   | `/atp-integration`                                     | Contributed by the ATP integration library, not by this service's own code.                               |
+| Tag                            | Base path                                              | Purpose                                                                                                   |
+|--------------------------------|--------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| `test-data-controller`         | `/api/tdm`                                             | Test data tables: import, read, occupy and release rows, export, maintenance.                             |
+| `test-data-controller-v2`      | `/api/tdm/v2`                                          | The same import-by-SQL operation as `test-data-controller`, with its parameters in the request body.      |
+| `atp-action-controller`        | `/api/tdm/rest`                                        | The operations ATP actions call on a test data table, addressed by project, environment, and system name. |
+| `atp-env-controller`           | `/api/tdm/rest/create-env`                             | The [Dynamic Environment API](#dynamic-environment-api).                                                  |
+| `data-refresh-controller`      | `/api/tdm/data/refresh`                                | Refresh settings and manual refresh runs of test data tables.                                             |
+| `data-cleanup-controller`      | `/api/tdm/cleanup`                                     | Cleanup settings and manual cleanup runs of test data tables.                                             |
+| `statistics-controller`        | `/api/tdm/statistics`                                  | Statistics on test data tables and the scheduled email reports.                                           |
+| `database-transfer-controller` | `/api/tdm/database`                                    | The [Database transfer API](#database-transfer-api): export and import of the whole database.             |
+| `environments-controller`      | under `/api/tdm/` (`environments`, `envs`, `projects`) | Projects, dynamic environments, and their systems.                                                        |
+| `versions-controller`          | `/api/tdm/versions`                                    | Service name and version.                                                                                 |
+| `route-info-controller`        | `/atp-integration`                                     | Contributed by the ATP integration library, not by this service's own code.                               |
 
 ## Response format
 
@@ -132,6 +133,63 @@ The server replies with one or more text messages, each a JSON object, and then 
 the path and the project for the run's duration ([`LOCK_BULK_ACTION_SEC`](configuration.md#locks)), so a second run of
 the same bulk operation on the same project waits for the first to finish; a different bulk operation on the same
 project does not wait.
+
+## Database transfer API
+
+The five operations of the `database-transfer-controller` move the whole database between services; the steps are in
+[Database transfer](database-transfer.md). Every operation needs the transfer key in the `X-TDM-Transfer-Key` header.
+While the key is not configured, every operation answers `404`. A request with a missing or wrong key gets `403` with
+the text `The transfer key is missing or wrong.`, the same for both cases. The key is checked before the request is
+matched to an operation, so a request with an unsupported method or content type gets the same `403` or `404`.
+
+| Operation           | Method and path                                                             | Success                   | Errors                                                                                              |
+|---------------------|-----------------------------------------------------------------------------|---------------------------|-----------------------------------------------------------------------------------------------------|
+| Export              | `GET /api/tdm/database/export`                                              | `200`, `application/gzip` | `409` not an H2 file database, or an export is already running                                      |
+| Stage a dump        | `POST /api/tdm/database/import`                                             | `202`, status body        | `400` invalid dump, `409`, `413` over the size limit, `415` other content type, `507` no free space |
+| Read the status     | `GET /api/tdm/database/import`                                              | `200`, status body        | `409` not an H2 file database                                                                       |
+| Cancel              | `DELETE /api/tdm/database/import`                                           | `204`                     | `409`                                                                                               |
+| Approve and restart | `POST /api/tdm/database/import/apply?confirm=REPLACE_ALL_DATA&restart=true` | `202`, status body        | `400` missing or wrong `confirm`, `409` nothing is staged                                           |
+
+- **Export.** The response is a gzip stream with the header
+  `Content-Disposition: attachment; filename="tdm-<database>-<timestamp>.sql.gz"` and no `Content-Length`. The first
+  line of the dump is `-- TDM3-DUMP v1 service=<version> h2=<version> created=<UTC time> database=<name>`.
+- **Stage a dump.** The request body is the raw `.sql.gz` file, sent with `Content-Type` `application/gzip`,
+  `application/x-gzip`, or `application/octet-stream`; a multipart form is not accepted. A valid dump replaces any dump
+  that is staged or approved and sets the state to `STAGED`. A second operation on the import while one runs gets `409`
+  with `Another import operation is running.`
+- **Cancel.** Deletes a staged or approved dump and sets the state to `NONE`. In any other state it changes nothing and
+  still answers `204`.
+- **Approve and restart.** `confirm` must be exactly `REPLACE_ALL_DATA`. With `restart=true`, the default, the service
+  exits after it answers, and the platform has to start it again; the dump replaces the database during that start.
+  With `restart=false`, the dump waits for the next start.
+
+The operations that return a status body answer with this object:
+
+```json
+{
+  "state": "STAGED",
+  "uploadedAt": "2026-11-11T10:15:30Z",
+  "sizeBytes": 73400320,
+  "sha256": "9f2c...e1",
+  "dumpServiceVersion": "1.0.13",
+  "dumpH2Version": "2.2.224",
+  "warnings": [],
+  "approvedAt": null,
+  "finishedAt": null,
+  "error": null,
+  "backup": null
+}
+```
+
+`state` is one of `NONE`, `STAGED`, `APPROVED`, `APPLYING`, `APPLIED`, and `FAILED`, described in
+[Database transfer](database-transfer.md#move-a-database). `sizeBytes` and `sha256` describe the stored file, which
+differs from the uploaded one because the service removes the account statements and compresses it again. `warnings`
+lists problems that do not stop the import, such as a dump from an older major version. `backup` is the name of the
+directory under `transfer/backup/` that holds the replaced database files, and it is empty after a failed restore.
+`error` is set in the state `FAILED`. The status survives a restart.
+
+An error of this controller is plain text with the reason, for example `No dump is staged.`; the
+[Troubleshooting](troubleshooting.md#database-transfer) page lists the texts.
 
 ## Dynamic Environment API
 

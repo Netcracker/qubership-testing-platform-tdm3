@@ -64,8 +64,34 @@ capabilities:
 {{- end -}}
 {{/* Helper functions end */}}
 
+{{/* Name of the Secret that holds the database transfer key */}}
+{{- define "atp3tdm.dbTransfer.secretName" -}}
+{{- default (printf "%s-db-transfer" .Values.SERVICE_NAME) .Values.atp3tdm.dbTransfer.existingSecret -}}
+{{- end }}
+
+{{/*
+The database transfer key that the deployer supplied, or an empty string. A key shorter than the service accepts fails
+the render, because the service would treat it as no key and switch the transfer off without a visible error.
+*/}}
+{{- define "atp3tdm.dbTransfer.suppliedKey" -}}
+{{- $key := toString (.Values.atp3tdm.dbTransfer.key | default "") -}}
+{{- if and $key (lt (len $key) 32) -}}
+{{- fail "atp3tdm.dbTransfer.key must have at least 32 characters." -}}
+{{- end -}}
+{{- $key -}}
+{{- end }}
+
 {{/* Environment variables to be used AS IS */}}
 {{- define "atp3tdm.env.lines" }}
+{{- if and .Values.atp3tdm.dbTransfer.enabled (eq .Values.PAAS_PLATFORM "COMPOSE") }}
+{{- if not (include "atp3tdm.dbTransfer.suppliedKey" .) }}
+{{- fail "atp3tdm.dbTransfer.key is required on the COMPOSE platform, which has no Secrets." }}
+{{- end }}
+TDM_DB_TRANSFER_KEY: "{{ include "atp3tdm.dbTransfer.suppliedKey" . }}"
+{{- end }}
+{{- if .Values.atp3tdm.dbTransfer.enabled }}
+TDM_DB_TRANSFER_MAX_SIZE: "{{ .Values.atp3tdm.dbTransfer.maxSize }}"
+{{- end }}
 ATP_HTTP_LOGGING: "{{ .Values.atp3tdm.atpHttpLogging }}"
 ATP_HTTP_LOGGING_HEADERS: "{{ .Values.atp3tdm.atpHttpLoggingHeaders }}"
 ATP_HTTP_LOGGING_HEADERS_IGNORE: "{{ .Values.atp3tdm.atpHttpLoggingHeadersIgnore }}"
@@ -115,6 +141,7 @@ MAIL_SENDER_ENDPOINT: "{{ .Values.MAIL_SENDER_ENDPOINT }}"
 MAIL_SENDER_PORT: "{{ .Values.MAIL_SENDER_PORT }}"
 MAIL_SENDER_URL: "{{ .Values.MAIL_SENDER_URL }}"
 MAX_FILE_SIZE: "{{ .Values.atp3tdm.maxFileSize }}"
+MAX_HTTP_POST_SIZE: "{{ .Values.atp3tdm.maxHttpPostSize }}"
 MAX_RAM: "{{ .Values.MAX_RAM }}"
 MAX_REQUEST_SIZE: "{{ .Values.atp3tdm.maxRequestSize }}"
 MICROSERVICE_NAME: "{{ .Values.SERVICE_NAME }}"
