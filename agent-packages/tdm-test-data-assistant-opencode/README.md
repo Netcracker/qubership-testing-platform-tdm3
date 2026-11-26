@@ -27,10 +27,10 @@ commands of this package would appear next to the skills with the same names.
 Each command file loads the skill of the same name and passes it the text after the command name as `$ARGUMENTS`. The
 rules, the arguments, and the safety checks stay in the skill. The package has no logic of its own.
 
-The package ships sixteen commands:
+The package ships fifteen commands:
 
-- Ten commands: `/tdm-context`, `/tdm-tables`, `/tdm-find`, `/tdm-reserve`, `/tdm-release`, `/tdm-insert`,
-  `/tdm-update`, `/tdm-delete`, `/tdm-load`, and `/tdm-generate`.
+- Nine commands: `/tdm-context`, `/tdm-tables`, `/tdm-find`, `/tdm-reserve`, `/tdm-release`, `/tdm-insert`,
+  `/tdm-update`, `/tdm-delete`, and `/tdm-load`.
 - Six script pilots: `/tdm-find-script`, `/tdm-insert-script`, `/tdm-list-tables-script`, `/tdm-release-script`,
   `/tdm-reserve-script`, and `/tdm-update-script`.
 

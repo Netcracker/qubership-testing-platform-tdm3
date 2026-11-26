@@ -131,14 +131,18 @@ Covered by [tdm-select-context](.apm/skills/tdm-select-context/SKILL.md) — inc
 controller that exist but do nothing useful (a cache-refresh and a cache-reset left over from a caching layer that
 no longer exists); see that skill's own page.
 
-### Test data generation (GitLab pipeline)
+### Test data generation
 
-| Skill                                                                 | Purpose                                                                               |
-|-----------------------------------------------------------------------|---------------------------------------------------------------------------------------|
-| [tdm-generate-test-data](.apm/skills/tdm-generate-test-data/SKILL.md) | Start the project's GitLab pipeline that generates test data, and wait until it ends. |
+This package does not generate test data: generating it means running test cases in the project's GitLab pipeline,
+which the [atp-tests-assistant](https://github.com/Netcracker/qubership-testing-platform-ai-packages/blob/main/agent-packages/atp-tests-assistant/README.md) package does, for example with `/atp-run-tests`.
 
-This skill does not call TDM3. The pipeline runs the project's test cases, and the test cases fill the tables of TDM3
-as their last step. See [Generating test data](#generating-test-data) for the settings it needs.
+Versions before 2.0.0 did it with the `tdm-generate-test-data` skill and the `/tdm-generate` command. To move:
+
+1. Install atp-tests-assistant, as its [user guide](https://github.com/Netcracker/qubership-testing-platform-ai-packages/blob/main/agent-packages/atp-tests-assistant/docs/user-guide.md) describes.
+2. Put the GitLab settings, the pipeline variables, the keys of the search for identifiers, and the token into the
+   `.atp-assistant` folder, as the same guide describes. This package needs only the TDM3 settings.
+3. Update this package, and use `/atp-run-tests` where you used `/tdm-generate`. When the old skill folders stay in the
+   folder of your agent after the update, delete `tdm-generate-test-data` and `tdm-generate`.
 
 ### Showing a request
 
@@ -184,7 +188,6 @@ nothing more there.
 | [`/tdm-update`](.apm/skills/tdm-update/SKILL.md)     | [tdm-update-test-data](.apm/skills/tdm-update-test-data/SKILL.md)                       | `/tdm-update table=Agents where agent_code=A013 set country=IT`              |
 | [`/tdm-delete`](.apm/skills/tdm-delete/SKILL.md)     | [tdm-occupy-test-data-rows-by-id](.apm/skills/tdm-occupy-test-data-rows-by-id/SKILL.md) | `/tdm-delete table=Agents agent_code=A013`                                   |
 | [`/tdm-load`](.apm/skills/tdm-load/SKILL.md)         | [tdm-import-test-data](.apm/skills/tdm-import-test-data/SKILL.md)                       | `/tdm-load table=Agents file="C:\data\agents.xlsx" new`                      |
-| [`/tdm-generate`](.apm/skills/tdm-generate/SKILL.md) | [tdm-generate-test-data](.apm/skills/tdm-generate-test-data/SKILL.md)                   | `/tdm-generate test="Generate domestic customers" env=environments/dev.yaml` |
 
 ## Instruction
 
@@ -266,88 +269,3 @@ otherwise.
 
 The script refuses a `TDM3_BASE_URL` that is not on `localhost`; pass `--allow-remote` to override. It does not test the
 agent: how the agent parses a command or words a reply is checked by hand.
-
-### Generating test data
-
-[tdm-generate-test-data](.apm/skills/tdm-generate-test-data/SKILL.md) needs the GitLab settings of the project's
-pipeline, in the same config file:
-
-| Key                       | Meaning                                                                                                  |
-|---------------------------|----------------------------------------------------------------------------------------------------------|
-| `GITLAB_URL`              | Base URL of the GitLab service.                                                                          |
-| `GITLAB_PROJECT_ID`       | The numeric ID of the GitLab project that holds the pipeline.                                            |
-| `GITLAB_REF`              | The branch to run the pipeline from, such as `main`.                                                     |
-| `GENERATE_VARIABLES_FILE` | The JSON file with the pipeline variables, as a path relative to the project folder or an absolute path. |
-| `GITLAB_TOKEN_ENV`        | Optional. The name of the environment variable that holds the token. The default is `GITLAB_TOKEN`.      |
-
-The variables file has one `variables` object. The skill replaces the variables that the user's request gives
-and sends the rest as written:
-
-```json
-{
-  "variables": {
-    "PIPELINE_RUNTIME_CONFIG": "environments/dev.yaml",
-    "ATP_TESTS_GIT_REPO_URL": "https://gitlab.example.com/group/tests.git",
-    "ATP_TESTS_GIT_REPO_BRANCH": "main",
-    "EXECUTION_TYPE": "test",
-    "EXECUTION_NAME": "Generate domestic customers",
-    "ENABLE_JIRA_INTEGRATION": "false",
-    "SEND_WEBEX_NOTIFICATION": "true"
-  }
-}
-```
-
-The GitLab token needs the right to read the project and to run pipelines. Keep it out of the config file and out of the
-chat, because the skills read the config file and the agent sends what it reads to the model. Set the environment
-variable, or put the token on the first line of `.tdm-assistant/gitlab-token`, which only the script reads.
-`ATP_TESTS_GIT_REPO_URL`, `EXECUTION_TYPE`, and `EXECUTION_NAME` must not be empty, and `ENABLE_JIRA_INTEGRATION` and
-`SEND_WEBEX_NOTIFICATION` must be `true` or `false`; the script checks this before it starts the pipeline. The pipeline
-normally ends within minutes, and the script stops waiting after 30 minutes; it cannot cancel a pipeline.
-
-#### Business identifiers while the pipeline runs
-
-The test cases create the business identifiers of the new data, such as a customer ID, early in the pipeline. With the
-keys below, the script reads the logs while the pipeline runs, and the agent reports each identifier as soon as the logs
-show it. You can look at the data on the project's server long before the pipeline ends. The search is on when the
-first four keys are set, and off when none of them is; a partial set is an error (`config_incomplete`). The search needs
-the downstream pipeline to be in the GitLab project of `GITLAB_PROJECT_ID` or in another project that the token can
-read.
-
-| Key                       | Meaning                                                                                                          |
-|---------------------------|------------------------------------------------------------------------------------------------------------------|
-| `ORCHESTRATOR_URL`        | Base URL of the test orchestrator, starting with `http://` or `https://`. The script sends no credentials to it. |
-| `DOWNSTREAM_STAGE`        | The stage of the downstream pipeline whose first job logs the run ID, such as `1. Run ATP3 tests`.               |
-| `RUN_ID_PATTERN`          | A regular expression that finds the run ID in the log of that job.                                               |
-| `BUSINESS_ID_PATTERNS`    | An object that maps the name of an identifier to a regular expression that finds it in the runner log.           |
-| `DISCOVERY_TIMEOUT`       | Optional. Seconds after the start of the pipeline during which the script searches. The default is `420`.        |
-| `DISCOVERY_INTERVAL`      | Optional. Seconds between two rounds of the search until the run ID is known. The default is `5`.                |
-| `DISCOVERY_SLOW_INTERVAL` | Optional. Seconds between two rounds once the run ID is known. The default is `15`.                              |
-
-```json
-{
-  "ORCHESTRATOR_URL": "https://orchestrator.example.com",
-  "DOWNSTREAM_STAGE": "1. Run ATP3 tests",
-  "RUN_ID_PATTERN": "Run submitted: id=(?P<value>[0-9a-f-]{36})",
-  "BUSINESS_ID_PATTERNS": {
-    "customerId": "^customerId:[ \\t]*(?P<value>\\d+)[ \\t]*$"
-  }
-}
-```
-
-A pattern uses the Python regular expression syntax and is matched line by line, so `^` and `$` stand for the start and
-the end of a line. The identifier is the group named `value`, or the first group when no group has that name. Each
-distinct value is reported once. A value that is empty, longer than 200 characters, or not printable is ignored, because
-a log is not trusted. A pattern that does not compile, or has no group, is refused as `invalid_pattern` before the
-pipeline starts. To search for one more identifier, add one more entry to `BUSINESS_ID_PATTERNS`.
-
-The script finds the downstream pipeline through the bridge job of the pipeline, takes the first job of
-`DOWNSTREAM_STAGE`, and reads the run ID from the log of that job. It then reads the last 5000 lines of
-`<ORCHESTRATOR_URL>/atp3/api/v1/runs/<run ID>/logs` on every round, because the identifiers appear one by one. It waits
-and tries again while a pipeline, a job, or a log is not there yet. Each found value is printed as `FOUND <name>=<value>`
-in the progress output, and the result of the script lists all of them in `found`.
-
-The search never stops the wait for the pipeline. It ends by itself after `DISCOVERY_TIMEOUT` seconds, or after five
-failed requests in a row, and the result then says why in `discovery.stopped` and `discovery.message`. The script reads
-the logs once more when the pipeline ends. The search needs the agent to read the output of the script while it runs. A
-tool that shows the output only at the end gets the identifiers at the end. The search exists since version 1.17.0 of
-the package.
