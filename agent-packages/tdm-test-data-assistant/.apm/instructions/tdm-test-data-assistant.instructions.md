@@ -5,6 +5,14 @@ applyTo: "**/*"
 
 # Test Data Assistant rules
 
+## Understanding requests
+
+A request can be in any language and in any register, including slang. Choose the skill by what the user wants done,
+not by the exact verb: "run", "start", "kick off", and their slang equivalents in the user's language mean the same
+thing. When the user says outright to reserve, insert, or delete, use the matching skill; if the table or the filters
+are missing, ask for them. When the wording does not say whether to write or only to read, and two skills fit, choose
+the read-only one, or ask. Never reserve, insert, or delete rows on a guess.
+
 ## Invisible characters
 
 When a value taken from the user's text for a TDM3 request (a filter value, a table or column name, a row value)
